@@ -9,7 +9,10 @@ const {
     getResultDetail,
     getProfile,
     updateProfile,
-    deleteAccount
+    deleteAccount,
+    getCreateCustomTest, // New Import
+    createCustomTest,    // New Import
+    deleteCustomTest     // New Import
 } = require('../controllers/studentController');
 const { protect, checkUser } = require('../middleware/auth');
 
@@ -19,6 +22,12 @@ router.get('/practice', checkUser, getPractice);
 
 // Protected Routes (Login required)
 router.use(protect); 
+
+// Custom Test Routes (New)
+router.get('/custom-test', getCreateCustomTest);
+router.post('/custom-test/create', createCustomTest);
+router.post('/custom-test/delete/:id', deleteCustomTest);
+
 router.get('/test', startTest);
 router.post('/test/submit', submitTest); 
 router.get('/history', getResults);

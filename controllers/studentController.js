@@ -8,12 +8,93 @@ const User = require('../models/User'); // Import User model for profile managem
 // @route   GET /student/dashboard
 const getDashboard = async (req, res) => {
     try {
-        // Fetch active test configurations
-        const tests = await TestConfig.find({ isActive: true }).sort({ createdAt: -1 });
+        // Fetch active tests (Admin created) OR Custom tests created by this user
+        const queryConditions = [
+            { isActive: true, createdBy: null }, // Admin tests
+            { isActive: true, createdBy: { $exists: false } } // Legacy admin tests
+        ];
+
+        if (req.user) {
+            queryConditions.push({ createdBy: req.user.id }); // User's own tests
+        }
+
+        const tests = await TestConfig.find({
+            $or: queryConditions
+        }).sort({ createdAt: -1 });
         
-        // Also fetch topics for legacy "Practice Mode" if needed, OR just use tests
-        // For strict adherence to new requirement, we show tests/practice sets
-        res.render('student/dashboard', { tests });
+        res.render('student/dashboard', { tests, user: req.user });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Get Custom Test Creation Page
+// @route   GET /student/custom-test
+const getCreateCustomTest = async (req, res) => {
+    try {
+        // Fetch distinct topics for dropdown
+        const topics = await Question.distinct('topic');
+        res.render('student/create_custom', { topics });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Create Custom Test
+// @route   POST /student/custom-test/create
+const createCustomTest = async (req, res) => {
+    try {
+        const { topics, duration, isAdaptive, totalQuestions, easy, medium, hard } = req.body;
+        
+        let topicArray = Array.isArray(topics) ? topics : [topics];
+        let calculatedTotal = 0;
+        let distribution = { easy: 0, medium: 0, hard: 0 };
+
+        if (isAdaptive === 'on') {
+            calculatedTotal = parseInt(totalQuestions) || 10;
+        } else {
+            distribution = {
+                easy: parseInt(easy) || 0,
+                medium: parseInt(medium) || 0,
+                hard: parseInt(hard) || 0
+            };
+            calculatedTotal = distribution.easy + distribution.medium + distribution.hard;
+        }
+
+        if (calculatedTotal <= 0) {
+            return res.status(400).send('Total questions must be greater than 0');
+        }
+
+        const newTest = await TestConfig.create({
+            title: `Custom Test (${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})})`,
+            topics: topicArray,
+            duration: parseInt(duration),
+            totalQuestions: calculatedTotal,
+            difficultyDistribution: distribution,
+            isAdaptive: isAdaptive === 'on',
+            category: 'Practice Set', // Custom tests are practice by default
+            createdBy: req.user.id,
+            expireAt: new Date(Date.now() + 3 * 60 * 60 * 1000) // 3 Hours TTL
+        });
+
+        res.redirect('/student/dashboard');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Delete Custom Test
+// @route   POST /student/custom-test/delete/:id
+const deleteCustomTest = async (req, res) => {
+    try {
+        const test = await TestConfig.findOne({ _id: req.params.id, createdBy: req.user.id });
+        if(test) {
+            await TestConfig.findByIdAndDelete(req.params.id);
+        }
+        res.redirect('/student/dashboard');
     } catch (error) {
         console.error(error);
         res.status(500).send('Server Error');
@@ -48,6 +129,10 @@ const startTest = async (req, res) => {
         const now = new Date();
         const startTime = test.startDate ? new Date(test.startDate) : null;
         const endTime = test.endDate ? new Date(test.endDate) : null;
+
+        if (test.isAdaptive) {
+            return res.redirect(`/adaptive/test/${testId}/start`);
+        }
 
         if (startTime && startTime > now) {
             return res.status(403).send(`
@@ -378,6 +463,9 @@ const deleteAccount = async (req, res) => {
 
 module.exports = {
     getDashboard,
+    getCreateCustomTest, // New export
+    createCustomTest,    // New export
+    deleteCustomTest,    // New export
     getPractice,
     startTest,
     submitTest,

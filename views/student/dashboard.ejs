@@ -10,6 +10,13 @@
 </div>
 
 <h2 style="margin-bottom: 25px; color: white;">Available Quizzes</h2>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; margin-top: -15px;">
+    <!-- Divider or just spacer -->
+    <span></span> 
+    <a href="/student/custom-test" style="background: linear-gradient(135deg, #238636, #2ea043); color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(46, 160, 67, 0.3);">
+        <span>⚡</span> Create Custom Test
+    </a>
+</div>
 
 <!-- Cards Grid -->
 <div class="cards-grid">
@@ -24,7 +31,11 @@
                     <span style="margin-right: 8px;">🚀</span>
                     <%= test.title %>
                 </div>
-                <span class="status-badge"><%= test.category %></span>
+                <% if(test.createdBy && test.createdBy.toString() === user._id.toString()) { %>
+                    <span class="status-badge" style="background: rgba(88, 166, 255, 0.1); color: #58a6ff; border: 1px solid rgba(88, 166, 255, 0.3);">Custom</span>
+                <% } else { %>
+                    <span class="status-badge"><%= test.category %></span>
+                <% } %>
             </div>
             
             <% if (test.isAdaptive) { %>
@@ -115,9 +126,20 @@
                     </button>
                 <% } %>
                     
-                <% if (!isUpcoming && !isExpired && test.category !== 'Test') { %>
+                <% if (!isUpcoming && !isExpired && test.category !== 'Test' && (!test.createdBy || test.createdBy.toString() !== user._id.toString())) { %>
                     <div style="text-align: center; margin-top: 10px; color: #8b949e; font-size: 0.8rem;">
                         Practice mode enabled
+                    </div>
+                <% } %>
+
+                <% if(test.createdBy && test.createdBy.toString() === user._id.toString()) { %>
+                    <form action="/student/custom-test/delete/<%= test._id %>" method="POST" style="margin-top: 10px;" onsubmit="return confirm('Delete this custom test?')">
+                        <button type="submit" style="background: transparent; color: #f85149; border: 1px solid rgba(248,81,73,0.3); width: 100%; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">
+                            🗑️ Delete Test
+                        </button>
+                    </form>
+                    <div style="text-align: center; margin-top: 5px; color: #8b949e; font-size: 0.75rem;">
+                        Expires in 3 hours
                     </div>
                 <% } %>
             </div>

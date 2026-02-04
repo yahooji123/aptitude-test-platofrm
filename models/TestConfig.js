@@ -20,7 +20,13 @@ const testConfigSchema = new mongoose.Schema({
     isActive: { type: Boolean, default: true },
     isAdaptive: { type: Boolean, default: false }, // New Adaptive Flag
     startDate: { type: Date },
-    endDate: { type: Date }
+    endDate: { type: Date },
+    // Custom Test Fields
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Null for admin tests
+    expireAt: { type: Date } // For TTL
 }, { timestamps: true });
+
+// TTL Index: Automatically delete document when 'expireAt' time is reached
+testConfigSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
 
 module.exports = mongoose.model('TestConfig', testConfigSchema);
