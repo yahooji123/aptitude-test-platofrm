@@ -97,6 +97,26 @@
     .diff-easy { background: rgba(35, 134, 54, 0.2); color: #3fb950; border: 1px solid rgba(35, 134, 54, 0.4); }
     .diff-medium { background: rgba(210, 153, 34, 0.2); color: #d29922; border: 1px solid rgba(210, 153, 34, 0.4); }
     .diff-hard { background: rgba(248, 81, 73, 0.2); color: #ff7b72; border: 1px solid rgba(248, 81, 73, 0.4); }
+
+    /* Code Box Styling */
+    .code-box {
+        background: #0d1117; /* Darker than card */
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        padding: 15px;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        color: #e6edf3;
+        overflow-x: auto;
+        margin: 15px 0;
+        white-space: pre;
+    }
+    
+    .q-paragraph {
+        margin-bottom: 20px;
+        white-space: pre-wrap;
+    }
 </style>
 
 <div class="runner-container">
@@ -112,10 +132,16 @@
     <div class="question-card">
         <div id="timer" class="timer">00:00</div>
         
-        <!-- Difficulty Indicator (Optional, maybe hide for students to reduce anxiety, but useful for debug/teachers) -->
+        <!-- Difficulty Indicator -->
         <span class="difficulty-badge diff-<%= question.difficulty %>"><%= question.difficulty %></span>
 
-        <h3 class="question-text"><%= question.questionText %></h3>
+        <!-- Raw Text Hidden -->
+        <div id="rawQuestionText" style="display: none;"><%= question.questionText %></div>
+        
+        <!-- Formatted Container -->
+        <div id="formattedQuestion" class="question-text">
+            <!-- JS will populate this -->
+        </div>
 
         <form id="adaptiveForm">
             <input type="hidden" name="questionId" value="<%= question._id %>">
@@ -199,6 +225,77 @@
             submitBtn.disabled = false;
         }
     });
+
+    // Formatting Logic for Code Boxes
+    (function renderQuestion() {
+        const rawEl = document.getElementById('rawQuestionText');
+        if(!rawEl) return;
+        
+        const rawText = rawEl.innerText;
+        const container = document.getElementById('formattedQuestion');
+        
+        const escapeHtml = (unsafe) => {
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        };
+
+        const lines = rawText.split('\n');
+        let html = '';
+        let buffer = [];
+        let inCode = false;
+        
+        // Heuristics for C++/Java/Code
+        const isCodeLine = (line) => {
+            const trimmed = line.trim();
+            if(!trimmed) return inCode; 
+            
+            // Indicators
+            if (/^(#include|import|package|using namespace)/.test(trimmed)) return true;
+            if (/[\{\}\(\);]$/.test(trimmed)) return true; // Ends in structural char
+            if (/^(int|void|bool|char|float|double|struct|class|public|private|if|for|while|return)\b/.test(trimmed)) return true;
+            if (/^\/\//.test(trimmed)) return true; // Comment
+            if (/^(\s{4}|\t)/.test(line)) return true; // Indentation
+            if (/cout\s*<</.test(trimmed)) return true;
+            
+            return false;
+        };
+
+        lines.forEach(line => {
+            const looksLike = isCodeLine(line);
+            
+            if (looksLike && !inCode) {
+                // FLUSH TEXT
+                if (buffer.length > 0) {
+                    html += `<div class="q-paragraph">${buffer.map(escapeHtml).join('<br>')}</div>`;
+                    buffer = [];
+                }
+                inCode = true;
+            } else if (!looksLike && inCode) {
+                // CHECK IF WE SHOULD EXIT CODE
+                // If line starts with Capital letter (English sentence) -> Exit
+                // If it's a short line or symbol, might still be code.
+                if (/^[A-Z][a-z]/.test(line.trim())) {
+                    // FLUSH CODE
+                    html += `<div class="code-box">${buffer.map(escapeHtml).join('\n')}</div>`;
+                    buffer = [];
+                    inCode = false;
+                }
+            }
+            buffer.push(line);
+        });
+
+        // Flush remaining
+        if (buffer.length > 0) {
+            if (inCode) html += `<div class="code-box">${buffer.map(escapeHtml).join('\n')}</div>`;
+            else html += `<div class="q-paragraph">${buffer.map(escapeHtml).join('<br>')}</div>`;
+        }
+
+        container.innerHTML = html;
+    })();
 </script>
 
 <%- include('../partials/footer') %>

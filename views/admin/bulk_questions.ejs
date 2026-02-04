@@ -19,7 +19,7 @@
 
     .editor-section, .preview-section {
         background: #161b22;
-        border: 1px solid var(--border-color);
+        border: 1px solid #30363d;
         border-radius: 12px;
         padding: 25px;
         display: flex;
@@ -27,11 +27,40 @@
         height: 80vh;
     }
 
+    .tab-nav {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #30363d;
+        padding-bottom: 10px;
+    }
+
+    .mode-tab {
+        background: transparent;
+        border: none;
+        color: #8b949e;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-weight: 600;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+
+    .mode-tab:hover {
+        background: rgba(255,255,255,0.05);
+        color: #c9d1d9;
+    }
+
+    .mode-tab.active {
+        background: #238636;
+        color: white;
+    }
+
     textarea.bulk-input {
         flex: 1;
         background: #0d1117;
         color: #e6edf3;
-        border: 1px solid var(--border-color);
+        border: 1px solid #30363d;
         border-radius: 8px;
         padding: 15px;
         font-family: 'Courier New', Courier, monospace;
@@ -139,24 +168,39 @@
     
     <!-- Left: Editor -->
     <div class="editor-section">
+        <div class="tab-nav">
+            <button class="mode-tab active" onclick="switchMode('simple')" id="tab-simple">Standard Mode</button>
+            <button class="mode-tab" onclick="switchMode('advanced')" id="tab-advanced">Advanced / Code Mode</button>
+        </div>
+
         <div class="action-bar">
             <strong>Input Data</strong>
             <button class="btn-action btn-clear" onclick="clearInput()">Clear</button>
         </div>
         
-        <textarea id="bulkData" class="bulk-input" placeholder="Paste your questions here..."></textarea>
-        
-        <div class="format-guide">
-            <strong>Format Guide:</strong><br>
-            Separated by empty lines or continuous.<br>
-            <code>Q: Who is the PM of India?</code><br>
-            <code>TOPIC: General Knowledge</code><br>
-            <code>DIFFICULTY: easy</code><br>
-            <code>A) Narendra Modi</code><br>
-            <code>B) Rahul Gandhi</code><br>
-            <code>C) Amit Shah</code><br>
-            <code>D) Manmohan Singh</code><br>
-            <code>ANS: A</code>
+        <!-- Format Simple -->
+        <div id="format-simple" class="input-group" style="display: flex; flex-direction: column; flex: 1;">
+            <textarea id="bulkDataSimple" class="bulk-input" placeholder="Paste your simple questions here..."></textarea>
+            <div class="format-guide">
+                <strong>Format Guide (Standard):</strong><br>
+                <code>Q: Question text</code><br>
+                <code>TOPIC: Topic Name</code><br>
+                <code>DIFFICULTY: easy/medium/hard</code><br>
+                <code>A) Option 1</code> ... <code>ANS: A</code>
+            </div>
+        </div>
+
+        <!-- Format Advanced -->
+        <div id="format-advanced" class="input-group" style="display: none; flex-direction: column; flex: 1;">
+            <textarea id="bulkDataAdvanced" class="bulk-input" placeholder="Paste questions with code blocks here..."></textarea>
+            <div class="format-guide">
+                <strong>Format Guide (Advanced/Code):</strong><br>
+                <code>Q: Question text...</code><br>
+                <code>int main() { ... }</code> (Multi-line code allowed)<br>
+                <code>TOPIC: C++ Functions</code> (Marks end of question)<br>
+                <code>DIFFICULTY: hard</code><br>
+                <code>A) Option 1</code> ... <code>ANS: B</code>
+            </div>
         </div>
         
         <button class="btn-action btn-preview" onclick="parseQuestions()" style="margin-top: 15px; width: 100%; padding: 12px;">
@@ -196,10 +240,39 @@
 
 <script>
     let parsedQuestions = [];
+    let currentMode = 'simple';
+
+    function switchMode(mode) {
+        currentMode = mode;
+        document.getElementById('tab-simple').className = `mode-tab ${mode === 'simple' ? 'active' : ''}`;
+        document.getElementById('tab-advanced').className = `mode-tab ${mode === 'advanced' ? 'active' : ''}`;
+        
+        document.getElementById('format-simple').style.display = mode === 'simple' ? 'flex' : 'none';
+        document.getElementById('format-advanced').style.display = mode === 'advanced' ? 'flex' : 'none';
+        
+        // Auto-fill advanced example if empty
+        if (mode === 'advanced' && document.getElementById('bulkDataAdvanced').value === '') {
+            document.getElementById('bulkDataAdvanced').value = `Q: What is the issue in this function?
+
+void print(int *p) {
+    cout << *p;
+}
+
+TOPIC: Pointers
+DIFFICULTY: medium
+A) Syntax Error
+B) Dereferencing uninitialized pointer
+C) Nothing wrong
+D) Pointer is null
+ANS: B`;
+        }
+    }
 
     function clearInput() {
         if(confirm('Clear all input?')) {
-            document.getElementById('bulkData').value = '';
+            if (currentMode === 'simple') document.getElementById('bulkDataSimple').value = '';
+            else document.getElementById('bulkDataAdvanced').value = '';
+            
             document.getElementById('previewBody').innerHTML = '';
             parsedQuestions = [];
             updateSaveButton();
@@ -207,42 +280,59 @@
     }
 
     function parseQuestions() {
-        const text = document.getElementById('bulkData').value;
-        const lines = text.split('\n').map(l => l.trim()).filter(l => l !== '');
+        const inputId = currentMode === 'simple' ? 'bulkDataSimple' : 'bulkDataAdvanced';
+        const text = document.getElementById(inputId).value;
+        const lines = text.split('\n'); // Keep empty lines for code formatting in advanced mode
         
         let questions = [];
         let currentQ = null;
 
-        // Simple State Machine Parser
-        lines.forEach(line => {
-            // Check for new Question start (more flexible regex)
-            if (line.match(/^Q[:\.]/i)) {
-                if (currentQ) validateAndPush(questions, currentQ);
-                currentQ = { 
-                    questionText: line.replace(/^Q[:\.]\s*/i, ''), 
-                    options: [], 
-                    topic: 'General', // Default
-                    difficulty: 'medium', // Default
-                    correctOption: null,
-                    rawAns: null,
-                    error: []
-                };
-            } else if (currentQ) {
-                if (line.match(/^TOPIC[:\-]/i)) {
-                    currentQ.topic = line.replace(/^TOPIC[:\-]\s*/i, '');
-                } else if (line.match(/^DIFFICULTY[:\-]/i)) {
-                     currentQ.difficulty = line.replace(/^DIFFICULTY[:\-]\s*/i, '').toLowerCase();
-                } else if (line.match(/^[A-D]\)/)) {
-                    // Option
-                    currentQ.options.push(line.replace(/^[A-D]\)\s*/, ''));
-                } else if (line.match(/^ANS[:\-]/i)) {
-                    const ansChar = line.replace(/^ANS[:\-]\s*/i, '').trim().toUpperCase();
-                    const map = {'A': 0, 'B': 1, 'C': 2, 'D': 3};
-                    if (map[ansChar] !== undefined) currentQ.correctOption = map[ansChar];
-                    currentQ.rawAns = ansChar;
+        if (currentMode === 'simple') {
+            // SIMPLE PARSER (Strict Line-by-Line)
+            lines.forEach(line => {
+                line = line.trim();
+                if (line === '') return;
+
+                if (line.match(/^Q[:\.]/i)) {
+                    if (currentQ) validateAndPush(questions, currentQ);
+                    currentQ = createNewQuestion(line.replace(/^Q[:\.]\s*/i, ''));
+                } else if (currentQ) {
+                    parseMetadata(currentQ, line);
                 }
-            }
-        });
+            });
+        } else {
+            // ADVANCED PARSER (Multi-line Question Text Support)
+            // Logic: Everything between Q: and TOPIC: is part of Question Text
+            
+            lines.forEach(line => {
+                // Remove trailing whitespace but keep indent for code
+                const trimmedLine = line.trim();
+
+                // Check for Start of new Question
+                if (trimmedLine.match(/^Q[:\.]/i)) {
+                    if (currentQ) validateAndPush(questions, currentQ);
+                    currentQ = createNewQuestion(trimmedLine.replace(/^Q[:\.]\s*/i, ''));
+                    currentQ.parsingState = 'TEXT'; // State tracking
+                } 
+                else if (currentQ) {
+                    // Check if we hit the limiters
+                    if (trimmedLine.match(/^TOPIC[:\-]/i)) {
+                        currentQ.parsingState = 'META';
+                        currentQ.topic = trimmedLine.replace(/^TOPIC[:\-]\s*/i, '');
+                    }
+                    else if (currentQ.parsingState === 'TEXT') {
+                        // Still reading question description/code
+                        // Preserve empty lines if inside code, but maybe trim excessive ones?
+                        // For now, just append.
+                        currentQ.questionText += '\n' + line; 
+                    }
+                    else {
+                        // Parsing Metadata (Difficulty, Options, Ans)
+                        parseMetadata(currentQ, trimmedLine);
+                    }
+                }
+            });
+        }
         
         // Push last one
         if (currentQ) validateAndPush(questions, currentQ);
@@ -251,7 +341,37 @@
         renderPreview();
     }
 
+    function createNewQuestion(text) {
+        return {
+            questionText: text,
+            options: [],
+            topic: 'General',
+            difficulty: 'medium',
+            correctOption: null,
+            rawAns: null,
+            error: []
+        };
+    }
+
+    function parseMetadata(q, line) {
+        if (line.match(/^TOPIC[:\-]/i)) {
+            q.topic = line.replace(/^TOPIC[:\-]\s*/i, '');
+        } else if (line.match(/^DIFFICULTY[:\-]/i)) {
+             q.difficulty = line.replace(/^DIFFICULTY[:\-]\s*/i, '').toLowerCase();
+        } else if (line.match(/^[A-D]\)/)) {
+            q.options.push(line.replace(/^[A-D]\)\s*/, ''));
+        } else if (line.match(/^ANS[:\-]/i)) {
+            const ansChar = line.replace(/^ANS[:\-]\s*/i, '').trim().toUpperCase();
+            const map = {'A': 0, 'B': 1, 'C': 2, 'D': 3};
+            if (map[ansChar] !== undefined) q.correctOption = map[ansChar];
+            q.rawAns = ansChar;
+        }
+    }
+
     function validateAndPush(list, q) {
+        // Clean up question text
+        q.questionText = q.questionText.trim();
+        
         // Validation Logic
         if (!q.questionText) q.error.push("Missing Question Text");
         if (q.options.length < 2) q.error.push("Need at least 2 options");
@@ -348,8 +468,8 @@
     
     // Auto-fill example on load if empty
     window.onload = function() {
-        if(document.getElementById('bulkData').value === '') {
-            document.getElementById('bulkData').value = `Q: What follows the Green Revolution?
+        if(document.getElementById('bulkDataSimple').value === '') {
+            document.getElementById('bulkDataSimple').value = `Q: What follows the Green Revolution?
 TOPIC: Agriculture
 DIFFICULTY: hard
 A) White Revolution

@@ -92,6 +92,15 @@
         overflow-y: auto;
         display: flex;
         flex-direction: column;
+        
+        /* Hide Scrollbar */
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none;  /* IE 10+ */
+    }
+
+    .question-area::-webkit-scrollbar {
+        width: 0px;
+        background: transparent;
     }
 
     /* Question Card */
@@ -393,6 +402,26 @@
 
     .sm-footer { padding: 20px 25px; border-top: 1px solid #30363d; display: flex; justify-content: flex-end; gap: 15px; background: #0d1117; border-radius: 0 0 12px 12px; }
 
+    /* Code Box Styling */
+    .code-box {
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        padding: 15px;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        color: #e6edf3;
+        overflow-x: auto;
+        margin: 15px 0;
+        white-space: pre;
+    }
+    
+    .q-paragraph {
+        margin-bottom: 20px;
+        white-space: pre-wrap;
+    }
+
 </style>
 
 <!-- Header Overlay with Timer -->
@@ -424,7 +453,8 @@
                             </div>
                         </div>
                         
-                        <div class="q-text"><%= question.questionText %></div>
+                        <div id="raw-text-<%= index %>" style="display:none;"><%= question.questionText %></div>
+                        <div class="q-text" id="formatted-text-<%= index %>"></div>
                         
                         <div class="options-grid">
                             <% question.options.forEach((option, i) => { %>
@@ -538,6 +568,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         updateProgress();
         updateNavButtons();
+        formatAllQuestions();
     });
 
     // --- Navigation Logic ---
@@ -769,6 +800,69 @@
         }
     });
 
+    // --- Formatter Logic ---
+    function formatAllQuestions() {
+        for(let i=0; i<totalQuestions; i++) {
+            const rawEl = document.getElementById(`raw-text-${i}`);
+            const container = document.getElementById(`formatted-text-${i}`);
+            if(rawEl && container) {
+                 container.innerHTML = formatText(rawEl.innerText);
+            }
+        }
+    }
+
+    function formatText(rawText) {
+        const escapeHtml = (unsafe) => {
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        };
+
+        const lines = rawText.split('\n');
+        let html = '';
+        let buffer = [];
+        let inCode = false;
+        
+        const isCodeLine = (line) => {
+            const trimmed = line.trim();
+            if(!trimmed) return inCode; 
+            if (/^(#include|import|package|using namespace)/.test(trimmed)) return true;
+            if (/[\{\}\(\);]$/.test(trimmed)) return true; 
+            if (/^(int|void|bool|char|float|double|struct|class|public|private|if|for|while|return)\b/.test(trimmed)) return true;
+            if (/^\/\//.test(trimmed)) return true;
+            if (/^(\s{4}|\t)/.test(line)) return true; 
+            if (/cout\s*<</.test(trimmed)) return true;
+            return false;
+        };
+
+        lines.forEach(line => {
+            const looksLike = isCodeLine(line);
+            
+            if (looksLike && !inCode) {
+                if (buffer.length > 0) {
+                    html += `<div class="q-paragraph">${buffer.map(escapeHtml).join('<br>')}</div>`;
+                    buffer = [];
+                }
+                inCode = true;
+            } else if (!looksLike && inCode) {
+                if (/^[A-Z][a-z]/.test(line.trim())) {
+                    html += `<div class="code-box">${buffer.map(escapeHtml).join('\n')}</div>`;
+                    buffer = [];
+                    inCode = false;
+                }
+            }
+            buffer.push(line);
+        });
+
+        if (buffer.length > 0) {
+            if (inCode) html += `<div class="code-box">${buffer.map(escapeHtml).join('\n')}</div>`;
+            else html += `<div class="q-paragraph">${buffer.map(escapeHtml).join('<br>')}</div>`;
+        }
+        return html;
+    }
 </script>
 
 <%- include('../partials/footer') %>
