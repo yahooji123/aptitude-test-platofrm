@@ -60,7 +60,22 @@ const createTest = async (req, res) => {
     const easy = parseInt(easyCount) || 0;
     const medium = parseInt(mediumCount) || 0;
     const hard = parseInt(hardCount) || 0;
-    const totalQuestions = easy + medium + hard;
+    
+    // Adaptive Logic Adjustment
+    let totalQuestions = 0;
+    if (isAdaptive) {
+        // If adaptive, check if specific total was sent or calculate from parts (if fallback)
+        // Note: The UI for adaptive might send 'adaptiveTotalQuestions'
+        const adaptiveTotal = parseInt(req.body.adaptiveTotalQuestions) || 0;
+        if (adaptiveTotal > 0) {
+            totalQuestions = adaptiveTotal;
+        } else {
+             // Fallback if they hacked UI or something
+             totalQuestions = easy + medium + hard;
+        }
+    } else {
+        totalQuestions = easy + medium + hard;
+    }
 
     try {
         if (topicArray.length === 0) {
@@ -84,9 +99,7 @@ const createTest = async (req, res) => {
         if (endDate && endDate.trim() !== '') {
             end = new Date(endDate);
             if (isNaN(end.getTime())) end = undefined;
-        }ole.log("Dates to Save -> Start:", start, "End:", end);
-
-        cons
+        }
 
         const newTest = {
             title,
@@ -227,8 +240,8 @@ const getEditTest = async (req, res) => {
 // @desc    Update Test Config
 // @route   POST /admin/tests/edit/:id
 const postEditTest = async (req, res) => {
-    try {, isAdaptive
-        const { title, duration, category, tags, topics, easyCount, mediumCount, hardCount, correctMark, incorrectMark, startDate, endDate } = req.body;
+    try {
+        const { title, duration, category, isAdaptive, tags, topics, easyCount, mediumCount, hardCount, correctMark, incorrectMark, startDate, endDate } = req.body;
         
         let topicArray = topics;
         if (!topics) {
@@ -399,11 +412,57 @@ const deleteStudent = async (req, res) => {
     }
 };
 
+// @desc    Delete Multiple Questions
+// @route   POST /admin/questions/delete-bulk
+const deleteQuestionsBulk = async (req, res) => {
+    const { questionIds } = req.body;
+    
+    // questionIds could be a string if only one selected, or array if multiple
+    let idsToDelete = [];
+    if (Array.isArray(questionIds)) {
+        idsToDelete = questionIds;
+    } else if (questionIds) {
+        idsToDelete = [questionIds];
+    }
+
+    if (idsToDelete.length === 0) {
+        return res.redirect('/admin/questions');
+    }
+
+    try {
+        await Question.deleteMany({ _id: { $in: idsToDelete } });
+        res.redirect('/admin/questions');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Delete Questions by Topic
+// @route   POST /admin/questions/delete-topic
+const deleteQuestionsByTopic = async (req, res) => {
+    const { topic } = req.body;
+    
+    if (!topic) {
+        return res.redirect('/admin/questions');
+    }
+
+    try {
+        await Question.deleteMany({ topic: topic });
+        res.redirect('/admin/questions');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
 module.exports = {
     getDashboard,
     getQuestions,
     addQuestion,
     deleteQuestion,
+    deleteQuestionsBulk,
+    deleteQuestionsByTopic,
     getCreateTest,
     createTest,
     getBulkAdd,

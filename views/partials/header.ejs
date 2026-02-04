@@ -17,6 +17,7 @@
                 <span style="color: var(--text-secondary);">Welcome, <%= user.name %></span>
                 <% if (user.role === 'admin') { %>
                     <a href="/admin/dashboard">Admin Panel</a>
+                    <a href="/adaptive/admin/dashboard" style="color: #a371f7;">Adaptive®</a>
                     <a href="/admin/profile" style="display: inline-flex; align-items: center; margin-left: 5px;" title="Admin Profile">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -25,6 +26,7 @@
                     </a>
                 <% } else { %>
                     <a href="/student/dashboard">Dashboard</a>
+                    <a href="/adaptive/student/dashboard" style="color: #a371f7;">Adaptive®</a>
                     <a href="/student/history">My History</a>
                     <a href="/student/profile" style="display: inline-flex; align-items: center; margin-left: 5px;" title="My Profile">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

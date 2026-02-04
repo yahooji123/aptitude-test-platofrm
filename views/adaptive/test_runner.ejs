@@ -1,0 +1,204 @@
+<%- include('../partials/header') %>
+
+<style>
+    /* Clean, focused runner interface */
+    .runner-container {
+        max-width: 800px;
+        margin: 40px auto;
+        color: #e6edf3;
+    }
+    .question-card {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 12px;
+        padding: 30px;
+        position: relative;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+    .progress-bar {
+        height: 6px;
+        background: #30363d;
+        border-radius: 3px;
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    .progress-fill {
+        height: 100%;
+        background: #a371f7;
+        transition: width 0.3s ease;
+    }
+    .timer {
+        position: absolute;
+        top: 30px;
+        right: 30px;
+        font-family: monospace;
+        font-size: 1.2rem;
+        color: #e6edf3;
+        background: #21262d;
+        padding: 5px 12px;
+        border-radius: 6px;
+        border: 1px solid #30363d;
+    }
+    .question-text {
+        font-size: 1.3rem;
+        margin-bottom: 25px;
+        line-height: 1.6;
+        padding-right: 100px; /* Space for timer */
+    }
+    .options-grid {
+        display: grid;
+        gap: 15px;
+    }
+    .option-label {
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .option-label:hover {
+        background: #21262d;
+        border-color: #8b949e;
+    }
+    .option-input {
+        margin-right: 15px;
+        accent-color: #a371f7;
+        transform: scale(1.2);
+    }
+    .btn-submit {
+        display: block;
+        width: 100%;
+        margin-top: 30px;
+        padding: 15px;
+        background: #a371f7;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .btn-submit:hover {
+        background: #8957e5;
+    }
+    .difficulty-badge {
+        display: inline-block;
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        font-weight: 700;
+    }
+    .diff-easy { background: rgba(35, 134, 54, 0.2); color: #3fb950; border: 1px solid rgba(35, 134, 54, 0.4); }
+    .diff-medium { background: rgba(210, 153, 34, 0.2); color: #d29922; border: 1px solid rgba(210, 153, 34, 0.4); }
+    .diff-hard { background: rgba(248, 81, 73, 0.2); color: #ff7b72; border: 1px solid rgba(248, 81, 73, 0.4); }
+</style>
+
+<div class="runner-container">
+    <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end;">
+        <span style="color: #8b949e;">Question <%= currentQuestionNum %> of <%= totalQuestions %></span>
+        <span style="color: #a371f7; font-size: 0.9rem;">Adaptive Mode Active</span>
+    </div>
+    
+    <div class="progress-bar">
+        <div class="progress-fill" style="width: <%= ((currentQuestionNum - 1) / totalQuestions) * 100 %>%;"></div>
+    </div>
+
+    <div class="question-card">
+        <div id="timer" class="timer">00:00</div>
+        
+        <!-- Difficulty Indicator (Optional, maybe hide for students to reduce anxiety, but useful for debug/teachers) -->
+        <span class="difficulty-badge diff-<%= question.difficulty %>"><%= question.difficulty %></span>
+
+        <h3 class="question-text"><%= question.questionText %></h3>
+
+        <form id="adaptiveForm">
+            <input type="hidden" name="questionId" value="<%= question._id %>">
+            <input type="hidden" name="startTime" id="startTime" value="<%= Date.now() %>">
+            
+            <div class="options-grid">
+                <% question.options.forEach((opt, idx) => { %>
+                    <label class="option-label">
+                        <input type="radio" name="selectedOption" value="<%= idx %>" class="option-input" required>
+                        <%= opt %>
+                    </label>
+                <% }) %>
+            </div>
+
+            <button type="submit" class="btn-submit">Submit & Next &rarr;</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Timer Logic
+    let totalSeconds = <%= remainingSec %>;
+    const timerDisplay = document.getElementById('timer');
+
+    const updateTimer = () => {
+        const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+        const s = (totalSeconds % 60).toString().padStart(2, '0');
+        timerDisplay.textContent = `${m}:${s}`;
+        
+        if (totalSeconds <= 0) {
+            alert('Time is up!');
+            window.location.reload(); // Server checks time and concludes
+        } else {
+            totalSeconds--;
+        }
+    };
+    
+    setInterval(updateTimer, 1000);
+    updateTimer();
+
+    // Form Submission
+    document.getElementById('adaptiveForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitBtn = this.querySelector('.btn-submit');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Processing...';
+        submitBtn.style.opacity = '0.7';
+
+        const formData = new FormData(this);
+        const data = {
+            questionId: formData.get('questionId'),
+            selectedOption: formData.get('selectedOption'),
+            timeTaken: (Date.now() - parseInt(document.getElementById('startTime').value)) / 1000 // Seconds
+        };
+
+        try {
+            const response = await fetch('/adaptive/test/<%= test._id %>/submit-answer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                // Determine next step: reload page to fetch next question or redirect if done
+                // Since the controller handles "next question" logic on GET, we just reload the runner page.
+                // The server will verify if test is complete.
+                window.location.reload();
+            } else {
+                alert('Error submitting answer. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit & Next →';
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Connection failed.');
+            submitBtn.disabled = false;
+        }
+    });
+</script>
+
+<%- include('../partials/footer') %>

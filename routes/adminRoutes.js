@@ -26,6 +26,8 @@ router.post('/profile/delete', deleteAccount);
 // Bulk Routes (Place before /questions/:id or generic /questions catch-all if any detailed parameterized ones exist)
 router.get('/questions/bulk', getBulkAdd);
 router.post('/questions/bulk', postBulkAdd);
+router.post('/questions/delete-bulk', require('../controllers/adminController').deleteQuestionsBulk);
+router.post('/questions/delete-topic', require('../controllers/adminController').deleteQuestionsByTopic);
 
 router.get('/questions', getQuestions);
 router.post('/questions', addQuestion);

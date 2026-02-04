@@ -268,15 +268,32 @@
                 <label for="adaptiveCheck" style="font-weight: 600; color: #58a6ff; font-size: 1rem; cursor: pointer;">Enable Adaptive Practice Mode 🧠</label>
                 <div style="font-size: 0.85rem; color: #c9d1d9; margin-top: 5px; line-height: 1.4;">
                     <strong>What is this?</strong> In Adaptive Mode, the test difficulty changes based on student performance.
-                    <ul>
-                        <li>Start with Medium questions</li>
-                        <li>Correct Answer &rarr; Harder Question</li>
-                        <li>Wrong Answer &rarr; Easier Question</li>
-                    </ul>
-                    <span style="color: #8b949e;">(Note: Marks distribution may vary in this mode)</span>
+                    <br>
+                    <span style="color: #ff7b72;">Note: Distribution settings (Easy/Medium/Hard) will be ignored. Only total questions matter.</span>
                 </div>
             </div>
         </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const adaptiveCheck = document.getElementById('adaptiveCheck');
+                const manualDist = document.getElementById('manualDistribution');
+                const totalQWrapper = document.getElementById('totalQWrapper');
+
+                if (adaptiveCheck && manualDist && totalQWrapper) {
+                    adaptiveCheck.addEventListener('change', function() {
+                        if(this.checked) {
+                            manualDist.style.display = 'none';
+                            totalQWrapper.style.display = 'block';
+                            // Optional: Reset values if needed, but keeping them is fine
+                        } else {
+                            manualDist.style.display = 'grid'; 
+                            totalQWrapper.style.display = 'none';
+                        }
+                    });
+                }
+            });
+        </script>
 
         <div class="input-wrapper">
             <label>Tags (Comma separated)</label>
@@ -335,7 +352,7 @@
             </script>
         </div>
 
-        <div class="form-grid-3">
+        <div id="manualDistribution" class="form-grid-3">
             <div class="input-wrapper">
                 <label style="color: #7ee787;">Easy Questions</label>
                 <input type="number" name="easyCount" class="form-control" value="10" min="0">
@@ -348,6 +365,12 @@
                 <label style="color: #ff7b72;">Hard Questions</label>
                 <input type="number" name="hardCount" class="form-control" value="5" min="0">
             </div>
+        </div>
+
+        <div id="totalQWrapper" class="input-wrapper" style="display: none;">
+            <label style="color: #a371f7;">Total Adaptive Questions</label>
+            <input type="number" name="adaptiveTotalQuestions" class="form-control" placeholder="e.g. 30" min="1">
+            <small class="help-text">The system will dynamically pick this many questions based on performance.</small>
         </div>
 
         <!-- Section 3: Time & Marks -->

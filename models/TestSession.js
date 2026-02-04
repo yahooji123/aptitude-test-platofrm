@@ -19,6 +19,22 @@ const testSessionSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
+    // Adaptive Fields
+    isAdaptive: {
+        type: Boolean,
+        default: false
+    },
+    currentDifficulty: {
+        type: String,
+        enum: ['easy', 'medium', 'hard'],
+        default: 'medium'
+    },
+    responses: [{
+        question: { type: mongoose.Schema.Types.ObjectId, ref: 'Question' },
+        selectedOption: Number,
+        isCorrect: Boolean,
+        timeTaken: Number
+    }],
     status: {
         type: String,
         enum: ['inprogress', 'completed'],

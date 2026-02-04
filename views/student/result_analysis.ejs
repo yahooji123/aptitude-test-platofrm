@@ -422,7 +422,8 @@
             </thead>
             <tbody>
                 <% leaderboard.forEach((entry, index) => { %>
-                    <tr style="<%= entry.user._id.toString() === result.user._id.toString() ? 'background: rgba(88, 166, 255, 0.1);' : '' %>">
+                    <% const isCurrentUser = entry.user && result.user && entry.user._id.toString() === result.user._id.toString(); %>
+                    <tr style="<%= isCurrentUser ? 'background: rgba(88, 166, 255, 0.1);' : '' %>">
                         <td>
                             <% if(index === 0) { %> <div class="rank-badge rank-1">1</div>
                             <% } else if(index === 1) { %> <div class="rank-badge rank-2">2</div>
@@ -431,8 +432,8 @@
                         </td>
                         <td>
                             <div class="user-cell">
-                                <span class="user-name <%= entry.user._id.toString() === result.user._id.toString() ? 'user-self' : '' %>">
-                                    <%= entry.user.name %> <%= entry.user._id.toString() === result.user._id.toString() ? '(You)' : '' %>
+                                <span class="user-name <%= isCurrentUser ? 'user-self' : '' %>">
+                                    <%= entry.user ? entry.user.name : 'Unknown User' %> <%= isCurrentUser ? '(You)' : '' %>
                                 </span>
                             </div>
                         </td>

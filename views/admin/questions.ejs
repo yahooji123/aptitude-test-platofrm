@@ -280,6 +280,15 @@
             <h2>Question Bank</h2>
         </div>
         <div style="display: flex; gap: 10px;">
+            <div style="display: flex; gap: 5px;">
+                <button onclick="submitBulkDelete()" class="btn-action" style="color: #f85149; border-color: rgba(248,81,73,0.4); opacity: 0.5; cursor: not-allowed;" id="bulkDeleteBtn" disabled>
+                    Delete Selected
+                </button>
+                <button onclick="toggleTopicDelete()" class="btn-action" style="color: #f85149; border-color: rgba(248,81,73,0.4);">
+                    Delete by Topic
+                </button>
+            </div>
+            <div style="width: 1px; background: #30363d; margin: 0 5px;"></div>
             <a href="/admin/questions/bulk" class="btn-action">
                 <span>📦</span> &nbsp; Bulk Import
             </a>
@@ -287,6 +296,29 @@
                 <span>+</span> &nbsp; Add New
             </button>
         </div>
+    </div>
+
+    <!-- Delete By Topic Panel -->
+    <div id="topicDeletePanel" style="display: none; background: #161b22; border: 1px solid #f85149; border-radius: 12px; padding: 20px; margin-bottom: 25px;">
+        <h3 style="margin-top: 0; color: #f85149;">Delete Questions by Topic</h3>
+        <p style="color: #8b949e; font-size: 0.9rem;">Warning: This will delete ALL questions belonging to the selected topic. This action cannot be undone.</p>
+        <form action="/admin/questions/delete-topic" method="POST" onsubmit="return confirm('Are you sure you want to delete ALL questions in this topic? This cannot be undone!')">
+            <div style="display: flex; gap: 15px; align-items: end;">
+                <div style="flex: 1; max-width: 300px;">
+                    <label style="display: block; color: #8b949e; margin-bottom: 8px;">Select Topic</label>
+                    <select name="topic" class="form-control" required>
+                        <option value="">-- Choose Topic --</option>
+                        <% topics.forEach(t => { %>
+                            <option value="<%= t %>"><%= t %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <button type="submit" class="btn-action" style="background: #da3633; color: white; border: none;">
+                    Delete All in Topic
+                </button>
+                <button type="button" onclick="toggleTopicDelete()" class="btn-action">Cancel</button>
+            </div>
+        </form>
     </div>
 
     <!-- Filter Bar -->
@@ -363,11 +395,13 @@
     </div>
 
     <!-- Questions Table -->
+    <form id="bulkDeleteForm" action="/admin/questions/delete-bulk" method="POST">
     <div class="table-container">
         <table class="questions-table">
             <thead>
                 <tr>
-                    <th width="40%">Question</th>
+                    <th width="5%" style="text-align: center;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
+                    <th width="35%">Question</th>
                     <th width="15%">Topic</th>
                     <th width="10%">Difficulty</th>
                     <th width="25%">Options (Correct)</th>
@@ -377,7 +411,7 @@
             <tbody>
                 <% if (questions.length === 0) { %>
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 40px; color: #8b949e;">
+                        <td colspan="6" style="text-align: center; padding: 40px; color: #8b949e;">
                             No questions found. Add some questions or bulk import to get started.
                         </td>
                     </tr>
@@ -385,6 +419,9 @@
 
                 <% questions.forEach(question => { %>
                     <tr>
+                        <td style="text-align: center;">
+                            <input type="checkbox" name="questionIds" value="<%= question._id %>" class="question-checkbox" onclick="updateBulkBtn()">
+                        </td>
                         <td style="font-weight: 500; color: #e6edf3;">
                             <%= question.questionText.substring(0, 80) %>...
                         </td>
@@ -402,15 +439,14 @@
                             <% }) %>
                         </td>
                         <td>
-                            <form action="/admin/questions/delete/<%= question._id %>" method="POST" onsubmit="return confirm('Are you sure?')">
-                                <button type="submit" class="btn-delete-sm">Delete</button>
-                            </form>
+                            <button type="button" class="btn-delete-sm" onclick="deleteSingle('<%= question._id %>')">Delete</button>
                         </td>
                     </tr>
                 <% }) %>
             </tbody>
         </table>
     </div>
+    </form>
 
 </div>
 
@@ -429,6 +465,63 @@
             btn.innerHTML = '<span>+</span> &nbsp; Add New';
             btn.style.background = ''; // revert to class style
             btn.classList.add('btn-primary-glow');
+        }
+    }
+
+    function toggleTopicDelete() {
+        const panel = document.getElementById('topicDeletePanel');
+        if (panel.style.display === 'none') {
+            panel.style.display = 'block';
+            panel.scrollIntoView({ behavior: 'smooth' });
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.getElementsByClassName('question-checkbox');
+        for (let cb of checkboxes) {
+            cb.checked = selectAll.checked;
+        }
+        updateBulkBtn();
+    }
+
+    function updateBulkBtn() {
+        const checkboxes = document.getElementsByClassName('question-checkbox');
+        const btn = document.getElementById('bulkDeleteBtn');
+        let checkedCount = 0;
+        for (let cb of checkboxes) {
+            if (cb.checked) checkedCount++;
+        }
+        
+        if (checkedCount > 0) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.innerHTML = `Delete Selected (${checkedCount})`;
+        } else {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+            btn.innerHTML = 'Delete Selected';
+        }
+    }
+
+    function submitBulkDelete() {
+        if (confirm('Are you sure you want to delete the selected questions?')) {
+            document.getElementById('bulkDeleteForm').submit();
+        }
+    }
+
+    function deleteSingle(id) {
+        if (confirm('Are you sure you want to delete this question?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.style.display = 'none';
+            form.action = '/admin/questions/delete/' + id;
+            document.body.appendChild(form);
+            form.submit();
         }
     }
 </script>

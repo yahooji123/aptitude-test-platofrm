@@ -1,0 +1,94 @@
+<%- include('../partials/header') %>
+
+<!-- Banner Section (Customized for Adaptive) -->
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #4c2889 0%, #a371f7 100%); border: 1px solid #6e40c9;">
+    <div class="banner-title">🧠 Adaptive Practice Zone</div>
+    <div class="banner-subtitle">
+        Welcome to the Adaptive Learning Dashboard. These tests adjust difficulty based on your performance in real-time.
+    </div>
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <h2 style="margin: 0; color: white;">Your Adaptive Tests</h2>
+    <a href="/student/dashboard" class="btn btn-nav-login" style="background: #21262d; border-color: #30363d;">&larr; Back to Main Dashboard</a>
+</div>
+
+
+<!-- Cards Grid -->
+<div class="cards-grid">
+    <% if (tests.length === 0) { %>
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: rgba(22, 27, 34, 0.5); border-radius: 12px; border: 1px dashed #30363d;">
+            <p style="color: #8b949e; margin-bottom: 10px; font-size: 1.1rem;">No adaptive tests assigned yet.</p>
+            <p style="color: #8b949e; font-size: 0.9rem;">Check back later or explore standard tests.</p>
+        </div>
+    <% } %>
+
+    <% tests.forEach((test, index) => { %>
+        <div class="quiz-card" style="border: 1px solid #a371f7;">
+            <div class="card-header">
+                <div class="card-title">
+                    <span style="margin-right: 8px;">🚀</span>
+                    <%= test.title %>
+                </div>
+                <span class="status-badge" style="background: rgba(163, 113, 247, 0.15); color: #a371f7; border: 1px solid rgba(163, 113, 247, 0.4);"><%= test.category %></span>
+            </div>
+            
+            <div style="margin: -10px 0 15px 0;">
+                <span style="font-size: 0.75rem; background: linear-gradient(90deg, #a371f7, #58a6ff); color: white; padding: 2px 8px; border-radius: 10px; font-weight: 600;">🧠 Adaptive Mode</span>
+            </div>
+
+            <div class="card-meta">
+                <div class="meta-item">
+                    <span>📄</span>
+                    <span><%= test.totalQuestions %> Qs (Dynamic)</span>
+                </div>
+                <div class="meta-item">
+                    <span>⏱</span>
+                    <span><%= test.duration %> Mins</span>
+                </div>
+            </div>
+
+             <!-- Schedule Display -->
+            <% if (test.startDate || test.endDate) { %>
+                <div style="margin-top: 15px; padding: 10px; background: rgba(56, 139, 253, 0.1); border: 1px solid rgba(56, 139, 253, 0.4); border-radius: 6px; font-size: 0.85rem; color: #c9d1d9;">
+                    <% if (test.startDate) { %>
+                        <div style="margin-bottom: 4px;">
+                            <span style="color: #58a6ff;">Starts:</span> <%= new Date(test.startDate).toLocaleString() %>
+                        </div>
+                    <% } %>
+                    <% if (test.endDate) { %>
+                        <div>
+                            <span style="color: #ff7b72;">Ends:</span> <%= new Date(test.endDate).toLocaleString() %>
+                        </div>
+                    <% } %>
+                </div>
+            <% } %>
+
+            <% 
+                const now = new Date();
+                const start = test.startDate ? new Date(test.startDate) : null;
+                const end = test.endDate ? new Date(test.endDate) : null;
+                let isAccessible = true;
+                let statusMessage = "";
+
+                if (start && now < start) {
+                    isAccessible = false;
+                    statusMessage = "Upcoming";
+                } else if (end && now > end) {
+                    isAccessible = false;
+                    statusMessage = "Expired";
+                }
+            %>
+
+            <% if (isAccessible) { %>
+                <a href="/adaptive/test/<%= test._id %>/start" class="btn-start" style="background: #a371f7;">Start Adaptive Test</a>
+            <% } else { %>
+                <button class="btn-start" style="background: #30363d; cursor: not-allowed; opacity: 0.7;" disabled>
+                    <%= statusMessage %>
+                </button>
+            <% } %>
+        </div>
+    <% }) %>
+</div>
+
+<%- include('../partials/footer') %>

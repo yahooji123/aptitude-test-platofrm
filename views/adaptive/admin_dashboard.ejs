@@ -1,0 +1,76 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #4c2889 0%, #a371f7 100%); border: 1px solid #6e40c9;">
+    <div class="banner-title">Adaptive Admin Control</div>
+    <div class="banner-subtitle">Manage purely adaptive tests and configuration here.</div>
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+    <h2 style="margin: 0;">Adaptive Tests Management</h2>
+    <div>
+        <a href="/admin/dashboard" class="btn btn-nav-login" style="background: #21262d; border-color: #30363d; margin-right: 10px;">&larr; Standard Admin</a>
+    </div>
+</div>
+
+<!-- Active Adaptive Tests Table -->
+<div style="margin-bottom: 40px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin: 0;">Configuration & Tests</h3>
+        <a href="/admin/tests/create" class="btn btn-nav-signup" style="background: #a371f7; border-color: #a371f7;">+ Create New Test</a>
+    </div>
+
+    <div class="quiz-card" style="padding: 0; border: none; overflow: hidden; border: 1px solid #a371f7;">
+        <table>
+            <thead style="background: rgba(163, 113, 247, 0.1);">
+                <tr>
+                    <th width="35%">Title</th>
+                    <th>Type</th>
+                    <th>Questions</th>
+                    <th>Status</th>
+                    <th>Adaptive Scheme</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if(tests.length === 0) { %>
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 30px; color: #8b949e;">
+                            No adaptive tests found. Create one and check "Adaptive Mode".
+                        </td>
+                    </tr>
+                <% } %>
+                
+                <% tests.forEach(test => { %>
+                    <tr>
+                        <td style="font-weight: 500; color: #e6edf3;">
+                            <%= test.title %>
+                            <div style="font-size: 0.75rem; color: #8b949e; font-weight: 400;"><%= test.description %></div>
+                        </td>
+                        <td><span class="status-badge"><%= test.category %></span></td>
+                        <td><%= test.totalQuestions %></td>
+                        <td>
+                            <% if (test.isActive) { %>
+                                <span style="color: #3fb950;">● Active</span>
+                            <% } else { %>
+                                <span style="color: #8b949e;">○ Draft</span>
+                            <% } %>
+                        </td>
+                        <td>
+                             <span style="font-size: 0.75rem; background: #a371f7; color: white; padding: 2px 6px; border-radius: 4px;">Dynamic</span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 10px;">
+                                <a href="/admin/tests/edit/<%= test._id %>" style="color: #58a6ff; text-decoration: none; font-size: 0.9rem;">Edit</a>
+                                <form action="/admin/tests/delete/<%= test._id %>" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure?');">
+                                    <button type="submit" style="background: none; border: none; color: #ff7b72; cursor: pointer; font-size: 0.9rem; padding: 0;">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
