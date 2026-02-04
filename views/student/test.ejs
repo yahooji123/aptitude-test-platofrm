@@ -422,6 +422,68 @@
         white-space: pre-wrap;
     }
 
+    /* Mobile Exam Styles */
+    @media screen and (max-width: 768px) {
+        .exam-header {
+            padding: 5px 10px;
+            height: auto;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .exam-title {
+            width: 100%;
+            font-size: 1rem;
+            margin: 5px 0;
+            text-align: center;
+            max-width: none;
+            order: 1;
+        }
+        .exam-stats {
+            width: 100%;
+            justify-content: space-between;
+            gap: 10px;
+            order: 2;
+            margin-bottom: 5px;
+        }
+        
+        .exam-wrapper {
+            padding-top: 90px; /* Increased header height adjustment */
+        }
+        
+        .question-area {
+            padding: 15px;
+        }
+        
+        .nav-controls {
+            flex-direction: column-reverse;
+            gap: 15px;
+            padding-bottom: 20px;
+        }
+        
+        .nav-controls > div {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        
+        .nav-btn {
+            flex: 1;
+            justify-content: center;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .palette-overlay {
+            width: 85%;
+            right: -85%;
+        }
+        
+        .palette-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+
 </style>
 
 <!-- Header Overlay with Timer -->

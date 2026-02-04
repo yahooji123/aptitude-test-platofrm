@@ -41,11 +41,33 @@
     </div>
 </div>
 
+<style>
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+    }
+    .grid-wide {
+        grid-column: span 2;
+    }
+    @media (max-width: 1024px) {
+        .grid-wide {
+            grid-column: auto;
+        }
+    }
+    @media (max-width: 768px) {
+         .dashboard-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+         }
+    }
+</style>
+
 <!-- Main Content Grid -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+<div class="dashboard-grid">
     
     <!-- Active Tests Table -->
-    <div style="grid-column: span 2;">
+    <div class="grid-wide">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3 style="margin: 0;">Configuration & Tests</h3>
             <a href="/admin/tests/create" class="btn btn-nav-signup">+ Create New Test</a>

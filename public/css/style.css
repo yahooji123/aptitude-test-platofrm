@@ -402,3 +402,142 @@ body {
     background: #e6e6e6;
 }
 
+/* =========================================
+   Responsive Design / Media Queries
+   ========================================= */
+
+/* Tablets and Mobile Devices */
+@media screen and (max-width: 1024px) {
+    .container {
+        padding: 0 15px;
+        margin-top: 20px;
+    }
+    
+    .dashboard-banner {
+        padding: 30px;
+    }
+}
+
+/* Mobile Devices (Phones) */
+@media screen and (max-width: 768px) {
+    /* Navbar Responsiveness */
+    .navbar {
+        flex-direction: column;
+        padding: 1rem;
+        gap: 15px;
+    }
+
+    .nav-links {
+        width: 100%;
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+
+    .nav-links a {
+        display: block;
+        padding: 8px 0;
+        width: 100%;
+    }
+
+    /* Buttons in Navbar */
+    .btn-nav-login, .btn-nav-signup {
+        display: block;
+        width: 100%;
+        text-align: center;
+        margin-top: 5px;
+    }
+    
+    /* Layout Adjustments */
+    .container {
+        margin-top: 15px;
+        padding: 0 12px;
+    }
+
+    .dashboard-banner {
+        padding: 20px;
+        margin-bottom: 25px;
+        text-align: center;
+    }
+
+    .banner-title {
+        font-size: 1.5rem;
+    }
+
+    .banner-subtitle {
+        font-size: 0.95rem;
+    }
+
+    /* Cards Grid */
+    .cards-grid {
+        grid-template-columns: 1fr; /* Single column on mobile */
+        gap: 15px;
+    }
+
+    .quiz-card {
+        padding: 20px;
+    }
+    
+    .card-meta {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .tags-row {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    /* Auth Forms (Login/Register) */
+    .auth-form {
+        margin: 30px auto;
+        padding: 25px;
+        width: 100%;
+    }
+
+    /* Modals */
+    .modal-content {
+        width: 95%;
+        max-height: 80vh;
+    }
+    
+    .modal-header, .modal-footer {
+        padding: 15px;
+    }
+    
+    .modal-body {
+        padding: 15px;
+    }
+    
+    .modal-footer {
+        flex-direction: column-reverse; /* Stack buttons, cancel at bottom */
+    }
+    
+    .modal-footer button {
+        width: 100%;
+        margin: 0;
+    }
+
+    /* Tables */
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    th, td {
+        padding: 8px 10px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Very Small Devices */
+@media screen and (max-width: 380px) {
+    .banner-title {
+        font-size: 1.3rem;
+    }
+    
+    .navbar .logo {
+        font-size: 1.3rem;
+    }
+}

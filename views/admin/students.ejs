@@ -8,7 +8,21 @@
     </div>
 </div>
 
-<div class="container" style="max-width: 1200px; margin-top: -30px; position: relative; z-index: 2;">
+<style>
+    .overlap-container {
+        max-width: 1200px; 
+        margin-top: -30px; 
+        position: relative; 
+        z-index: 2;
+    }
+    @media (max-width: 768px) {
+        .overlap-container {
+            margin-top: 10px;
+        }
+    }
+</style>
+
+<div class="container overlap-container">
     
     <div class="quiz-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
