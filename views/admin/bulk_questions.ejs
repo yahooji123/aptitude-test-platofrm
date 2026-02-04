@@ -291,11 +291,14 @@ ANS: B`;
             // SIMPLE PARSER (Strict Line-by-Line)
             lines.forEach(line => {
                 line = line.trim();
-                if (line === '') return;
+                // if (line === '') return; // ALLOW EMPTY LINES
 
-                if (line.match(/^Q[:\.]/i)) {
+                if (line.match(/^Q\d*[:\.]|^Q\s/i)) { // MATCH Q1:, Q:, Q2., etc.
                     if (currentQ) validateAndPush(questions, currentQ);
-                    currentQ = createNewQuestion(line.replace(/^Q[:\.]\s*/i, ''));
+                    
+                    // Cleanup question prefix (Q1: .. -> ..)
+                    let qText = line.replace(/^Q\d*[:\.]\s*/i, '').trim();
+                    currentQ = createNewQuestion(qText);
                 } else if (currentQ) {
                     parseMetadata(currentQ, line);
                 }
@@ -309,9 +312,10 @@ ANS: B`;
                 const trimmedLine = line.trim();
 
                 // Check for Start of new Question
-                if (trimmedLine.match(/^Q[:\.]/i)) {
+                if (trimmedLine.match(/^Q\d*[:\.]|^Q\s/i)) {
                     if (currentQ) validateAndPush(questions, currentQ);
-                    currentQ = createNewQuestion(trimmedLine.replace(/^Q[:\.]\s*/i, ''));
+                    let qText = trimmedLine.replace(/^Q\d*[:\.]\s*/i, '').trim();
+                    currentQ = createNewQuestion(qText);
                     currentQ.parsingState = 'TEXT'; // State tracking
                 } 
                 else if (currentQ) {

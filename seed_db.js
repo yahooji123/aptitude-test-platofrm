@@ -74,12 +74,15 @@ const questions = [
     }
 ];
 
-mongoose.connect('mongodb://localhost:27017/apptitude-db', {
+// Use environment variable or default to local
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/apptitude-db';
+
+mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 })
 .then(async () => {
-    console.log('Connected to DB');
+    console.log(`Connected to DB: ${MONGO_URI}`);
     await Question.deleteMany({}); // Clear existing
     console.log('Cleared existing questions');
     
