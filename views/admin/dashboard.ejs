@@ -1,0 +1,139 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #238636 0%, #2ea043 100%);">
+    <div class="banner-title">Admin Control Center</div>
+    <div class="banner-subtitle">Manage questions, configure tests, and monitor system performance.</div>
+</div>
+
+<!-- Stats Row -->
+<div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-bottom: 40px;">
+    <div class="admin-stat-card">
+        <div>
+            <div class="admin-stat-label">Total Questions</div>
+            <div class="admin-stat-value"><%= questionCount %></div>
+        </div>
+        <div style="margin-top: 15px;">
+            <a href="/admin/questions" class="btn btn-nav-login" style="display:inline-block; font-size: 0.9rem;">View All Questions &rarr;</a>
+        </div>
+    </div>
+
+    <div class="admin-stat-card">
+        <div>
+            <div class="admin-stat-label">Active Tests</div>
+            <div class="admin-stat-value"><%= typeof tests !== 'undefined' ? tests.filter(t => t.isActive).length : 0 %></div>
+        </div>
+        <div style="margin-top: 15px;">
+            <span style="color: #238636; font-size: 0.9rem;">● Live for students</span>
+        </div>
+    </div>
+    
+    <div class="admin-stat-card">
+        <div>
+            <div class="admin-stat-label">System Topics</div>
+            <div class="admin-stat-value" style="font-size: 1.8rem;"><%= topics.length %></div>
+        </div>
+        <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary); font-size: 0.85rem; max-height: 80px; overflow-y: auto;">
+            <% topics.slice(0, 5).forEach(topic => { %>
+                <li><%= topic %></li>
+            <% }) %>
+            <% if(topics.length > 5) { %><li>+<%= topics.length - 5 %> more</li><% } %>
+        </ul>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+    
+    <!-- Active Tests Table -->
+    <div style="grid-column: span 2;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0;">Configuration & Tests</h3>
+            <a href="/admin/tests/create" class="btn btn-nav-signup">+ Create New Test</a>
+        </div>
+
+        <div class="quiz-card" style="padding: 0; border: none; overflow: hidden;">
+            <table>
+                <thead>
+                    <tr>
+                        <th width="35%">Title</th>
+                        <th>Type</th>
+                        <th>Questions</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (typeof tests !== 'undefined' && tests.length > 0) { %>
+                        <% tests.forEach(test => { %>
+                            <tr>
+                                <td style="font-weight: 600; color: white;">
+                                    <%= test.title %>
+                                    <div style="font-size: 0.75rem; color: #8b949e; margin-top: 4px;">
+                                        <%= test.tags.join(', ') %>
+                                    </div>
+                                </td>
+                                <td>
+                                    <% if(test.category === 'Test') { %>
+                                        <span class="status-badge" style="background: rgba(238, 75, 43, 0.1); color: #ff7b72; border-color: rgba(238, 75, 43, 0.4);">Test</span>
+                                    <% } else { %>
+                                        <span class="status-badge">Practice</span>
+                                    <% } %>
+                                </td>
+                                <td><%= test.totalQuestions %></td>
+                                <td><%= test.duration %>m</td>
+                                <td>
+                                    <% if(test.isActive) { %>
+                                        <span style="color: #238636;">● Active</span>
+                                    <% } else { %>
+                                        <span style="color: #8b949e;">○ Draft</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 10px; align-items: center;">
+                                        <a href="/admin/tests/edit/<%= test._id %>" style="color: var(--accent-color); text-decoration: none; font-size: 0.9rem;">Edit</a>
+                                        <form action="/admin/tests/delete/<%= test._id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this test? This will also remove associated student results.');" style="margin:0;">
+                                            <button type="submit" style="background: none; border: none; color: #f85149; cursor: pointer; font-size: 0.9rem;">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 40px; color: #8b949e;">
+                                No test configurations found. Create one to get started!
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div>
+        <h3 style="margin-bottom: 20px;">Quick Actions</h3>
+        
+        <div class="quiz-card" style="display: flex; flex-direction: column; gap: 15px;">
+            <a href="/admin/students" class="btn" style="text-align: center; background: #21262d; color: var(--text-primary); padding: 12px; border-radius: 6px; text-decoration: none; border: 1px solid var(--border-color); transition: 0.2s;">
+                User Management
+            </a>
+            <a href="/admin/questions" class="btn" style="text-align: center; background: #21262d; color: var(--text-primary); padding: 12px; border-radius: 6px; text-decoration: none; border: 1px solid var(--border-color); transition: 0.2s;">
+                Database Manager
+            </a>
+            <a href="/admin/tests/create" class="btn" style="text-align: center; background: #21262d; color: var(--text-primary); padding: 12px; border-radius: 6px; text-decoration: none; border: 1px solid var(--border-color); transition: 0.2s;">
+                New Configuration
+            </a>
+            
+            <div style="height: 1px; background: var(--border-color); margin: 10px 0;"></div>
+
+            <div style="font-size: 0.85rem; color: #8b949e;">
+                <strong>Tip:</strong> Create "Practice Sets" for specific topics like Arrays or DP to let students train without pressure.
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<%- include('../partials/footer') %>

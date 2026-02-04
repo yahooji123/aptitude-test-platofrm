@@ -1,0 +1,72 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #238636 0%, #2ea043 100%);">
+    <div class="banner-title">Student Management</div>
+    <div class="banner-subtitle">Manage registered students and view their details.</div>
+    <div style="margin-top: 15px;">
+        <a href="/admin/dashboard" class="btn btn-nav-login" style="background: rgba(255,255,255,0.2); color: white; border: none;">&larr; Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="container" style="max-width: 1200px; margin-top: -30px; position: relative; z-index: 2;">
+    
+    <div class="quiz-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                Registered Students 
+                <span style="background: var(--bg-secondary); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; color: var(--text-secondary);"><%= students.length %></span>
+            </h3>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Joined Date</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (typeof students !== 'undefined' && students.length > 0) { %>
+                        <% students.forEach((student, index) => { %>
+                            <tr>
+                                <td style="color: var(--text-secondary);"><%= index + 1 %></td>
+                                <td style="font-weight: 500;">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div style="width: 32px; height: 32px; background: var(--bg-secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 0.9rem;">
+                                            <%= student.name.charAt(0).toUpperCase() %>
+                                        </div>
+                                        <%= student.name %>
+                                    </div>
+                                </td>
+                                <td><%= student.email %></td>
+                                <td style="color: var(--text-secondary);">
+                                    <%= new Date(student.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                                </td>
+                                <td style="text-align: right;">
+                                    <form action="/admin/students/delete/<%= student._id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this student account? All their results/history will be permanently lost.');" style="display: inline-block;">
+                                        <button type="submit" class="btn" style="background: rgba(248, 81, 73, 0.1); color: #f85149; padding: 6px 12px; font-size: 0.85rem; border: 1px solid rgba(248, 81, 73, 0.4);">
+                                            Delete User
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 40px; color: #8b949e;">
+                                No students registered yet.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<%- include('../partials/footer') %>

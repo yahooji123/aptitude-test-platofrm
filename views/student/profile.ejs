@@ -1,0 +1,109 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-container">
+    <div class="hero-section" style="margin-bottom: 30px;">
+        <div>
+            <h1>My Profile</h1>
+            <p style="color: #c9d1d9;">Manage your account settings and preferences</p>
+        </div>
+    </div>
+
+    <% if (success) { %>
+        <div class="alert success" style="background: rgba(46, 160, 67, 0.15); border: 1px solid #3fb950; color: #3fb950; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <%= success %>
+        </div>
+    <% } %>
+
+    <% if (error) { %>
+        <div class="alert error" style="background: rgba(255, 123, 114, 0.15); border: 1px solid #ff7b72; color: #ff7b72; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <%= error %>
+        </div>
+    <% } %>
+
+    <div class="dashboard-grid" style="grid-template-columns: 1fr; align-items: start;">
+        
+        <!-- Profile Update Form -->
+        <div class="glass-card">
+            <h2 style="margin-bottom: 20px; font-size: 1.5rem;">Update Information</h2>
+            
+            <form action="/student/profile" method="POST">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="name" style="display: block; margin-bottom: 8px; color: #8b949e;">Full Name</label>
+                    <input type="text" id="name" name="name" value="<%= user.name %>" required
+                        style="width: 100%; padding: 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: white;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="email" style="display: block; margin-bottom: 8px; color: #8b949e;">Email Address</label>
+                    <input type="email" id="email" name="email" value="<%= user.email %>" required
+                        style="width: 100%; padding: 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: white;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 30px;">
+                    <label for="password" style="display: block; margin-bottom: 8px; color: #8b949e;">New Password <span style="font-size: 0.8em; color: #8b949e;">(Leave blank to keep current)</span></label>
+                    <input type="password" id="password" name="password" placeholder="••••••••"
+                        style="width: 100%; padding: 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: white;">
+                </div>
+
+                <button type="submit" class="btn-primary" style="background: #238636; border: none; color: white; padding: 12px 24px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                    Update Profile
+                </button>
+            </form>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="glass-card" style="border: 1px solid #da3633; margin-top: 30px;">
+            <h2 style="color: #ff7b72; margin-bottom: 15px; font-size: 1.5rem;">Danger Zone</h2>
+            <p style="color: #c9d1d9; margin-bottom: 20px;">Once you delete your account, there is no going back. Please be certain.</p>
+            
+            <button onclick="confirmDelete()" class="btn-danger" style="background: transparent; border: 1px solid #da3633; color: #ff7b72; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                Delete Account
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" style="color: #ff7b72;">Delete Account?</h3>
+            <button onclick="closeDeleteModal()" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="color: #c9d1d9;">Are you sure you want to delete your account? This action will permanently remove:</p>
+            <ul style="color: #8b949e; margin-top: 10px; padding-left: 20px;">
+                <li>Your personal information</li>
+                <li>All test history and results</li>
+                <li>All progress data</li>
+            </ul>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeDeleteModal()" class="btn-cancel">Cancel</button>
+            <form action="/student/profile/delete" method="POST" style="margin: 0;">
+                <button type="submit" class="btn-confirm" style="background: #da3633; color: white; border: none;">Permanently Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmDelete() {
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    // Close on outside click
+    window.onclick = function(event) {
+        const modal = document.getElementById('deleteModal');
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+</script>
+
+<%- include('../partials/footer') %>

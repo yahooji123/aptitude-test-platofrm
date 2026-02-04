@@ -1,0 +1,436 @@
+<%- include('../partials/header') %>
+
+<style>
+    /* Admin Questions Specific Styles */
+    
+    /* Animations */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-container {
+        animation: fadeInUp 0.5s ease-out;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* Header & Title */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    
+    .page-crumbs {
+        color: #8b949e;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+
+    .page-crumbs a {
+        color: #58a6ff;
+        text-decoration: none;
+    }
+
+    .page-title h2 {
+        font-size: 2rem;
+        background: linear-gradient(90deg, #fff, #a5d8ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+    }
+
+    /* Filter Tabs (Glassmorphism) */
+    .filter-bar {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 5px;
+        margin-bottom: 25px;
+        scrollbar-width: none; 
+    }
+    
+    .filter-tab {
+        background: rgba(22, 27, 34, 0.7);
+        color: var(--text-secondary);
+        padding: 8px 18px;
+        border-radius: 12px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        border: 1px solid rgba(48, 54, 61, 0.6);
+        white-space: nowrap;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(5px);
+    }
+
+    .filter-tab:hover {
+        background: rgba(48, 54, 61, 0.8);
+        color: #c9d1d9;
+        transform: translateY(-2px);
+    }
+
+    .filter-tab.active {
+        background: rgba(88, 166, 255, 0.15);
+        color: #58a6ff;
+        border-color: #58a6ff;
+        box-shadow: 0 0 10px rgba(88, 166, 255, 0.2);
+    }
+
+    /* Modern Buttons */
+    .btn-action {
+        background: #21262d; 
+        color: #c9d1d9;
+        border: 1px solid rgba(240, 246, 252, 0.1);
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+
+    .btn-action:hover {
+        background: #30363d;
+        border-color: #8b949e;
+        color: white;
+    }
+
+    .btn-primary-glow {
+        background: linear-gradient(135deg, #1f6feb 0%, #238636 100%);
+        border: none;
+        color: white;
+        box-shadow: 0 4px 15px rgba(31, 111, 235, 0.3);
+    }
+    
+    .btn-primary-glow:hover {
+        box-shadow: 0 6px 20px rgba(31, 111, 235, 0.5);
+        transform: translateY(-1px);
+    }
+
+    /* Add Question Form */
+    .add-question-container {
+        display: none;
+        background: #161b22;
+        border: 1px solid #30363d;
+        padding: 30px;
+        border-radius: 16px;
+        margin-bottom: 40px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        position: relative;
+        overflow: hidden;
+        animation: slideDown 0.4s ease-out;
+    }
+
+    .add-question-container::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 4px;
+        background: linear-gradient(90deg, #238636, #2ea043); /* Green theme for add */
+    }
+
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        color: #8b949e;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .form-control {
+        background: #0d1117;
+        border: 1px solid #30363d;
+        color: #e6edf3;
+        padding: 12px;
+        border-radius: 8px;
+        width: 100%;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
+    }
+
+    .form-control:focus {
+        border-color: #58a6ff;
+        background: #0d1117;
+        box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+        outline: none;
+    }
+
+    /* Table Styles */
+    .table-container {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .questions-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .questions-table th {
+        background: #21262d;
+        color: #c9d1d9;
+        font-weight: 600;
+        text-align: left;
+        padding: 18px 24px;
+        border-bottom: 1px solid #30363d;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .questions-table td {
+        padding: 18px 24px;
+        border-bottom: 1px solid #21262d;
+        color: #8b949e;
+        font-size: 0.95rem;
+        vertical-align: middle;
+    }
+
+    .questions-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .questions-table tr:hover td {
+        background: rgba(56, 139, 253, 0.03);
+        color: #c9d1d9;
+    }
+
+    /* Badges */
+    .difficulty-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+    
+    .badge-easy { background: rgba(35, 134, 54, 0.15); color: #3fb950; border: 1px solid rgba(35, 134, 54, 0.3); }
+    .badge-medium { background: rgba(219, 97, 162, 0.15); color: #d2a8ff; border: 1px solid rgba(219, 97, 162, 0.3); }
+    .badge-hard { background: rgba(218, 54, 51, 0.15); color: #ff7b72; border: 1px solid rgba(218, 54, 51, 0.3); }
+
+    .topic-tag {
+        background: rgba(121, 192, 255, 0.1);
+        color: #79c0ff;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        border: 1px solid rgba(121, 192, 255, 0.2);
+    }
+
+    /* Options Grid in Form */
+    .options-grid {
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 15px; 
+    }
+    
+    .options-grid .form-group {
+        margin-bottom: 0;
+    }
+
+    .btn-delete-sm {
+        background: transparent;
+        color: #f85149;
+        border: 1px solid rgba(248, 81, 73, 0.4);
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-delete-sm:hover {
+        background: rgba(248, 81, 73, 0.1);
+        border-color: #f85149;
+    }
+</style>
+
+<div class="page-container">
+    
+    <div class="page-header">
+        <div class="page-title">
+            <div class="page-crumbs">
+                <a href="/admin/dashboard">&larr; Dashboard</a>
+            </div>
+            <h2>Question Bank</h2>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="/admin/questions/bulk" class="btn-action">
+                <span>📦</span> &nbsp; Bulk Import
+            </a>
+            <button id="toggleFormBtn" onclick="toggleForm()" class="btn-action btn-primary-glow">
+                <span>+</span> &nbsp; Add New
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <a href="/admin/questions?topic=All" class="filter-tab <%= typeof selectedTopic === 'undefined' || selectedTopic === 'All' ? 'active' : '' %>">All Topics</a>
+        <% topics.forEach(topic => { %>
+            <a href="/admin/questions?topic=<%= topic %>" class="filter-tab <%= typeof selectedTopic !== 'undefined' && selectedTopic === topic ? 'active' : '' %>"><%= topic %></a>
+        <% }) %>
+    </div>
+
+    <!-- Add Question Form -->
+    <div id="addQuestionForm" class="add-question-container">
+        <h3 style="margin-top: 0; margin-bottom: 20px; color: white;">Add New Question</h3>
+        
+        <form action="/admin/questions" method="POST">
+            <div class="form-grid">
+                <!-- Left Column -->
+                <div>
+                    <div class="form-group">
+                        <label>Question Text</label>
+                        <textarea name="questionText" class="form-control" rows="4" required placeholder="Enter the question here..."></textarea>
+                    </div>
+                    
+                    <div class="form-grid" style="gap: 15px;">
+                        <div class="form-group">
+                            <label>Topic</label>
+                            <input type="text" name="topic" class="form-control" placeholder="e.g. Arrays" required list="topicsList">
+                            <datalist id="topicsList">
+                                <% topics.forEach(t => { %>
+                                    <option value="<%= t %>">
+                                <% }) %>
+                            </datalist>
+                        </div>
+                        <div class="form-group">
+                            <label>Difficulty</label>
+                            <select name="difficulty" class="form-control">
+                                <option value="easy">Easy</option>
+                                <option value="medium">Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column (Options) -->
+                <div>
+                    <div class="form-group">
+                        <label>Options & Correct Answer</label>
+                        <div class="options-grid">
+                            <% for(let i=1; i<=4; i++) { %>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <input type="text" name="option<%= i %>" class="form-control" placeholder="Option <%= i %>" required>
+                                </div>
+                            <% } %>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <label>Correct Option:</label>
+                            <select name="correctOption" class="form-control">
+                                <option value="0">Option 1</option>
+                                <option value="1">Option 2</option>
+                                <option value="2">Option 3</option>
+                                <option value="3">Option 4</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #30363d;">
+                <button type="button" onclick="toggleForm()" class="btn-action">Cancel</button>
+                <button type="submit" class="btn-action btn-primary-glow" style="border: none;">Save Question</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Questions Table -->
+    <div class="table-container">
+        <table class="questions-table">
+            <thead>
+                <tr>
+                    <th width="40%">Question</th>
+                    <th width="15%">Topic</th>
+                    <th width="10%">Difficulty</th>
+                    <th width="25%">Options (Correct)</th>
+                    <th width="10%">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (questions.length === 0) { %>
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: #8b949e;">
+                            No questions found. Add some questions or bulk import to get started.
+                        </td>
+                    </tr>
+                <% } %>
+
+                <% questions.forEach(question => { %>
+                    <tr>
+                        <td style="font-weight: 500; color: #e6edf3;">
+                            <%= question.questionText.substring(0, 80) %>...
+                        </td>
+                        <td>
+                            <span class="topic-tag"><%= question.topic %></span>
+                        </td>
+                        <td>
+                            <span class="difficulty-badge badge-<%= question.difficulty %>"><%= question.difficulty %></span>
+                        </td>
+                        <td style="font-size: 0.85rem;">
+                            <% question.options.forEach((opt, idx) => { %>
+                                <div style="<%= idx === question.correctOption ? 'color: #3fb950; font-weight: bold;' : 'color: #8b949e;' %>">
+                                    <%= idx+1 %>) <%= opt %>
+                                </div>
+                            <% }) %>
+                        </td>
+                        <td>
+                            <form action="/admin/questions/delete/<%= question._id %>" method="POST" onsubmit="return confirm('Are you sure?')">
+                                <button type="submit" class="btn-delete-sm">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+    function toggleForm() {
+        const form = document.getElementById('addQuestionForm');
+        const btn = document.getElementById('toggleFormBtn');
+        
+        if (form.style.display === 'none' || form.style.display === '') {
+            form.style.display = 'block';
+            btn.innerHTML = '<span>×</span> &nbsp; Close';
+            btn.style.background = '#30363d';
+            btn.classList.remove('btn-primary-glow');
+        } else {
+            form.style.display = 'none';
+            btn.innerHTML = '<span>+</span> &nbsp; Add New';
+            btn.style.background = ''; // revert to class style
+            btn.classList.add('btn-primary-glow');
+        }
+    }
+</script>
+
+<%- include('../partials/footer') %>

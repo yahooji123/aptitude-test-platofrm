@@ -1,0 +1,373 @@
+<%- include('../partials/header') %>
+
+<style>
+    /* Bulk Page Specific Styles */
+    .bulk-container {
+        max-width: 1400px; /* Wider for split view */
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        padding-bottom: 50px;
+    }
+
+    @media (max-width: 1000px) {
+        .bulk-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .editor-section, .preview-section {
+        background: #161b22;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 25px;
+        display: flex;
+        flex-direction: column;
+        height: 80vh;
+    }
+
+    textarea.bulk-input {
+        flex: 1;
+        background: #0d1117;
+        color: #e6edf3;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 15px;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        resize: none;
+        outline: none;
+    }
+
+    textarea.bulk-input:focus {
+        border-color: #58a6ff;
+    }
+
+    .format-guide {
+        margin-top: 15px;
+        background: rgba(56, 139, 253, 0.1);
+        border: 1px solid rgba(56, 139, 253, 0.3);
+        border-radius: 8px;
+        padding: 15px;
+        font-size: 0.85rem;
+        color: #c9d1d9;
+    }
+
+    .format-guide code {
+        background: rgba(0,0,0,0.3);
+        padding: 2px 5px;
+        border-radius: 4px;
+        color: #58a6ff;
+        font-family: monospace;
+    }
+
+    /* Preview Table */
+    .preview-container {
+        flex: 1;
+        overflow-y: auto;
+        background: #0d1117;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .preview-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+
+    .preview-table th {
+        background: #21262d;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        padding: 10px;
+        text-align: left;
+        color: #8b949e;
+    }
+
+    .preview-table td {
+        padding: 10px;
+        border-bottom: 1px solid #30363d;
+        color: #c9d1d9;
+        vertical-align: top;
+    }
+
+    .status-valid { color: #238636; font-weight: bold; }
+    .status-error { color: #f85149; font-weight: bold; }
+
+    .action-bar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+    }
+
+    .btn-action {
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: 0.2s;
+    }
+
+    .btn-preview { background: #30363d; color: white; border-color: var(--border-color); }
+    .btn-preview:hover { background: #454c56; }
+
+    .btn-clear { background: transparent; color: #f85149; border-color: #f85149; }
+    .btn-clear:hover { background: rgba(248, 81, 73, 0.1); }
+
+    .btn-save { background: #238636; color: white; opacity: 0.5; pointer-events: none; }
+    .btn-save.active { opacity: 1; pointer-events: auto; }
+    .btn-save:hover.active { background: #2ea043; }
+
+</style>
+
+<div style="max-width: 1400px; margin: 0 auto 20px auto; padding: 0 20px;">
+    <a href="/admin/questions" style="color: #8b949e; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 10px;">
+        <span>&larr;</span> Back to Question Bank
+    </a>
+    <h2>Bulk Add Questions</h2>
+</div>
+
+<div class="bulk-container">
+    
+    <!-- Left: Editor -->
+    <div class="editor-section">
+        <div class="action-bar">
+            <strong>Input Data</strong>
+            <button class="btn-action btn-clear" onclick="clearInput()">Clear</button>
+        </div>
+        
+        <textarea id="bulkData" class="bulk-input" placeholder="Paste your questions here..."></textarea>
+        
+        <div class="format-guide">
+            <strong>Format Guide:</strong><br>
+            Separated by empty lines or continuous.<br>
+            <code>Q: Who is the PM of India?</code><br>
+            <code>TOPIC: General Knowledge</code><br>
+            <code>DIFFICULTY: easy</code><br>
+            <code>A) Narendra Modi</code><br>
+            <code>B) Rahul Gandhi</code><br>
+            <code>C) Amit Shah</code><br>
+            <code>D) Manmohan Singh</code><br>
+            <code>ANS: A</code>
+        </div>
+        
+        <button class="btn-action btn-preview" onclick="parseQuestions()" style="margin-top: 15px; width: 100%; padding: 12px;">
+            Preview & Validate &rarr;
+        </button>
+    </div>
+
+    <!-- Right: Preview -->
+    <div class="preview-section">
+        <div class="action-bar">
+            <strong>Preview (<span id="countDisplay">0</span> valid)</strong>
+            <button id="saveBtn" class="btn-action btn-save" onclick="saveQuestions()">Save All to Bank</button>
+        </div>
+
+        <div class="preview-container">
+            <table class="preview-table">
+                <thead>
+                    <tr>
+                        <th width="50%">Question</th>
+                        <th>Details</th>
+                        <th>Answer</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="previewBody">
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #8b949e; padding: 30px;">
+                            Click "Preview" to validate your input.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="errorSummary" style="color: #f85149; font-size: 0.9rem; min-height: 20px;"></div>
+    </div>
+</div>
+
+<script>
+    let parsedQuestions = [];
+
+    function clearInput() {
+        if(confirm('Clear all input?')) {
+            document.getElementById('bulkData').value = '';
+            document.getElementById('previewBody').innerHTML = '';
+            parsedQuestions = [];
+            updateSaveButton();
+        }
+    }
+
+    function parseQuestions() {
+        const text = document.getElementById('bulkData').value;
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l !== '');
+        
+        let questions = [];
+        let currentQ = null;
+
+        // Simple State Machine Parser
+        lines.forEach(line => {
+            // Check for new Question start (more flexible regex)
+            if (line.match(/^Q[:\.]/i)) {
+                if (currentQ) validateAndPush(questions, currentQ);
+                currentQ = { 
+                    questionText: line.replace(/^Q[:\.]\s*/i, ''), 
+                    options: [], 
+                    topic: 'General', // Default
+                    difficulty: 'medium', // Default
+                    correctOption: null,
+                    rawAns: null,
+                    error: []
+                };
+            } else if (currentQ) {
+                if (line.match(/^TOPIC[:\-]/i)) {
+                    currentQ.topic = line.replace(/^TOPIC[:\-]\s*/i, '');
+                } else if (line.match(/^DIFFICULTY[:\-]/i)) {
+                     currentQ.difficulty = line.replace(/^DIFFICULTY[:\-]\s*/i, '').toLowerCase();
+                } else if (line.match(/^[A-D]\)/)) {
+                    // Option
+                    currentQ.options.push(line.replace(/^[A-D]\)\s*/, ''));
+                } else if (line.match(/^ANS[:\-]/i)) {
+                    const ansChar = line.replace(/^ANS[:\-]\s*/i, '').trim().toUpperCase();
+                    const map = {'A': 0, 'B': 1, 'C': 2, 'D': 3};
+                    if (map[ansChar] !== undefined) currentQ.correctOption = map[ansChar];
+                    currentQ.rawAns = ansChar;
+                }
+            }
+        });
+        
+        // Push last one
+        if (currentQ) validateAndPush(questions, currentQ);
+
+        parsedQuestions = questions;
+        renderPreview();
+    }
+
+    function validateAndPush(list, q) {
+        // Validation Logic
+        if (!q.questionText) q.error.push("Missing Question Text");
+        if (q.options.length < 2) q.error.push("Need at least 2 options");
+        if (q.correctOption === null) q.error.push("Missing or Invalid Answer (Format: ANS: A)");
+        
+        // Validate Difficulty Enum if strictly required by Schema
+        const validDiff = ['easy', 'medium', 'hard'];
+        if (!validDiff.includes(q.difficulty)) q.difficulty = 'medium'; // Fallback
+
+        list.push(q);
+    }
+
+    function renderPreview() {
+        const tbody = document.getElementById('previewBody');
+        tbody.innerHTML = '';
+        let validCount = 0;
+        let hasErrors = false;
+
+        parsedQuestions.forEach((q, idx) => {
+            const isValid = q.error.length === 0;
+            if(isValid) validCount++;
+            else hasErrors = true;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <div style="font-weight: 600;">${q.questionText.substring(0, 80)}${q.questionText.length>80?'...':''}</div>
+                    ${q.options.map((opt, i) => `<div style="color: #8b949e; font-size: 0.8rem;">${String.fromCharCode(65+i)}) ${opt}</div>`).join('')}
+                </td>
+                <td>
+                    <div style="font-size: 0.8rem;">${q.topic}</div>
+                    <span style="font-size: 0.75rem; background: #21262d; padding: 2px 6px; border-radius: 4px;">${q.difficulty}</span>
+                </td>
+                <td>
+                    <strong style="color: #58a6ff;">${q.rawAns || '?'}</strong>
+                </td>
+                <td>
+                    ${isValid 
+                        ? '<span class="status-valid">Valid</span>' 
+                        : `<span class="status-error">${q.error.join(', ')}</span>`
+                    }
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('countDisplay').innerText = validCount;
+        
+        const summary = document.getElementById('errorSummary');
+        if (hasErrors) {
+            summary.innerText = "Please fix errors before saving.";
+        } else if (parsedQuestions.length === 0) {
+            summary.innerText = "";
+        } else {
+            summary.innerText = "All good! Ready to upload.";
+        }
+
+        updateSaveButton(validCount > 0 && !hasErrors);
+    }
+
+    function updateSaveButton(enable = false) {
+        const btn = document.getElementById('saveBtn');
+        if (enable) btn.classList.add('active');
+        else btn.classList.remove('active');
+    }
+
+    async function saveQuestions() {
+        if (!document.getElementById('saveBtn').classList.contains('active')) return;
+
+        const btn = document.getElementById('saveBtn');
+        btn.innerText = "Saving...";
+        
+        try {
+            const response = await fetch('/admin/questions/bulk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ questions: parsedQuestions })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                alert(`Successfully added ${result.count} questions!`);
+                window.location.href = '/admin/questions';
+            } else {
+                alert('Error: ' + result.message);
+                btn.innerText = "Save All to Bank";
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Network Error');
+            btn.innerText = "Save All to Bank";
+        }
+    }
+    
+    // Auto-fill example on load if empty
+    window.onload = function() {
+        if(document.getElementById('bulkData').value === '') {
+            document.getElementById('bulkData').value = `Q: What follows the Green Revolution?
+TOPIC: Agriculture
+DIFFICULTY: hard
+A) White Revolution
+B) Blue Revolution
+C) Yellow Revolution
+D) Golden Revolution
+ANS: D
+
+Q: Value of pi?
+TOPIC: Mathematics
+DIFFICULTY: easy
+A) 3.14
+B) 2.14
+C) 4.14
+D) 1.14
+ANS: A`;
+        }
+    }
+</script>
+
+<%- include('../partials/footer') %>

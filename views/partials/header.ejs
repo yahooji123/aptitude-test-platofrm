@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AptitudePro</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="logo">
+            <span style="color: #58a6ff;">Aptitude</span>Pro
+        </a>
+        <div class="nav-links">
+            <% if (typeof user !== 'undefined' && user) { %>
+                <span style="color: var(--text-secondary);">Welcome, <%= user.name %></span>
+                <% if (user.role === 'admin') { %>
+                    <a href="/admin/dashboard">Admin Panel</a>
+                    <a href="/admin/profile" style="display: inline-flex; align-items: center; margin-left: 5px;" title="Admin Profile">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </a>
+                <% } else { %>
+                    <a href="/student/dashboard">Dashboard</a>
+                    <a href="/student/history">My History</a>
+                    <a href="/student/profile" style="display: inline-flex; align-items: center; margin-left: 5px;" title="My Profile">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </a>
+                <% } %>
+                <a href="/auth/logout" class="btn-nav-login" style="background: transparent; color: #ff7b72 !important; border-color: #ff7b72;">Logout</a>
+            <% } else { %>
+                <a href="/login" class="btn-nav-login">Login</a>
+                <a href="/register" class="btn-nav-signup">Register</a>
+            <% } %>
+        </div>
+    </nav>
+    <div class="container">

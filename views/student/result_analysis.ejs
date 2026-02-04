@@ -1,0 +1,591 @@
+<%- include('../partials/header') %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    /* New Analysis Design Variables */
+    :root {
+        --card-bg: #161b22;
+        --border-color: #30363d;
+        --text-color: #c9d1d9;
+        --brand-blue: #58a6ff;
+        --brand-purple: #bc8cff;
+        --brand-green: #3fb950;
+        --brand-red: #ff7b72;
+        --brand-yellow: #d29922;
+    }
+
+    /* Page Animations */
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .analysis-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding-bottom: 50px;
+        animation: slideUp 0.6s ease-out;
+    }
+
+    /* Header Section */
+    .analysis-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 20px;
+    }
+    .page-title { margin: 0; font-size: 1.8rem; background: linear-gradient(90deg, #fff, #a5d6ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .back-btn { text-decoration: none; color: #8b949e; display: flex; align-items: center; gap: 8px; font-weight: 500; transition: color 0.2s; }
+    .back-btn:hover { color: white; }
+
+    /* Layout Grid */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2.2fr 1fr;
+        gap: 25px;
+    }
+    
+    @media (max-width: 992px) { .dashboard-grid { grid-template-columns: 1fr; } }
+
+    /* Card Component */
+    .glass-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    /* Hero Stats Section */
+    .hero-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .hero-stat-card {
+        background: #0d1117;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: transform 0.2s;
+    }
+    .hero-stat-card:hover { transform: translateY(-3px); border-color: #8b949e; }
+    
+    .hs-value { font-size: 2rem; font-weight: 800; color: white; display: block; margin-bottom: 5px; }
+    .hs-label { font-size: 0.85rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Rank Badge */
+    .rank-val { color: var(--brand-yellow); text-shadow: 0 0 15px rgba(210, 153, 34, 0.3); }
+
+    /* Detail Grid (Pie Chart + Performance) */
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        margin-bottom: 25px;
+    }
+    @media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } }
+
+    /* Actionable Insights */
+    .insight-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(48, 54, 61, 0.4);
+    }
+    .insight-row:last-child { border-bottom: none; }
+    .insight-label { display: flex; align-items: center; gap: 10px; color: #e6edf3; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-green { background: var(--brand-green); box-shadow: 0 0 8px rgba(63, 185, 80, 0.4); }
+    .dot-red { background: var(--brand-red); box-shadow: 0 0 8px rgba(255, 123, 114, 0.4); }
+    .dot-yellow { background: var(--brand-yellow); }
+    .insight-val { font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+
+    /* Leaderboard Styles */
+    .lb-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+    .lb-title { font-size: 1.1rem; font-weight: 700; color: white; margin: 0; }
+    .lb-icon { background: rgba(210, 153, 34, 0.15); color: var(--brand-yellow); padding: 5px; border-radius: 6px; }
+
+    .lb-table { width: 100%; border-collapse: collapse; }
+    .lb-table th { text-align: left; color: #8b949e; font-size: 0.85rem; padding: 12px; border-bottom: 1px solid var(--border-color); }
+    .lb-table td { padding: 12px; border-bottom: 1px solid rgba(48, 54, 61, 0.3); color: #e6edf3; font-size: 0.95rem; }
+    
+    .rank-badge { 
+        width: 24px; height: 24px; 
+        display: inline-flex; align-items: center; justify-content: center; 
+        border-radius: 50%; font-size: 0.8rem; font-weight: 700; 
+    }
+    .rank-1 { background: #ffd700; color: black; box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); }
+    .rank-2 { background: #c0c0c0; color: black; }
+    .rank-3 { background: #cd7f32; color: black; }
+    .rank-other { background: #21262d; color: #8b949e; border: 1px solid #30363d; }
+
+    .user-cell { display: flex; flex-direction: column; }
+    .user-name { font-weight: 600; color: white; }
+    .user-self { color: var(--brand-blue); }
+
+    /* Improvement Badge */
+    .imp-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 600;
+        margin-top: 5px;
+    }
+    .imp-up { background: rgba(63, 185, 80, 0.15); color: var(--brand-green); }
+    .imp-down { background: rgba(255, 123, 114, 0.15); color: var(--brand-red); }
+
+</style>
+
+<div class="analysis-container">
+    
+    <!-- Top Nav -->
+    <div class="analysis-header">
+        <div>
+            <h2 class="page-title">Performance Analysis</h2>
+            <span style="color: #8b949e; font-size: 0.9rem;">Topic: <%= result.topic %> &bull; Attempt <%= result.attemptNumber || 1 %></span>
+        </div>
+        <a href="/student/history" class="back-btn"><span>&larr;</span> Back to History</a>
+    </div>
+
+
+    <!-- Hero Stats -->
+    <div class="hero-stats" style="grid-template-columns: repeat(<%= isPractice ? 4 : 4 %>, 1fr);">
+        <% if (isPractice) { %>
+            <div class="hero-stat-card">
+                <span class="hs-value" style="color: white;"><%= attemptHistory.length %></span>
+                <span class="hs-label">Total Attempts</span>
+            </div>
+        <% } else { %>
+            <div class="hero-stat-card">
+                <span class="hs-value rank-val">#<%= rank %></span>
+                <span class="hs-label">Your Rank</span>
+            </div>
+        <% } %>
+        
+        <div class="hero-stat-card">
+            <span class="hs-value" style="color: var(--brand-blue);"><%= result.score %> / <%= result.totalQuestions %></span>
+            <span class="hs-label">Score</span>
+        </div>
+        
+        <% if (isPractice) { %>
+            <div class="hero-stat-card">
+                <span class="hs-value" style="color: var(--brand-purple);">
+                     <%= avgTimePerQuestion %>s
+                </span>
+                <span class="hs-label">Avg Speed / Q</span>
+            </div>
+        <% } else { %>
+            <div class="hero-stat-card">
+                <span class="hs-value" style="color: var(--brand-purple);"><%= percentile %>%</span>
+                <span class="hs-label">Percentile</span>
+            </div>
+        <% } %>
+
+        <div class="hero-stat-card">
+            <span class="hs-value" style="color: var(--brand-green);">
+                <%= accuracy %>%
+            </span>
+            <span class="hs-label">Accuracy</span>
+        </div>
+    </div>
+
+    <div class="dashboard-grid" style="<%= isPractice ? 'grid-template-columns: 1fr;' : '' %>">
+        <!-- Main Analysis Column -->
+        <div class="main-col">
+            
+            <% if (isPractice) { %>
+            <!-- PRACTICE MODE: Trend & History -->
+            
+            <div class="glass-card" style="margin-bottom: 25px;">
+                <div class="lb-header" style="border: none; margin-bottom: 10px; justify-content: space-between;">
+                    <div style="display: flex; gap: 10px;">
+                        <div class="lb-icon" style="background: rgba(88, 166, 255, 0.15); color: var(--brand-blue);">📈</div>
+                        <h3 class="lb-title">Improvement Trend</h3>
+                    </div>
+                </div>
+                <div style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <div class="lb-header" style="border: none; margin-bottom: 10px; justify-content: space-between;">
+                    <div style="display: flex; gap: 10px;">
+                        <div class="lb-icon" style="background: rgba(63, 185, 80, 0.15); color: var(--brand-green);">📝</div>
+                        <h3 class="lb-title">Attempt History</h3>
+                    </div>
+                    <!-- Small Analysis Link for Modal -->
+                    <a href="#" onclick="openLeaderboardModal()" style="font-size: 0.85rem; color: var(--brand-blue); text-decoration: none;">View Leaderboard</a>
+                </div>
+                
+                <table class="lb-table">
+                    <thead>
+                        <tr>
+                            <th>Attempt</th>
+                            <th>Date</th>
+                            <th>Score</th>
+                            <th>Accuracy</th>
+                            <th>Time Used</th>
+                            <th>Improvement</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% attemptHistory.forEach((att, idx) => { 
+                             const attAcc = att.correctAnswers + att.incorrectAnswers > 0 
+                                ? ((att.correctAnswers / (att.correctAnswers + att.incorrectAnswers)) * 100).toFixed(0) + '%'
+                                : '0%';
+                             const prevAtt = idx > 0 ? attemptHistory[idx-1] : null;
+                             const scoreDiff = prevAtt ? (att.score - prevAtt.score).toFixed(1) : 0;
+                        %>
+                        <tr style="<%= att._id.toString() === result._id.toString() ? 'background: rgba(88, 166, 255, 0.1); border-left: 3px solid var(--brand-blue);' : '' %>">
+                            <td>#<%= idx + 1 %></td>
+                            <td style="color: #8b949e; font-size: 0.85rem;">
+                                <%= new Date(att.createdAt).toLocaleDateString() %> 
+                                <small><%= new Date(att.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></small>
+                            </td>
+                            <td style="font-weight: 700; color: white;"><%= att.score %></td>
+                            <td style="color: var(--brand-green);"><%= attAcc %></td>
+                            <td><%= (att.timeTaken / 60).toFixed(1) %>m</td>
+                            <td>
+                                <% if (idx === 0) { %> - <% } else { %>
+                                    <span style="color: <%= scoreDiff >= 0 ? 'var(--brand-green)' : 'var(--brand-red)' %>;">
+                                        <%= scoreDiff >= 0 ? '▲' : '▼' %> <%= Math.abs(scoreDiff) %>
+                                    </span>
+                                <% } %>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+
+            </div> <!-- End main-col (Practice Mode) -->
+
+            <% } else { %>
+            
+            <!-- TEST MODE: Comparative Analysis (Original View) -->
+            <!-- Comparison & Insights -->
+            <div class="glass-card" style="margin-bottom: 25px;">
+                <div class="lb-header" style="border: none; margin-bottom: 10px;">
+                    <div class="lb-icon" style="background: rgba(88, 166, 255, 0.15); color: var(--brand-blue);">📊</div>
+                    <h3 class="lb-title">Attempt Summary</h3>
+                </div>
+
+                <div class="detail-grid">
+                    <!-- Chart -->
+                    <div style="position: relative; height: 200px;">
+                        <canvas id="scoreChart"></canvas>
+                    </div>
+
+                    <!-- Data Points -->
+                    <div style="display: flex; flex-direction: column; justify-content: center;">
+                        <div class="insight-row">
+                            <span class="insight-label"><div class="dot dot-green"></div> Correct Answers</span>
+                            <span class="insight-val" style="color: var(--brand-green);"><%= result.correctAnswers %></span>
+                        </div>
+                        <div class="insight-row">
+                            <span class="insight-label"><div class="dot dot-red"></div> Incorrect Answers</span>
+                            <span class="insight-val" style="color: var(--brand-red);"><%= result.incorrectAnswers %></span>
+                        </div>
+                        <div class="insight-row">
+                            <span class="insight-label"><div class="dot dot-yellow"></div> Skipped</span>
+                            <span class="insight-val" style="color: var(--brand-yellow);"><%= result.skippedAnswers %></span>
+                        </div>
+                        <div class="insight-row" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #30363d;">
+                            <span class="insight-label">⏱ Avg Time / Attempted Q</span>
+                            <span class="insight-val"><%= avgTimePerQuestion %>s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Improvement Card -->
+            <div class="glass-card">
+                <div class="lb-header" style="border: none;">
+                    <div class="lb-icon" style="background: rgba(188, 140, 255, 0.15); color: var(--brand-purple);">📈</div>
+                    <h3 class="lb-title">Growth Analysis</h3>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <h4 style="color: #8b949e; font-size: 0.9rem; margin-bottom: 10px;">Vs Class Average</h4>
+                        <div style="display: flex; align-items: flex-end; gap: 10px;">
+                            <span style="font-size: 1.8rem; font-weight: 700; color: white;"><%= classAverage %></span>
+                            <span style="color: #8b949e; margin-bottom: 5px; font-size: 0.85rem;">Class Avg</span>
+                        </div>
+                        <% const diff = (result.score - classAverage).toFixed(1); %>
+                        <div class="imp-badge <%= diff >= 0 ? 'imp-up' : 'imp-down' %>">
+                            <%= diff >= 0 ? '▲' : '▼' %> <%= Math.abs(diff) %> points <%= diff >= 0 ? 'above' : 'below' %> average
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 style="color: #8b949e; font-size: 0.9rem; margin-bottom: 10px;">Vs Previous Attempt</h4>
+                        <% if (previousResult) { %>
+                            <div style="display: flex; align-items: flex-end; gap: 10px;">
+                                <span style="font-size: 1.8rem; font-weight: 700; color: white;"><%= previousResult.score %></span>
+                                <span style="color: #8b949e; margin-bottom: 5px; font-size: 0.85rem;">Prev Score</span>
+                            </div>
+                            <% const trend = (result.score - previousResult.score).toFixed(1); %>
+                            <div class="imp-badge <%= trend >= 0 ? 'imp-up' : 'imp-down' %>">
+                                <%= trend >= 0 ? '▲' : '▼' %> <%= Math.abs(trend) %> improvement
+                            </div>
+                        <% } else { %>
+                            <div style="color: #8b949e; padding-top: 10px;">
+                                No previous attempts found for comparison.
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Leaderboard Column -->
+        <div class="side-col">
+            <div class="glass-card" style="height: 100%;">
+                <div class="lb-header">
+                    <div class="lb-icon">🏆</div>
+                    <h3 class="lb-title">Leaderboard</h3>
+                </div>
+                
+                <table class="lb-table">
+                    <thead>
+                        <tr>
+                            <th width="15%">#</th>
+                            <th>Student</th>
+                            <th style="text-align: right;">Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% leaderboard.forEach((entry, index) => { %>
+                            <tr style="<%= entry.user._id.toString() === result.user._id.toString() ? 'background: rgba(88, 166, 255, 0.1);' : '' %>">
+                                <td>
+                                    <% if(index === 0) { %> <div class="rank-badge rank-1">1</div>
+                                    <% } else if(index === 1) { %> <div class="rank-badge rank-2">2</div>
+                                    <% } else if(index === 2) { %> <div class="rank-badge rank-3">3</div>
+                                    <% } else { %> <div class="rank-badge rank-other"><%= index + 1 %></div> <% } %>
+                                </td>
+                                <td>
+                                    <div class="user-cell">
+                                        <span class="user-name <%= entry.user._id.toString() === result.user._id.toString() ? 'user-self' : '' %>">
+                                            <%= entry.user.name %> <%= entry.user._id.toString() === result.user._id.toString() ? '(You)' : '' %>
+                                        </span>
+                                        <span style="font-size: 0.75rem; color: #8b949e;"><%= (entry.timeTaken / 60).toFixed(1) %> mins</span>
+                                    </div>
+                                </td>
+                                <td style="text-align: right; font-weight: 700; color: <%= index < 3 ? '#e6edf3' : '#8b949e' %>;">
+                                    <%= entry.score %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                        
+                        <% if(leaderboard.length === 0) { %>
+                           <tr><td colspan="3" style="text-align: center; color: #8b949e;">No data yet</td></tr> 
+                        <% } %>
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <small style="color: #8b949e;">Top 5 performers in this topic</small>
+                </div>
+            </div>
+        </div>
+        <% } %>
+    </div>
+</div>
+
+
+<% if (isPractice) { %>
+<!-- Leaderboard Modal (Practice Mode Only) -->
+<div id="leaderboardModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="glass-card" style="width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; position: relative;">
+        <button onclick="closeLeaderboardModal()" style="position: absolute; right: 20px; top: 20px; background: none; border: none; color: #8b949e; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        
+        <div class="lb-header" style="margin-bottom: 20px;">
+            <div class="lb-icon">🏆</div>
+            <h3 class="lb-title">Leaderboard</h3>
+        </div>
+
+        <table class="lb-table">
+            <thead>
+                <tr>
+                    <th width="15%">#</th>
+                    <th>Student</th>
+                    <th style="text-align: right;">Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% leaderboard.forEach((entry, index) => { %>
+                    <tr style="<%= entry.user._id.toString() === result.user._id.toString() ? 'background: rgba(88, 166, 255, 0.1);' : '' %>">
+                        <td>
+                            <% if(index === 0) { %> <div class="rank-badge rank-1">1</div>
+                            <% } else if(index === 1) { %> <div class="rank-badge rank-2">2</div>
+                            <% } else if(index === 2) { %> <div class="rank-badge rank-3">3</div>
+                            <% } else { %> <div class="rank-badge rank-other"><%= index + 1 %></div> <% } %>
+                        </td>
+                        <td>
+                            <div class="user-cell">
+                                <span class="user-name <%= entry.user._id.toString() === result.user._id.toString() ? 'user-self' : '' %>">
+                                    <%= entry.user.name %> <%= entry.user._id.toString() === result.user._id.toString() ? '(You)' : '' %>
+                                </span>
+                            </div>
+                        </td>
+                        <td style="text-align: right; font-weight: 700; color: <%= index < 3 ? '#e6edf3' : '#8b949e' %>;">
+                            <%= entry.score %>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+<% } %>
+
+<%- include('../partials/footer') %>
+
+<script>
+    <% if (isPractice) { %>
+        // --- PRACTICE MODE SCRIPTS ---
+
+        // Modal Logic
+        function openLeaderboardModal() {
+            const modal = document.getElementById('leaderboardModal');
+            modal.style.display = 'flex';
+        }
+        function closeLeaderboardModal() {
+            const modal = document.getElementById('leaderboardModal');
+            modal.style.display = 'none';
+        }
+        // Close on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('leaderboardModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Trend Chart Logic
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        const trendGradient = trendCtx.createLinearGradient(0, 0, 0, 300);
+        trendGradient.addColorStop(0, 'rgba(88, 166, 255, 0.4)');
+        trendGradient.addColorStop(1, 'rgba(88, 166, 255, 0.0)');
+
+        // Prepare Data from attemptHistory (passed from backend)
+        // We reverse them because attemptHistory coming from backend is usually sorted by Date desc (newest first).
+        // For chart, we want oldest -> newest.
+        <% 
+           // Safety check
+           const historyRev = attemptHistory ? [...attemptHistory].reverse() : [];
+           const labels = historyRev.map((h, i) => `Attempt ${i+1}`);
+           const dataPoints = historyRev.map(h => h.score);
+        %>
+
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: <%- JSON.stringify(labels) %>,
+                datasets: [{
+                    label: 'Score',
+                    data: <%- JSON.stringify(dataPoints) %>,
+                    borderColor: '#58a6ff',
+                    backgroundColor: trendGradient,
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointBackgroundColor: '#161b22',
+                    pointBorderColor: '#58a6ff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#30363d',
+                            drawBorder: false
+                        },
+                        ticks: { color: '#8b949e' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#8b949e' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: '#161b22',
+                        titleColor: '#8b949e',
+                        bodyColor: '#e6edf3',
+                        borderColor: '#30363d',
+                        borderWidth: 1
+                    }
+                }
+            }
+        });
+
+    <% } else { %>
+        // --- TEST MODE SCRIPTS (Doughnut Chart) ---
+        
+        const ctx = document.getElementById('scoreChart').getContext('2d');
+        
+        const gradGreen = ctx.createLinearGradient(0, 0, 0, 200);
+        gradGreen.addColorStop(0, '#3fb950');
+        gradGreen.addColorStop(1, '#2ea043');
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Correct', 'Incorrect', 'Skipped'],
+                datasets: [{
+                    data: [
+                        <%= result.correctAnswers %>, 
+                        <%= result.incorrectAnswers %>, 
+                        <%= result.skippedAnswers %>
+                    ],
+                    backgroundColor: [
+                        gradGreen,
+                        '#ff7b72', // Red
+                        '#d29922'  // Yellow
+                    ],
+                    borderColor: '#161b22', 
+                    borderWidth: 5,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#161b22',
+                        titleColor: '#8b949e',
+                        bodyColor: '#e6edf3',
+                        borderColor: '#30363d',
+                        borderWidth: 1,
+                        padding: 10,
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.label}: ${context.raw}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    <% } %>
+</script>

@@ -1,0 +1,49 @@
+<%- include('../partials/header') %>
+
+<h2>Practice: <%= topic %></h2>
+<a href="/student/dashboard" class="btn">Back to Dashboard</a>
+
+<div id="questions-container">
+    <% if (questions.length === 0) { %>
+        <p>No questions available for this topic.</p>
+    <% } %>
+
+    <% questions.forEach((question, index) => { %>
+        <div class="card">
+            <h4>Q<%= index + 1 %>: <%= question.questionText %></h4>
+            <div data-correct="<%= question.correctOption %>">
+                <% question.options.forEach((option, i) => { %>
+                    <button class="option-btn" onclick="checkAnswer(this, <%= i %>, <%= question.correctOption %>)">
+                        <%= option %>
+                    </button>
+                <% }) %>
+            </div>
+            <p class="feedback" style="display:none; font-weight:bold; margin-top:10px;"></p>
+        </div>
+    <% }) %>
+</div>
+
+<script>
+    function checkAnswer(btn, selectedIndex, correctIndex) {
+        const parent = btn.parentElement;
+        const feedback = parent.nextElementSibling;
+        const allBtns = parent.querySelectorAll('.option-btn');
+
+        // Disable all buttons for this question
+        allBtns.forEach(b => b.disabled = true);
+
+        if (selectedIndex === correctIndex) {
+            btn.classList.add('correct');
+            feedback.style.color = 'green';
+            feedback.innerText = 'Correct!';
+        } else {
+            btn.classList.add('incorrect');
+            allBtns[correctIndex].classList.add('correct'); // Show correct answer
+            feedback.style.color = 'red';
+            feedback.innerText = 'Incorrect!';
+        }
+        feedback.style.display = 'block';
+    }
+</script>
+
+<%- include('../partials/footer') %>

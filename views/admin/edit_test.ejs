@@ -1,0 +1,337 @@
+<%- include('../partials/header') %>
+
+<!-- Page Specific Styles (Reusing Create Page Styles) -->
+<style>
+    /* Animation Keyframes */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Container & Layout */
+    .create-test-container {
+        max-width: 900px;
+        margin: 0 auto;
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .page-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .back-btn {
+        background: rgba(33, 38, 45, 0.8);
+        color: #8b949e;
+        padding: 8px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        margin-right: 20px;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .back-btn:hover {
+        background: #30363d;
+        color: white;
+        transform: translateX(-3px);
+    }
+
+    /* Form Card Styles */
+    .form-card {
+        background: #161b22;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 40px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Gradient Top Border */
+    .form-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 6px;
+        background: linear-gradient(90deg, #d2a8ff, #58a6ff);
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        color: #58a6ff;
+        margin-bottom: 20px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+    }
+
+    .section-icon {
+        background: rgba(88, 166, 255, 0.15);
+        padding: 6px;
+        border-radius: 6px;
+        font-size: 1rem;
+    }
+
+    /* Input Enhancements */
+    .input-wrapper {
+        position: relative;
+        margin-bottom: 25px;
+        transition: all 0.3s;
+    }
+
+    .form-control {
+        background: #0d1117;
+        border: 1px solid #30363d;
+        color: #c9d1d9;
+        padding: 12px 16px;
+        border-radius: 8px;
+        width: 100%;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .form-control:focus {
+        border-color: #58a6ff;
+        background: #12181f; 
+        box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+        outline: none;
+    }
+
+    /* Topic Selection Grid - Checkbox Style */
+    .topic-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+        background: #0d1117;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #30363d;
+        max-height: 250px;
+        overflow-y: auto;
+    }
+
+    .topic-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        user-select: none;
+    }
+
+    .topic-checkbox:hover {
+        border-color: #8b949e;
+        background: #21262d;
+    }
+
+    .topic-checkbox.selected {
+        background: rgba(35, 134, 54, 0.15); /* Green tint */
+        border-color: #2ea043;
+        color: #2ea043;
+    }
+
+    .topic-checkbox input {
+        width: 18px; 
+        height: 18px;
+        accent-color: #2ea043;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .topic-checkbox span {
+        font-size: 0.9rem;
+        color: #e6edf3;
+        font-weight: 500;
+    }
+
+    /* Grid Layouts */
+    .form-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 25px;
+    }
+
+    .form-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+    }
+
+    /* Submit Button */
+    .btn-create {
+        background: linear-gradient(135deg, #1f6feb 0%, #58a6ff 100%);
+        color: white;
+        width: 100%;
+        padding: 15px;
+        font-size: 1rem;
+        font-weight: 700;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        margin-top: 30px;
+    }
+
+    .btn-create:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(31, 111, 235, 0.4);
+    }
+</style>
+
+<div class="create-test-container">
+    
+    <div class="page-header">
+        <a href="/admin/dashboard" class="back-btn">
+            <span>&larr;</span> Back
+        </a>
+        <h2 style="margin: 0; font-size: 1.8rem; font-weight: 700;">Edit Configuration</h2>
+    </div>
+
+    <form action="/admin/tests/edit/<%= test._id %>" method="POST" class="form-card">
+        
+        <!-- Section 1: Basic Info -->
+        <div class="section-title">
+            <span class="section-icon">📝</span> Basic Information
+        </div>
+
+        <div class="form-grid-2">
+            <div class="input-wrapper">
+                <label style="color: #8b949e; margin-bottom: 8px; display: block;">Configuration Title</label>
+                <input type="text" name="title" class="form-control" value="<%= test.title %>" required>
+            </div>
+
+            <div class="input-wrapper">
+                <label style="color: #8b949e; margin-bottom: 8px; display: block;">Category Type</label>
+                <select name="category" class="form-control">
+                    <option value="Test" <%= test.category === 'Test' ? 'selected' : '' %>>Standard Test 🏆</option>
+                    <option value="Practice Set" <%= test.category === 'Practice Set' ? 'selected' : '' %>>Practice Set 🎯</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Adaptive Mode Option -->
+         <div style="margin-bottom: 25px; padding: 15px; background: rgba(88, 166, 255, 0.1); border: 1px solid rgba(88, 166, 255, 0.3); border-radius: 8px; display: flex; align-items: start; gap: 15px;">
+            <input type="checkbox" name="isAdaptive" id="adaptiveCheck" <%= test.isAdaptive ? 'checked' : '' %> style="margin-top: 5px; width: 18px; height: 18px; accent-color: #58a6ff;">
+            <div>
+                <label for="adaptiveCheck" style="font-weight: 600; color: #58a6ff; font-size: 1rem; cursor: pointer;">Enable Adaptive Practice Mode 🧠</label>
+                <div style="font-size: 0.85rem; color: #c9d1d9; margin-top: 5px; line-height: 1.4;">
+                    In Adaptive Mode, questions get harder or easier based on performance.
+                </div>
+            </div>
+        </div>
+
+        <div class="input-wrapper">
+            <label style="color: #8b949e; margin-bottom: 8px; display: block;">Tags</label>
+            <input type="text" name="tags" class="form-control" value="<%= test.tags ? test.tags.join(', ') : '' %>">
+        </div>
+
+        <!-- Section 2: Question Logic -->
+        <div class="section-title" style="margin-top: 30px;">
+            <span class="section-icon">⚙️</span> Question Logic
+        </div>
+
+        <div class="input-wrapper">
+            <label style="color: #8b949e; margin-bottom: 8px; display: block;">Topics Selection</label>
+            
+            <div class="topic-grid">
+                <% topics.forEach(t => { %>
+                    <% const isSelected = test.topics.includes(t); %>
+                    <label class="topic-checkbox <%= isSelected ? 'selected' : '' %>">
+                        <input type="checkbox" name="topics" value="<%= t %>" <%= isSelected ? 'checked' : '' %>>
+                        <span><%= t %></span>
+                    </label>
+                <% }) %>
+            </div>
+            
+            <script>
+                document.querySelectorAll('.topic-checkbox input').forEach(cb => {
+                    cb.addEventListener('change', function() {
+                         const label = this.closest('.topic-checkbox');
+                         if(this.checked) label.classList.add('selected');
+                         else label.classList.remove('selected');
+                    });
+                });
+            </script>
+        </div>
+
+        <div class="form-grid-3">
+            <div class="input-wrapper">
+                <label style="color: #7ee787; margin-bottom: 8px; display: block;">Easy Questions</label>
+                <input type="number" name="easyCount" class="form-control" value="<%= test.difficultyDistribution.easy %>" min="0">
+            </div>
+            <div class="input-wrapper">
+                <label style="color: #ffaa00; margin-bottom: 8px; display: block;">Medium Questions</label>
+                <input type="number" name="mediumCount" class="form-control" value="<%= test.difficultyDistribution.medium %>" min="0">
+            </div>
+            <div class="input-wrapper">
+                <label style="color: #ff7b72; margin-bottom: 8px; display: block;">Hard Questions</label>
+                <input type="number" name="hardCount" class="form-control" value="<%= test.difficultyDistribution.hard %>" min="0">
+            </div>
+        </div>
+
+        <!-- Section 3: Time & Marks -->
+        <div class="section-title" style="margin-top: 30px;">
+            <span class="section-icon">⏱</span> Time & Evaluation
+        </div>
+
+        <div class="form-grid-3">
+            <div class="input-wrapper">
+                <label style="color: #8b949e; margin-bottom: 8px; display: block;">Duration (Mins)</label>
+                <input type="number" name="duration" class="form-control" value="<%= test.duration %>" required>
+            </div>
+            <div class="input-wrapper">
+                <label style="color: #8b949e; margin-bottom: 8px; display: block;">Correct (+)</label>
+                <input type="number" name="correctMark" class="form-control" value="<%= test.markingScheme.correct %>" step="0.25">
+            </div>
+            <div class="input-wrapper">
+                <label style="color: #ff7b72; margin-bottom: 8px; display: block;">Incorrect (-)</label>
+                <input type="number" name="incorrectMark" class="form-control" value="<%= test.markingScheme.incorrect %>" step="0.25">
+            </div>
+        </div>
+
+        <!-- Section 4: Scheduling (Optional) -->
+        <div class="section-title" style="margin-top: 30px;">
+            <span class="section-icon">📅</span> Scheduling (Optional)
+        </div>
+        <p style="color: #8b949e; font-size: 0.9rem; margin-bottom: 15px;">
+            Leave these blank if you want the test to be available immediately and indefinitely.
+        </p>
+
+        <div class="form-grid-2">
+            <div class="input-wrapper">
+                <label>Start Date & Time</label>
+                <input type="datetime-local" name="startDate" class="form-control" 
+                       value="<%= test.startDate ? new Date(test.startDate.getTime() - (test.startDate.getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : '' %>"
+                       style="color-scheme: dark;">
+            </div>
+            <div class="input-wrapper">
+                <label>End Date & Time</label>
+                <input type="datetime-local" name="endDate" class="form-control" 
+                       value="<%= test.endDate ? new Date(test.endDate.getTime() - (test.endDate.getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : '' %>"
+                       style="color-scheme: dark;">
+            </div>
+        </div>
+
+        <button type="submit" class="btn-create">
+            Save Changes 💾
+        </button>
+
+    </form>
+</div>
+
+<%- include('../partials/footer') %>

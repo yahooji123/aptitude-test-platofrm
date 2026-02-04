@@ -1,0 +1,420 @@
+const Question = require('../models/Question');
+const TestConfig = require('../models/TestConfig');
+const Result = require('../models/Result');
+const User = require('../models/User'); // Import User for profile management
+
+// @desc    Get Admin Dashboard
+// @route   GET /admin/dashboard
+const getDashboard = async (req, res) => {
+    try {
+        const topics = await Question.distinct('topic');
+        const questionCount = await Question.countDocuments();
+        const tests = await TestConfig.find().sort({ createdAt: -1 });
+        res.render('admin/dashboard', { topics, questionCount, tests });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Get Create Test Page
+// @route   GET /admin/tests/create
+const getCreateTest = async (req, res) => {
+    try {
+        const topics = await Question.distinct('topic');
+        res.render('admin/create_test', { topics });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Create New Test
+// @route   POST /admin/tests/create
+const createTest = async (req, res) => {
+    const { 
+        title, 
+        topics, // array or single string
+        duration, 
+        easyCount, mediumCount, hardCount, 
+        correctMark, incorrectMark,
+        category,
+        tags,
+        startDate, // New
+        endDate,   // New
+        isAdaptive // New
+    } = req.body;
+
+    // Normalize topics to array
+    let topicArray = [];
+    if (topics) {
+        topicArray = Array.isArray(topics) ? topics : [topics];
+    } else {
+        // Handle case where no topics are selected
+        // We could redirect back with error, or just use empty array (if allowed)
+        // For now, let's catch it in try/catch or just define empty
+        topicArray = []; 
+    }
+    
+    // Ensure numbers
+    const easy = parseInt(easyCount) || 0;
+    const medium = parseInt(mediumCount) || 0;
+    const hard = parseInt(hardCount) || 0;
+    const totalQuestions = easy + medium + hard;
+
+    try {
+        if (topicArray.length === 0) {
+            // Can't create test without topics
+            return res.status(400).send('Please select at least one topic.');
+        }
+
+        // Tag splitting (comma separated)
+        const tagArray = tags ? tags.split(',').map(t => t.trim()) : [];
+
+        // Safe Date Parsing
+        let start = undefined;
+        let end = undefined;
+
+        if (startDate && startDate.trim() !== '') {
+            start = new Date(startDate);
+            // Check for Invalid Date
+            if (isNaN(start.getTime())) start = undefined;
+        }
+
+        if (endDate && endDate.trim() !== '') {
+            end = new Date(endDate);
+            if (isNaN(end.getTime())) end = undefined;
+        }ole.log("Dates to Save -> Start:", start, "End:", end);
+
+        cons
+
+        const newTest = {
+            title,
+            topics: topicArray,
+            duration: parseInt(duration),
+            totalQuestions,
+            difficultyDistribution: {
+                easy,
+                medium,
+                hard
+            },
+            markingScheme: {
+                correct: parseFloat(correctMark),
+                incorrect: parseFloat(incorrectMark)
+            },
+            category,
+            tags: tagArray,
+            isAdaptive: isAdaptive === 'on',
+            startDate: start,
+            endDate: end
+        };
+
+        await TestConfig.create(newTest);
+
+        res.redirect('/admin/dashboard');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+
+// @desc    Get Questions page (List + Add Form)
+// @route   GET /admin/questions
+const getQuestions = async (req, res) => {
+    const topic = req.query.topic || 'All';
+    let query = {};
+    if (topic !== 'All') {
+        query.topic = topic;
+    }
+
+    try {
+        const questions = await Question.find(query).sort({createdAt: -1});
+        const topics = await Question.distinct('topic');
+        res.render('admin/questions', { questions, topics, selectedTopic: topic });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Add a Question
+// @route   POST /admin/questions
+const addQuestion = async (req, res) => {
+    const { questionText, option1, option2, option3, option4, correctOption, topic, difficulty } = req.body;
+
+    try {
+        await Question.create({
+            questionText,
+            options: [option1, option2, option3, option4],
+            correctOption: parseInt(correctOption),
+            topic,
+            difficulty
+        });
+        res.redirect('/admin/questions');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Delete a Question
+// @route   POST /admin/questions/delete/:id
+const deleteQuestion = async (req, res) => {
+    try {
+        await Question.findByIdAndDelete(req.params.id);
+        res.redirect('/admin/questions');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Get Bulk Add Questions Page
+// @route   GET /admin/questions/bulk
+const getBulkAdd = (req, res) => {
+    res.render('admin/bulk_questions');
+};
+
+// @desc    Process Bulk Add Questions
+// @route   POST /admin/questions/bulk
+const postBulkAdd = async (req, res) => {
+    const { questions } = req.body;
+    
+    if (!questions || !Array.isArray(questions) || questions.length === 0) {
+        return res.status(400).json({ success: false, message: 'No questions provided' });
+    }
+
+    try {
+        // Insert many
+        // Assuming validation is handled by frontend or partial backend checks
+        // Mongoose insertMany is efficient
+        const result = await Question.insertMany(questions);
+        
+        res.json({ success: true, count: result.length });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Get Edit Test Page
+// @route   GET /admin/tests/edit/:id
+const getEditTest = async (req, res) => {
+    try {
+        const test = await TestConfig.findById(req.params.id);
+        if(!test) return res.redirect('/admin/dashboard');
+
+        const topics = await Question.distinct('topic');
+        
+        // Count questions per topic for the UI sliders (helper data)
+        const topicCounts = {};
+        for (let t of topics) {
+            topicCounts[t] = {
+                easy: await Question.countDocuments({ topic: t, difficulty: 'easy' }),
+                medium: await Question.countDocuments({ topic: t, difficulty: 'medium' }),
+                hard: await Question.countDocuments({ topic: t, difficulty: 'hard' })
+            };
+        }
+
+        res.render('admin/edit_test', { test, topics, topicCounts });
+    } catch (error) {
+         console.error(error);
+         res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Update Test Config
+// @route   POST /admin/tests/edit/:id
+const postEditTest = async (req, res) => {
+    try {, isAdaptive
+        const { title, duration, category, tags, topics, easyCount, mediumCount, hardCount, correctMark, incorrectMark, startDate, endDate } = req.body;
+        
+        let topicArray = topics;
+        if (!topics) {
+            topicArray = []; // Handle no topics selected case
+        } else if (!Array.isArray(topics)) {
+            topicArray = [topics];
+        }
+
+        const difficultyDistribution = {
+            easy: parseInt(easyCount),
+            medium: parseInt(mediumCount),
+            hard: parseInt(hardCount)
+        };
+        const totalQuestions = difficultyDistribution.easy + difficultyDistribution.medium + difficultyDistribution.hard;
+
+        // Tag splitting
+        const tagArray = tags ? tags.split(',').map(t => t.trim()) : [];
+
+        // Safe Date Parsing
+        let start = null;
+        let end = null;
+
+        if (startDate && startDate.trim() !== '') {
+            const s = new Date(startDate);
+            if (!isNaN(s.getTime())) start = s;
+        }
+
+        if (endDate && endDate.trim() !== '') {
+            const e = new Date(endDate);
+            if (!isNaN(e.getTime())) end = e;
+        }
+
+        // Build Update Object securely
+        const updateOperation = {
+            $set: {
+                title,
+                duration: parseInt(duration),
+                category,
+                tags: tagArray,
+                topics: topicArray,
+                difficultyDistribution,
+                totalQuestions,
+                markingScheme: {
+                    correct: parseFloat(correctMark),
+                    incorrect: parseFloat(incorrectMark)
+                },
+                isAdaptive: isAdaptive === 'on'
+            },
+            $unset: {}
+        };
+
+        // Handle Start Date
+        if (start) {
+            updateOperation.$set.startDate = start;
+        } else {
+            updateOperation.$unset.startDate = 1;
+        }
+
+        // Handle End Date
+        if (end) {
+            updateOperation.$set.endDate = end;
+        } else {
+            updateOperation.$unset.endDate = 1;
+        }
+
+        // Clean up empty $unset if not needed to avoid Mongo errors
+        if (Object.keys(updateOperation.$unset).length === 0) {
+        console.log("Update Operation:", JSON.stringify(updateOperation, null, 2));
+
+            delete updateOperation.$unset;
+        }
+
+        await TestConfig.findByIdAndUpdate(req.params.id, updateOperation);
+
+        res.redirect('/admin/dashboard');
+    } catch (error) {
+         console.error(error);
+         res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Delete Test
+// @route   POST /admin/tests/delete/:id
+const deleteTest = async (req, res) => {
+    try {
+        await TestConfig.findByIdAndDelete(req.params.id);
+        await Result.deleteMany({ testConfig: req.params.id }); 
+        res.redirect('/admin/dashboard');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+
+// @desc    Get Profile Page
+// @route   GET /admin/profile
+const getProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        res.render('admin/profile', { user, success: null, error: null });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Update Profile
+// @route   POST /admin/profile
+const updateProfile = async (req, res) => {
+    const { name, email, password } = req.body;
+    try {
+        const user = await User.findById(req.user._id);
+        
+        if (user) {
+            user.name = name || user.name;
+            user.email = email || user.email;
+            if (password && password.trim() !== '') {
+                user.password = password; 
+            }
+            await user.save();
+            res.render('admin/profile', { user, success: 'Profile updated successfully!', error: null });
+        } else {
+            res.status(404).send('User not found');
+        }
+    } catch (error) {
+        console.error(error);
+        res.render('admin/profile', { user: req.user, success: null, error: 'Could not update profile.' });
+    }
+};
+
+// @desc    Delete Account
+// @route   POST /admin/profile/delete
+const deleteAccount = async (req, res) => {
+    try {
+        await User.findByIdAndDelete(req.user._id);
+        res.clearCookie('token');
+        res.redirect('/');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Get All Students
+// @route   GET /admin/students
+const getStudents = async (req, res) => {
+    try {
+        const students = await User.find({ role: 'student' }).sort({ createdAt: -1 });
+        res.render('admin/students', { students });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Delete Student
+// @route   POST /admin/students/delete/:id
+const deleteStudent = async (req, res) => {
+    try {
+        await User.findByIdAndDelete(req.params.id);
+        // Also remove results associated with student to keep DB clean
+        await Result.deleteMany({ user: req.params.id });
+        res.redirect('/admin/students');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+module.exports = {
+    getDashboard,
+    getQuestions,
+    addQuestion,
+    deleteQuestion,
+    getCreateTest,
+    createTest,
+    getBulkAdd,
+    postBulkAdd,
+    getEditTest,
+    postEditTest,
+    deleteTest,
+    getProfile,
+    updateProfile,
+    deleteAccount,
+    getStudents,
+    deleteStudent
+};
+

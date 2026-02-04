@@ -1,0 +1,196 @@
+<%- include('../partials/header') %>
+
+<!-- Banner Section -->
+<div class="dashboard-banner">
+    <div class="banner-title">Ready to Challenge Yourself?</div>
+    <div class="banner-subtitle">
+        <strong>Important:</strong> Only marks from your first attempt will be counted in your final score. 
+        All subsequent attempts are for practice only. Leaderboard scores are based on best attempts.
+    </div>
+</div>
+
+<h2 style="margin-bottom: 25px; color: white;">Available Quizzes</h2>
+
+<!-- Cards Grid -->
+<div class="cards-grid">
+    <% if (tests.length === 0) { %>
+        <p style="color: #8b949e;">No active tests available at the moment. Please check back later.</p>
+    <% } %>
+
+    <% tests.forEach((test, index) => { %>
+        <div class="quiz-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span style="margin-right: 8px;">🚀</span>
+                    <%= test.title %>
+                </div>
+                <span class="status-badge"><%= test.category %></span>
+            </div>
+            
+            <% if (test.isAdaptive) { %>
+                <div style="margin: -10px 0 15px 0;">
+                    <span style="font-size: 0.75rem; background: linear-gradient(90deg, #a371f7, #58a6ff); color: white; padding: 2px 8px; border-radius: 10px; font-weight: 600;">🧠 Adaptive Mode</span>
+                </div>
+            <% } %>
+
+            <div class="card-meta">
+                <div class="meta-item">
+                    <span>📄</span>
+                    <span><%= test.totalQuestions %> Qs</span>
+                </div>
+                <div class="meta-item">
+                    <span>⏱</span>
+                    <span><%= test.duration %> Mins</span>
+                </div>
+            </div>
+
+            <!-- Schedule Display -->
+            <% if (test.startDate || test.endDate) { %>
+                <div style="margin-top: 15px; padding: 10px; background: rgba(56, 139, 253, 0.1); border: 1px solid rgba(56, 139, 253, 0.4); border-radius: 6px; font-size: 0.85rem; color: #c9d1d9;">
+                    <% if (test.startDate) { %>
+                        <div style="margin-bottom: 4px;">
+                            <span style="color: #58a6ff; font-weight: 500;">Starts:</span> 
+                            <%= new Date(test.startDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute:'2-digit' }) %>
+                        </div>
+                    <% } %>
+                    <% if (test.endDate) { %>
+                        <div>
+                            <span style="color: #f85149; font-weight: 500;">Ends:</span> 
+                            <%= new Date(test.endDate).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute:'2-digit' }) %>
+                        </div>
+                    <% } %>
+                </div>
+            <% } %>
+
+            <div class="tags-row">
+                <div>
+                <% if(test.tags && test.tags.length > 0) { %>
+                    <% test.tags.forEach(tag => { %>
+                        <span class="difficulty-tag" style="background: rgba(139, 148, 158, 0.2); color: #c9d1d9;"><%= tag %></span>
+                    <% }) %>
+                <% } else { %>
+                    <span class="difficulty-tag">General</span>
+                <% } %>
+                </div>
+                
+                <% if (test.category === 'Test') { %>
+                <a href="/student/history" class="leaderboard-link">
+                    <span>👥</span> Leaderboard
+                </a>
+                <% } %>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <% 
+                    const now = new Date(); 
+                    let isUpcoming = false;
+                    let isExpired = false;
+                    
+                    // Robust check ensuring Date objects comparisons
+                    if (test.startDate && new Date(test.startDate).getTime() > now.getTime()) {
+                        isUpcoming = true;
+                    }
+                    if (test.endDate && new Date(test.endDate).getTime() < now.getTime()) {
+                        isExpired = true;
+                    }
+                %>
+
+                <% if (isUpcoming) { %>
+                    <button type="button" class="btn-start" style="background: rgba(33, 38, 45, 0.5); color: #8b949e; cursor: not-allowed; border: 1px dashed var(--border-color); width: 100%; opacity: 0.7;" disabled>
+                         ⏳ Coming Soon
+                    </button>
+                    <div style="text-align: center; margin-top: 10px; font-size: 0.8rem; color: #58a6ff;">
+                        Test window not yet open
+                    </div>
+                <% } else if (isExpired) { %>
+                    <button type="button" class="btn-start" style="background: rgba(33, 38, 45, 0.5); color: #f85149; cursor: not-allowed; border: 1px solid var(--border-color); width: 100%; opacity: 0.7;" disabled>
+                         🚫 Test Ended
+                    </button>
+                    <div style="text-align: center; margin-top: 10px; font-size: 0.8rem; color: #f85149;">
+                        No longer available
+                    </div>
+                <% } else { %>
+                    <button type="button" class="btn-start" onclick="openInstructionsModal('<%= test._id %>', '<%= test.title %>', '<%= test.totalQuestions %>', '<%= test.duration %>')">
+                        Start <%= test.category %> &nbsp; &rsaquo;
+                    </button>
+                <% } %>
+                    
+                <% if (!isUpcoming && !isExpired && test.category !== 'Test') { %>
+                    <div style="text-align: center; margin-top: 10px; color: #8b949e; font-size: 0.8rem;">
+                        Practice mode enabled
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    <% }) %>
+</div>
+
+<!-- Start Quiz Modal -->
+<div id="startQuizModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalQuizTitle">Quiz Title</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="color: #8b949e; margin-bottom: 20px;">Please read the following instructions carefully before starting the test.</p>
+            
+            <div class="instruction-group">
+                <div class="instruction-header">📄 Instructions:</div>
+                <ul class="instruction-list">
+                    <li>This quiz contains <strong id="modalQuestionCount">0</strong> questions.</li>
+                    <li>You must complete the quiz within <strong id="modalDuration">0</strong> minutes.</li>
+                    <li><strong>Only your first attempt will be counted.</strong> All subsequent attempts are considered dummy.</li>
+                    <li>You can <strong>mark questions for review</strong>, but only submitted answers will be evaluated.</li>
+                    <li><strong>Do not cheat</strong> — suspicious activity may lead to disqualification.</li>
+                </ul>
+            </div>
+
+            <div class="instruction-group">
+                <div class="instruction-header" style="color: #ffa657;">⚠️ Rules:</div>
+                <p style="color: #8b949e; font-size: 0.9rem; margin-top: 10px;">
+                    You cannot pause, exit, or refresh the quiz once it starts.<br>
+                    You can navigate between questions freely.<br>
+                    Use of external help (books, websites, friends, AI tools) is strictly prohibited.<br>
+                    Switching tabs or minimising the quiz window may flag your attempt.
+                </p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+            <form id="modalStartForm" action="/student/test" method="GET" style="display: inline;">
+                <input type="hidden" name="testId" id="modalTestId">
+                <button type="submit" class="btn-confirm">Start Quiz</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openInstructionsModal(testId, title, questions, duration) {
+        document.getElementById('modalTestId').value = testId;
+        document.getElementById('modalQuizTitle').innerText = title;
+        document.getElementById('modalQuestionCount').innerText = questions;
+        document.getElementById('modalDuration').innerText = duration;
+        
+        const modal = document.getElementById('startQuizModal');
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('startQuizModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    // Close modal if clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('startQuizModal');
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
+</script>
+
+<%- include('../partials/footer') %>
