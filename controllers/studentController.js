@@ -226,38 +226,84 @@ const submitTest = async (req, res) => {
         if (!test) return res.status(404).json({ success: false, message: 'Test not found' });
 
         // Mark session as completed
-        await TestSession.findOneAndUpdate(
+        const session = await TestSession.findOneAndUpdate(
             { user: req.user._id, testConfig: testId, status: 'inprogress' },
-            { status: 'completed' }
+            { status: 'completed' },
+            { new: true }
         );
 
         let score = 0;
         let correctAnswers = 0;
         let incorrectAnswers = 0;
         let skippedAnswers = 0;
+        let detailedResponses = [];
         
-        const questionIds = Object.keys(answers);
+        // Use questions from the session to ensure we account for all questions served
+        // If no session (shouldn't happen technically due to findOneAndUpdate above), fallback to answers keys or test logic
+        // But assuming session exists since we just updated it.
+        const questionIds = session && session.questions && session.questions.length > 0 
+            ? session.questions 
+            : Object.keys(answers); // Fallback: only answered questions (not ideal but safe)
+
         const questionsToCheck = await Question.find({ _id: { $in: questionIds } });
         
-        questionsToCheck.forEach(q => {
+        // Map questions by ID for easy lookup to maintain order if needed, or just iterate
+        const questionMap = new Map(questionsToCheck.map(q => [q._id.toString(), q]));
+        
+        // Iterate over session question IDs to preserve order and include skipped ones
+        const idsToProcess = session && session.questions && session.questions.length > 0
+            ? session.questions.map(id => id.toString())
+            : Object.keys(answers);
+
+        idsToProcess.forEach(qId => {
+            const q = questionMap.get(qId);
+            if (!q) return;
+
             const selectedOption = parseInt(answers[q._id.toString()]);
+            let status = 'skipped';
+            let isCorrect = false;
+
             if (!isNaN(selectedOption)) {
                 if (selectedOption === q.correctOption) {
                     score += test.markingScheme.correct;
                     correctAnswers++;
+                    status = 'correct';
+                    isCorrect = true;
                 } else {
                     score += test.markingScheme.incorrect; // Adding negative number
                     incorrectAnswers++;
+                    status = 'wrong';
+                    isCorrect = false;
                 }
-            } 
-        });
+            } else {
+                 skippedAnswers++;
+            }
 
-        const totalQuestions = test.totalQuestions; 
-        skippedAnswers = totalQuestions - (correctAnswers + incorrectAnswers);
+            detailedResponses.push({
+                question: q._id,
+                selectedOption: isNaN(selectedOption) ? null : selectedOption,
+                correctOption: q.correctOption,
+                isCorrect,
+                status
+            });
+        });
+        
+        // If we didn't calculate skippedAnswers correctly above (e.g. fallback path)
+        // Recalculate based on counts if needed, but the loop handles it.
+        // Wait, the original code used totalQuestions from test config.
+        // If randomized, session.questions.length should matches test.totalQuestions.
+        
+        // Double check skipped count
+        const totalQuestions = session && session.questions ? session.questions.length : test.totalQuestions;
+        // The loop increments skippedAnswers, so we should be good. 
+        // IMPORTANT: The original code calculated skippedAnswers = total - (correct + incorrect).
+        // My loop increments skippedAnswers, so I don't need that formula unless as a sanity check.
 
         // Attempt Count Logic
         const existingAttempts = await Result.countDocuments({ user: req.user._id, testConfig: test._id });
         const attemptNumber = existingAttempts + 1;
+
+        console.log('Detailed Responses being saved:', detailedResponses.length); // Debug Log
 
         const result = await Result.create({
             user: req.user._id,
@@ -269,8 +315,11 @@ const submitTest = async (req, res) => {
             skippedAnswers,
             timeTaken: timeTaken || 0,
             topic: test.title, // Keep for backward compatibility or display
-            attemptNumber
+            attemptNumber,
+            detailedResponses, // Save detailed responses
         });
+        
+        console.log('Result Saved ID:', result._id); // Debug Log
 
         res.json({ success: true, resultId: result._id });
     } catch (error) {
@@ -285,10 +334,26 @@ const getResultDetail = async (req, res) => {
     try {
         const result = await Result.findById(req.params.id)
             .populate('user', 'name')
+            .populate({
+                path: 'detailedResponses.question',
+                select: 'questionText options correctOption topic difficulty' // Only fetch needed fields
+            }) 
             .populate('testConfig'); // Needed to check category
             
         if (!result) {
             return res.redirect('/student/history');
+        }
+
+        // Check 30 Minutes Visibility Logic
+        const diffMs = Date.now() - new Date(result.createdAt).getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const showDetailedReview = diffMins <= 30;
+
+        // If time expired, scrub the sensitive details
+        // We create a view object, protecting the database object
+        let viewDetailedResponses = null;
+        if (showDetailedReview && result.detailedResponses) {
+            viewDetailedResponses = result.detailedResponses;
         }
 
         const isPractice = result.testConfig.category === 'Practice Set';
@@ -384,7 +449,9 @@ const getResultDetail = async (req, res) => {
             previousResult,
             classAverage: typeof classAverage === 'number' ? classAverage.toFixed(1) : classAverage,
             accuracy,
-            avgTimePerQuestion
+            avgTimePerQuestion,
+            showDetailedReview, // Pass visibility flag
+            detailedResponses: viewDetailedResponses // Pass filtered responses
         });
 
     } catch (error) {

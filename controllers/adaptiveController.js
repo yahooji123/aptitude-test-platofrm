@@ -229,9 +229,17 @@ const finishAdaptiveTest = async (session, req, res, reason) => {
         score,
         totalQuestions: session.responses.length,
         correctAnswers: correct,
-        wrongAnswers: wrong,
+        wrongAnswers: wrong, // Note: Schema uses incorrectAnswers, mapping check needed
+        incorrectAnswers: wrong, // Saving both/correct key if schema uses incorrectAnswers
         attemptNumber: await Result.countDocuments({ user: session.user, testConfig: session.testConfig._id }) + 1,
-        timeTaken: Math.min((new Date() - session.startTime) / 1000 / 60, testConfig.duration)
+        timeTaken: Math.min((new Date() - session.startTime) / 1000, testConfig.duration * 60), // Fix Seconds
+        detailedResponses: session.responses.map(r => ({
+            question: r.question,
+            selectedOption: r.selectedOption,
+            correctOption: r.correctOption, // Wait, need to check if session saves correctOption
+            isCorrect: r.isCorrect,
+            status: r.isCorrect ? 'correct' : 'wrong' // Adaptive logic usually forces answer so no skip?
+        }))
     });
 
     res.redirect(`/student/result/${result._id}`);

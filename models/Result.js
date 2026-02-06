@@ -41,6 +41,19 @@ const resultSchema = new mongoose.Schema({
         type: Number,
         default: 1
     },
+    detailedResponses: [{
+        question: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Question'
+        },
+        selectedOption: Number,
+        correctOption: Number,
+        isCorrect: Boolean,
+        status: {
+            type: String,
+            enum: ['correct', 'wrong', 'skipped']
+        }
+    }],
     date: {
         type: Date,
         default: Date.now
