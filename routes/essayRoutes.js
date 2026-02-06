@@ -7,10 +7,12 @@ const essayController = require('../controllers/essayController');
 router.get('/admin/dashboard', protect, authorize('admin'), essayController.getAdminEssayDashboard);
 router.post('/admin/topics/add', protect, authorize('admin'), essayController.addBulkTopics);
 router.post('/admin/topics/toggle/:id', protect, authorize('admin'), essayController.toggleTopicStatus);
+router.post('/admin/topics/delete/:id', protect, authorize('admin'), essayController.deleteTopic);
 
 router.get('/admin/submissions', protect, authorize('admin'), essayController.getAdminSubmissions);
 router.get('/admin/evaluate/:id', protect, authorize('admin'), essayController.getEvaluatePage);
 router.post('/admin/evaluate/:id', protect, authorize('admin'), essayController.submitEvaluation);
+router.post('/admin/submissions/delete/:id', protect, authorize('admin'), essayController.deleteSubmission);
 
 // --- STUDENT ROUTES ---
 router.get('/student/dashboard', protect, authorize('student'), essayController.getStudentEssayDashboard);

@@ -36,11 +36,16 @@
                                 <%= sub.status %>
                             </span>
                         </td>
-                        <td style="padding: 15px;">
+                        <td style="padding: 15px; display: flex; align-items: center; gap: 15px;">
                             <a href="/essay/admin/evaluate/<%= sub._id %>" 
                                style="color: #58a6ff; text-decoration: none; font-weight: 600;">
                                <%= sub.status === 'Checked' ? 'Re-Evaluate' : 'Evaluate' %> &rarr;
                             </a>
+                            <form action="/essay/admin/submissions/delete/<%= sub._id %>" method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to delete this submission?');">
+                                <button type="submit" style="background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 0;" title="Delete Submission">
+                                    🗑️
+                                </button>
+                            </form>
                         </td>
                     </tr>
                 <% }) %>

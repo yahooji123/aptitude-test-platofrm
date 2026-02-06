@@ -54,6 +54,19 @@ exports.toggleTopicStatus = async (req, res) => {
     }
 };
 
+// POST Delete Topic
+exports.deleteTopic = async (req, res) => {
+    try {
+        await EssayTopic.findByIdAndDelete(req.params.id);
+        // Also delete associated submissions to keep DB clean
+        await EssaySubmission.deleteMany({ topic: req.params.id }); 
+        res.redirect('/essay/admin/dashboard');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
 // GET Submissions List
 exports.getAdminSubmissions = async (req, res) => {
     try {
@@ -97,6 +110,17 @@ exports.submitEvaluation = async (req, res) => {
             submission.status = 'Checked';
             await submission.save();
         }
+        res.redirect('/essay/admin/submissions');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// POST Delete Submission
+exports.deleteSubmission = async (req, res) => {
+    try {
+        await EssaySubmission.findByIdAndDelete(req.params.id);
         res.redirect('/essay/admin/submissions');
     } catch (error) {
         console.error(error);

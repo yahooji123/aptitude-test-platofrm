@@ -36,12 +36,20 @@
                         <div style="background: #0d1117; padding: 10px; border-radius: 6px; border: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center;">
                             <span style="color: #e6edf3; font-size: 0.9rem;"><%= t.topic.substring(0, 40) %>...</span>
                             
-                            <form action="/essay/admin/topics/toggle/<%= t._id %>" method="POST" style="margin:0;">
-                                <button type="submit" 
-                                    style="padding: 4px 8px; border-radius: 4px; border: none; font-size:0.7rem; font-weight: bold; cursor: pointer; background: <%= t.isActive ? 'rgba(46, 160, 67, 0.2)' : 'rgba(218, 54, 51, 0.2)' %>; color: <%= t.isActive ? '#3fb950' : '#ff7b72' %>;">
-                                    <%= t.isActive ? 'ACTIVE' : 'INACTIVE' %>
-                                </button>
-                            </form>
+                            <div style="display: flex; gap: 10px;">
+                                <form action="/essay/admin/topics/toggle/<%= t._id %>" method="POST" style="margin:0;">
+                                    <button type="submit" 
+                                        style="padding: 4px 8px; border-radius: 4px; border: none; font-size:0.7rem; font-weight: bold; cursor: pointer; background: <%= t.isActive ? 'rgba(46, 160, 67, 0.2)' : 'rgba(218, 54, 51, 0.2)' %>; color: <%= t.isActive ? '#3fb950' : '#ff7b72' %>;">
+                                        <%= t.isActive ? 'ACTIVE' : 'INACTIVE' %>
+                                    </button>
+                                </form>
+                                <form action="/essay/admin/topics/delete/<%= t._id %>" method="POST" style="margin:0;" onsubmit="return confirm('Are you sure? This will delete the topic and ALL student submissions associated with it.');">
+                                    <button type="submit" 
+                                        style="padding: 4px 8px; border-radius: 4px; border: none; font-size:0.8rem; font-weight: bold; cursor: pointer; background: rgba(218, 54, 51, 0.2); color: #ff7b72;" title="Delete Topic">
+                                        🗑️
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     <% }) %>
                 </div>
