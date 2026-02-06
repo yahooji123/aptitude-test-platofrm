@@ -1,0 +1,58 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #000000, #434343);">
+    <div class="banner-title">Super Data Management</div>
+    <div class="banner-subtitle">Search and manage users across the entire platform. Admin Access Only.</div>
+</div>
+
+<div class="container" style="max-width: 800px;">
+
+    <% if (typeof query !== 'undefined' && query.status === 'deleted') { %>
+        <div class="alert alert-success" style="background: #238636; color: white; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            User and all associated data have been permanently deleted.
+        </div>
+    <% } %>
+
+    <!-- Search Box -->
+    <div class="card" style="background: #161b22; border: 1px solid #30363d; padding: 30px; border-radius: 8px;">
+        <h3 style="color: #e6edf3; margin-top: 0;">Find User</h3>
+        <form action="/admin/super-management/search" method="POST" style="display: flex; gap: 10px;">
+            <input type="text" name="query" placeholder="Enter Name or Email..." value="<%= searchQuery %>" required
+                style="flex: 1; padding: 12px; background: #0d1117; border: 1px solid #30363d; color: white; border-radius: 6px;">
+            <button type="submit" class="btn btn-primary">Search 🔍</button>
+        </form>
+    </div>
+
+    <!-- Results -->
+    <% if (searchResults) { %>
+        <div style="margin-top: 30px;">
+            <h4 style="color: #8b949e;">Found <%= searchResults.length %> users</h4>
+            
+            <% if (searchResults.length === 0) { %>
+                <div style="padding: 20px; text-align: center; color: #8b949e; border: 1px dashed #30363d; border-radius: 8px;">
+                    No users found matching "<%= searchQuery %>"
+                </div>
+            <% } else { %>
+                <div style="display: grid; gap: 15px;">
+                    <% searchResults.forEach(u => { %>
+                        <div style="background: #161b22; border: 1px solid #30363d; padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 600; font-size: 1.1rem; color: #e6edf3;"><%= u.name %></div>
+                                <div style="color: #8b949e;"><%= u.email %></div>
+                                <span style="font-size: 0.8rem; padding: 2px 8px; border-radius: 10px; background: #21262d; border: 1px solid #30363d; color: #c9d1d9;">
+                                    <%= u.role.toUpperCase() %>
+                                </span>
+                            </div>
+                            <a href="/admin/super-management/audit/<%= u._id %>" class="btn btn-secondary" style="border-color: #58a6ff; color: #58a6ff;">
+                                Manage Data &rarr;
+                            </a>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } %>
+        </div>
+    <% } %>
+
+</div>
+
+<%- include('../partials/footer') %>

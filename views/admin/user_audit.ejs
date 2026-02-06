@@ -1,0 +1,62 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #7f1d1d, #450a0a);">
+    <div class="banner-title">User Audit & Zone of Danger</div>
+    <div class="banner-subtitle">Reviewing data for <%= targetUser.name %> (<%= targetUser.email %>)</div>
+</div>
+
+<div class="container">
+    <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+            <h3>Data Audit</h3>
+            <p>Summary of all database records associated with this user.</p>
+        </div>
+        <div class="card-body">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div style="background: #161b22; padding: 1rem; border-radius: 6px; border: 1px solid #30363d;">
+                    <h4 style="margin: 0; color: #8b949e;">MCQ Results</h4>
+                    <div style="font-size: 2rem; font-weight: bold; color: #e6edf3;"><%= stats.mcqCount %></div>
+                </div>
+                <div style="background: #161b22; padding: 1rem; border-radius: 6px; border: 1px solid #30363d;">
+                    <h4 style="margin: 0; color: #8b949e;">Reading Sessions</h4>
+                    <div style="font-size: 2rem; font-weight: bold; color: #e6edf3;"><%= stats.readingCount %></div>
+                </div>
+                <div style="background: #161b22; padding: 1rem; border-radius: 6px; border: 1px solid #30363d;">
+                    <h4 style="margin: 0; color: #8b949e;">Essay Submissions</h4>
+                    <div style="font-size: 2rem; font-weight: bold; color: #e6edf3;"><%= stats.essayCount %></div>
+                </div>
+                <div style="background: #161b22; padding: 1rem; border-radius: 6px; border: 1px solid #30363d;">
+                    <h4 style="margin: 0; color: #8b949e;">Active Test Session</h4>
+                    <div style="font-size: 2rem; font-weight: bold; color: #e6edf3;"><%= stats.hasActiveSession ? 'Yes' : 'No' %></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="border: 1px solid #da3633; background: #221111;">
+        <div class="card-header" style="border-bottom: 1px solid #da3633;">
+            <h3 style="color: #f85149;">⚠️ PERMANENT DELETION ZONE</h3>
+        </div>
+        <div class="card-body">
+            <p style="color: #ff7b72;">
+                This action is <strong>irreversible</strong>. It will permanently delete the user account and 
+                <strong>ALL</strong> associated data listed above from the database.
+            </p>
+
+            <form action="/admin/super-management/delete/<%= targetUser._id %>" method="POST" onsubmit="return confirm('Are you absolutely sure? This cannot be undone.');">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px;">To confirm, type the user's email address below:</label>
+                    <input type="email" name="confirmationEmail" placeholder="<%= targetUser.email %>" required
+                        style="width: 100%; max-width: 400px; padding: 10px; background: #0d1117; border: 1px solid #da3633; color: white; border-radius: 6px;">
+                </div>
+                
+                <button type="submit" class="btn btn-danger" style="background: #da3633; border: none; padding: 12px 24px; font-weight: bold;">
+                    🗑️ NUKE USER & DATA
+                </button>
+                <a href="/admin/super-management" class="btn btn-secondary" style="margin-left: 10px;">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

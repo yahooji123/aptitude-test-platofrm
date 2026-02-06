@@ -249,6 +249,44 @@ exports.submitTest = async (req, res) => {
     }
 };
 
+exports.deleteResult = async (req, res) => {
+    try {
+        await ReadingResult.findByIdAndDelete(req.params.id);
+        
+        // Return based on source (though mostly hitting from admin views)
+        // If query param ?source=student is passed, go there (for dev testing)
+        // Otherwise default to admin dashboard or back
+        const referer = req.get('Referer');
+        if (referer && referer.includes('/student/dashboard')) {
+            return res.redirect('/reading/student/dashboard'); // Allow refresh if dev deleting from student view
+        }
+        res.redirect('/reading/admin/dashboard'); // Or create a dedicated results view
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Deletion Error");
+    }
+};
+
+exports.deleteStudentResult = async (req, res) => {
+    try {
+        // Only delete if it belongs to the logged-in student
+        const result = await ReadingResult.findOneAndDelete({ 
+            _id: req.params.id, 
+            user: req.user._id 
+        });
+
+        if (!result) {
+            // Could be not found or not owned
+            return res.status(404).send("Result not found or unauthorized");
+        }
+
+        res.redirect('/reading/student/dashboard');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Deletion Error");
+    }
+};
+
 exports.viewResult = async (req, res) => {
     try {
         const result = await ReadingResult.findById(req.params.id)

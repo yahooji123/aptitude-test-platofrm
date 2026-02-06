@@ -50,7 +50,15 @@
                 <span style="color: #8b949e; font-size: 1rem;">/ <%= r.maxScore %></span>
             </div>
             
-            <a href="/reading/student/result/<%= r._id %>" style="color: #58a6ff; text-decoration: none; font-weight: 600;">View Analysis &rarr;</a>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                <a href="/reading/student/result/<%= r._id %>" style="color: #58a6ff; text-decoration: none; font-weight: 600;">View Analysis &rarr;</a>
+                
+                <form action="/reading/student/result/delete/<%= r._id %>" method="POST" style="margin: 0;" onsubmit="return confirm('Delete this result? This cannot be undone.');">
+                    <button type="submit" style="background: rgba(248, 81, 73, 0.1); border: 1px solid rgba(248, 81, 73, 0.4); color: #f85149; cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;" title="Delete Result">
+                        Delete 🗑️
+                    </button>
+                </form>
+            </div>
         </div>
     <% }) %>
 </div>

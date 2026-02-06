@@ -24,6 +24,14 @@
     </div>
 
     <a href="/reading/student/dashboard" class="btn btn-secondary" style="margin-top: 30px; display: inline-block;">Return to Dashboard</a>
+
+    <% if (typeof user !== 'undefined' && user.role === 'admin') { %>
+        <form action="/reading/admin/result/delete/<%= result._id %>" method="POST" style="display: inline-block; margin-left: 10px;" onsubmit="return confirm('ADMIN ACTION: Permanently delete this result?');">
+            <button type="submit" class="btn" style="background: rgba(218, 54, 51, 0.1); color: #f85149; border: 1px solid #da3633; padding: 10px 20px;">
+                Delete Result 🗑️
+            </button>
+        </form>
+    <% } %>
 </div>
 
 <!-- Detailed Analysis -->
