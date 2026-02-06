@@ -9,37 +9,58 @@
 </head>
 <body>
     <nav class="navbar">
-        <a href="/" class="logo">
-            <span style="color: #58a6ff;">Aptitude</span>Pro
-        </a>
-        <div class="nav-links">
+        <div class="nav-brand">
+            <a href="/" class="logo">
+                <span style="color: #58a6ff;">Aptitude</span>Pro
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMenu()" aria-label="Toggle Menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="nav-links" id="navLinks">
             <% if (typeof user !== 'undefined' && user) { %>
-                <span style="color: var(--text-secondary);">Welcome, <%= user.name %></span>
+                <div class="nav-user-info">
+                    <span style="color: var(--text-secondary);">Welcome, <%= user.name %></span>
+                </div>
                 <% if (user.role === 'admin') { %>
-                    <a href="/admin/dashboard">Admin Panel</a>
-                    <a href="/adaptive/admin/dashboard" style="color: #a371f7;">Adaptive®</a>
-                    <a href="/admin/profile" style="display: inline-flex; align-items: center; margin-left: 5px;" title="Admin Profile">
+                    <a href="/admin/dashboard" class="nav-item">Admin Panel</a>
+                    <a href="/adaptive/admin/dashboard" class="nav-item adaptive-link">Adaptive®</a>
+                    <a href="/admin/profile" class="nav-item icon-link" title="Admin Profile">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
+                        <span class="mobile-only">Profile</span>
                     </a>
                 <% } else { %>
-                    <a href="/student/dashboard">Dashboard</a>
-                    <a href="/adaptive/student/dashboard" style="color: #a371f7;">Adaptive®</a>
-                    <a href="/student/history">My History</a>
-                    <a href="/student/profile" style="display: inline-flex; align-items: center; margin-left: 5px;" title="My Profile">
+                    <a href="/student/dashboard" class="nav-item">Dashboard</a>
+                    <a href="/adaptive/student/dashboard" class="nav-item adaptive-link">Adaptive®</a>
+                    <a href="/student/history" class="nav-item">My History</a>
+                    <a href="/student/profile" class="nav-item icon-link" title="My Profile">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
+                        <span class="mobile-only">Profile</span>
                     </a>
                 <% } %>
-                <a href="/auth/logout" class="btn-nav-login" style="background: transparent; color: #ff7b72 !important; border-color: #ff7b72;">Logout</a>
+                <a href="/auth/logout" class="btn-nav-login btn-logout">Logout</a>
             <% } else { %>
                 <a href="/login" class="btn-nav-login">Login</a>
                 <a href="/register" class="btn-nav-signup">Register</a>
             <% } %>
         </div>
     </nav>
-    <div class="container">
+    <div class="container main-content-wrapper">
+
+    <script>
+        function toggleMenu() {
+            const nav = document.getElementById('navLinks');
+            nav.classList.toggle('active');
+        }
+    </script>
