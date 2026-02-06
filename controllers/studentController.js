@@ -1,9 +1,9 @@
+const mongoose = require('mongoose');
 const Question = require('../models/Question');
 const Result = require('../models/Result');
 const TestConfig = require('../models/TestConfig');
 const TestSession = require('../models/TestSession');
-const User = require('../models/User'); // Import User model for profile management
-
+const User = require('../models/User'); // Import User model for profile managementconst SystemSetting = require('../models/SystemSetting'); // Import SystemSetting
 // @desc    Get Student Dashboard
 // @route   GET /student/dashboard
 const getDashboard = async (req, res) => {
@@ -170,7 +170,7 @@ const startTest = async (req, res) => {
         if (existingSession) {
             // Restore existing session
             // Fetch questions maintaining order
-            const sessionQuestions = await Question.find({ _id: { $in: existingSession.questions } });
+            const sessionQuestions = await Question.find({ _id: { $in: existingSession.questions } }).lean();
             // Reorder questions to match the saved order
             questions = existingSession.questions.map(id => sessionQuestions.find(q => q._id.toString() === id.toString()));
 
@@ -179,21 +179,77 @@ const startTest = async (req, res) => {
             remainingSeconds = Math.max(0, Math.floor((durationMs - elapsedMs) / 1000));
         } else {
             // Create New Session
-            // Logic to randomly pick questions based on distribution
-            const easyQ = await Question.aggregate([
-                { $match: { topic: { $in: test.topics }, difficulty: 'easy' } },
-                { $sample: { size: test.difficultyDistribution.easy } }
-            ]);
+            
+            // Check Smart Practice Mode Setting
+            const smartMode = await SystemSetting.findOne({ key: 'smartPracticeMode' });
+            const prioritizeUnseen = smartMode && smartMode.value;
 
-            const mediumQ = await Question.aggregate([
-                { $match: { topic: { $in: test.topics }, difficulty: 'medium' } },
-                { $sample: { size: test.difficultyDistribution.medium } }
-            ]);
+            // Get IDs of questions already attempted by this user (Used for both Smart Mode & "Repeated" Badge)
+            let attemptedIds = [];
+            if (req.user) {
+                try {
+                    const userId = new mongoose.Types.ObjectId(req.user.id);
+                    const rawIds = await Result.aggregate([
+                        { $match: { user: userId } },
+                        { $unwind: '$detailedResponses' },
+                        { $group: { _id: null, ids: { $addToSet: '$detailedResponses.question' } } }
+                    ]);
+                    
+                    if (rawIds.length > 0) {
+                        attemptedIds = rawIds[0].ids;
+                    }
+                    console.log(`[TestStart] User ${req.user.name} has history of ${attemptedIds.length} questions.`);
+                } catch (err) {
+                    console.error('[TestStart] Error fetching history:', err);
+                }
+            }
 
-            const hardQ = await Question.aggregate([
-                { $match: { topic: { $in: test.topics }, difficulty: 'hard' } },
-                { $sample: { size: test.difficultyDistribution.hard } }
-            ]);
+            // Helper to get questions with unseen priority
+            const getQuestionsWithPriority = async (topicList, diff, count) => {
+                let finalSelection = [];
+                
+                if (prioritizeUnseen) {
+                    // Try to get UNSEEN questions first
+                    const unseen = await Question.aggregate([
+                        { $match: { 
+                            topic: { $in: topicList }, 
+                            difficulty: diff,
+                            _id: { $nin: attemptedIds } 
+                        }},
+                        { $sample: { size: count } }
+                    ]);
+                    
+                    console.log(`[SmartMode] Category ${diff}: Found ${unseen.length} unseen questions.`);
+                    finalSelection = [...unseen];
+                    
+                    // If we need more, fetch from SEEN (Reset Cycle Logic)
+                    if (finalSelection.length < count) {
+                        const needed = count - finalSelection.length;
+                        console.log(`[SmartMode] Category ${diff}: Need ${needed} more from seen pool.`);
+                        
+                        const alreadySeen = await Question.aggregate([
+                            { $match: { 
+                                topic: { $in: topicList }, 
+                                difficulty: diff,
+                                _id: { $nin: finalSelection.map(q => q._id) } 
+                            }},
+                            { $sample: { size: needed } }
+                        ]);
+                        finalSelection = [...finalSelection, ...alreadySeen];
+                    }
+                } else {
+                    // Normal Random Logic (No priority)
+                    finalSelection = await Question.aggregate([
+                        { $match: { topic: { $in: topicList }, difficulty: diff } },
+                        { $sample: { size: count } }
+                    ]);
+                }
+                return finalSelection;
+            };
+
+            const easyQ = await getQuestionsWithPriority(test.topics, 'easy', test.difficultyDistribution.easy);
+            const mediumQ = await getQuestionsWithPriority(test.topics, 'medium', test.difficultyDistribution.medium);
+            const hardQ = await getQuestionsWithPriority(test.topics, 'hard', test.difficultyDistribution.hard);
 
             questions = [...easyQ, ...mediumQ, ...hardQ];
 
@@ -207,9 +263,35 @@ const startTest = async (req, res) => {
             remainingSeconds = test.duration * 60;
         }
 
+        // --- NEW: Mark Repeated Questions ---
+        // We need the set of attempted IDs again if we are in existing session path (or just refetch if lazy)
+        // To be safe, let's just ensure we have the set.
+        let attemptedSet = new Set();
+        if (req.user) {
+             // If we already fetched attemptedIds in the new session block, use it. 
+             // But existing session block didn't run that code.
+             // We can just quick-fetch simple distinct aggregation here for the UI flag if not present.
+             const userId = new mongoose.Types.ObjectId(req.user.id);
+             const rawIds = await Result.aggregate([
+                { $match: { user: userId } },
+                { $unwind: '$detailedResponses' },
+                { $group: { _id: null, ids: { $addToSet: '$detailedResponses.question' } } }
+             ]);
+             if (rawIds.length > 0) {
+                 rawIds[0].ids.forEach(id => attemptedSet.add(id.toString()));
+             }
+        }
+
+        const questionsWithFlag = questions.map(q => {
+            const qObj = q.toObject ? q.toObject() : q; 
+            if (attemptedSet.has(qObj._id.toString())) {
+                qObj.isRepeated = true;
+            }
+            return qObj;
+        });
+
         // Return view with questions (rendered as a test)
-        // Passing 'test' object for config details (duration, marking scheme etc)
-        res.render('student/test', { test, questions, remainingSeconds });
+        res.render('student/test', { test, questions: questionsWithFlag, remainingSeconds });
     } catch (error) {
         console.error(error);
         res.status(500).send('Server Error');
@@ -511,6 +593,34 @@ const updateProfile = async (req, res) => {
     }
 };
 
+// @desc    Reset Learning History (Clear "Repeated" Status)
+// @route   POST /student/profile/reset-history
+const resetHistory = async (req, res) => {
+    try {
+        // We do NOT delete the Result documents because that would destroy the user's Scores and Leaderboards.
+        // Instead, we simply want to "Forget" that they saw the questions for the purpose of the "Repeated" badge.
+        
+        // HOWEVER, our current logic uses Result.aggregate to find "seen" questions.
+        // If we want to reset history but keep scores, we need a way to distinguish.
+        // For a simple 'Reset Progress' in a small app, DELETING the Results is the cleanest way
+        // to reset the "Attempted" pool. If the user wants to start fresh, they probably don't care about old test logs.
+        
+        // Alternative: Add a 'archived: true' flag to results so they don't count for history but exist for stats?
+        // Let's go with the user's likely intent: Wipe the slate clean because I'm done.
+        
+        await Result.deleteMany({ user: req.user._id });
+        await TestSession.deleteMany({ user: req.user._id, status: 'inprogress' }); // Clear active sessions too
+
+        const user = await User.findById(req.user._id);
+        res.render('student/profile', { user, success: 'Question history reset successfully! All questions are now marked as New.', error: null });
+
+    } catch (error) {
+        console.error(error);
+        const user = await User.findById(req.user._id);
+        res.render('student/profile', { user, success: null, error: 'Could not reset history' });
+    }
+};
+
 // @desc    Delete Account
 // @route   POST /student/profile/delete
 const deleteAccount = async (req, res) => {
@@ -540,5 +650,6 @@ module.exports = {
     getResultDetail,
     getProfile,
     updateProfile,
-    deleteAccount
+    deleteAccount,
+    resetHistory         // New export
 };

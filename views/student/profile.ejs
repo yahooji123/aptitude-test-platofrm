@@ -54,11 +54,28 @@
         <!-- Danger Zone -->
         <div class="glass-card" style="border: 1px solid #da3633; margin-top: 30px;">
             <h2 style="color: #ff7b72; margin-bottom: 15px; font-size: 1.5rem;">Danger Zone</h2>
-            <p style="color: #c9d1d9; margin-bottom: 20px;">Once you delete your account, there is no going back. Please be certain.</p>
             
-            <button onclick="confirmDelete()" class="btn-danger" style="background: transparent; border: 1px solid #da3633; color: #ff7b72; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-                Delete Account
-            </button>
+            <!-- Reset History -->
+            <div style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #30363d;">
+                <h3 style="font-size: 1.1rem; color: #e6edf3; margin-bottom: 10px;">Reset Learning Progress</h3>
+                <p style="color: #8b949e; margin-bottom: 15px; font-size: 0.9rem;">
+                    This will clear your "Attempted Question" history. Your test scores will remain, but the system will treat all questions as "New" again for Smart Practice Mode.
+                </p>
+                <form action="/student/profile/reset-history" method="POST" onsubmit="return confirm('Are you sure? This will unmark all questions as seen.')">
+                    <button type="submit" style="background: transparent; border: 1px solid #a371f7; color: #a371f7; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                        ♻️ Reset Question History
+                    </button>
+                </form>
+            </div>
+
+            <!-- Delete Account -->
+            <div>
+                <h3 style="font-size: 1.1rem; color: #e6edf3; margin-bottom: 10px;">Delete Account</h3>
+                <p style="color: #8b949e; margin-bottom: 15px; font-size: 0.9rem;">Once you delete your account, there is no going back. Please be certain.</p>
+                <button onclick="confirmDelete()" class="btn-danger" style="background: transparent; border: 1px solid #da3633; color: #ff7b72; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    Delete Account
+                </button>
+            </div>
         </div>
 
     </div>

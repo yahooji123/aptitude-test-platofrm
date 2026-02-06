@@ -6,7 +6,28 @@
 </div>
 
 <!-- Stats Row -->
-<div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-bottom: 40px;">
+<div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 40px;">
+    
+    <!-- Smart Practice Mode Toggle Card -->
+    <div class="admin-stat-card" style="border: 1px solid <%= smartPracticeMode ? '#2ea043' : '#30363d' %>; transition: all 0.3s;" id="smartModeCard">
+        <div>
+            <div class="admin-stat-label">Smart Practice Mode</div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                <div class="admin-stat-value" id="smartModeStatus" style="font-size: 1.2rem; color: <%= smartPracticeMode ? '#2ea043' : '#8b949e' %>;">
+                    <%= smartPracticeMode ? 'Active' : 'Disabled' %>
+                </div>
+                <!-- Toggle Switch -->
+                <label class="switch">
+                    <input type="checkbox" id="smartModeToggle" <%= smartPracticeMode ? 'checked' : '' %> onchange="toggleSmartMode()">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+        <div style="margin-top: 10px; font-size: 0.8rem; color: #8b949e;">
+            Prioritize unseen questions for students.
+        </div>
+    </div>
+
     <div class="admin-stat-card">
         <div>
             <div class="admin-stat-label">Total Questions</div>
@@ -40,28 +61,6 @@
         </ul>
     </div>
 </div>
-
-<style>
-    .dashboard-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 30px;
-    }
-    .grid-wide {
-        grid-column: span 2;
-    }
-    @media (max-width: 1024px) {
-        .grid-wide {
-            grid-column: auto;
-        }
-    }
-    @media (max-width: 768px) {
-         .dashboard-grid {
-            grid-template-columns: 1fr;
-            gap: 20px;
-         }
-    }
-</style>
 
 <!-- Main Content Grid -->
 <div class="dashboard-grid">
@@ -157,5 +156,90 @@
     </div>
 
 </div>
+
+<script>
+    async function toggleSmartMode() {
+        const toggle = document.getElementById('smartModeToggle');
+        const statusLabel = document.getElementById('smartModeStatus');
+        const card = document.getElementById('smartModeCard');
+        
+        // Optimistic UI Update
+        const isChecked = toggle.checked;
+        statusLabel.textContent = isChecked ? 'Active' : 'Disabled';
+        statusLabel.style.color = isChecked ? '#2ea043' : '#8b949e';
+        card.style.borderColor = isChecked ? '#2ea043' : '#30363d';
+
+        try {
+            const res = await fetch('/admin/settings/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'smartPracticeMode' })
+            });
+            const data = await res.json();
+            if(!data.success) {
+                // Revert on failure
+                toggle.checked = !isChecked;
+                alert('Failed to update setting');
+            }
+        } catch (err) {
+            console.error(err);
+            toggle.checked = !isChecked; // Revert
+            alert('Error updating setting');
+        }
+    }
+</script>
+
+<style>
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+    }
+    .grid-wide {
+        grid-column: span 2;
+    }
+    @media (max-width: 1024px) {
+        .grid-wide {
+            grid-column: auto;
+        }
+    }
+    @media (max-width: 768px) {
+         .dashboard-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+         }
+    }
+    
+    /* Toggle Switch Styles */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #30363d;
+      transition: .4s;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+    }
+    input:checked + .slider { background-color: #2ea043; }
+    input:checked + .slider:before { transform: translateX(20px); }
+    .slider.round { border-radius: 20px; }
+    .slider.round:before { border-radius: 50%; }
+
+</style>
 
 <%- include('../partials/footer') %>

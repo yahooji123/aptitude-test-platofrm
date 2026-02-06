@@ -152,6 +152,12 @@
         
         <!-- Difficulty Indicator -->
         <span class="difficulty-badge diff-<%= question.difficulty %>"><%= question.difficulty %></span>
+        
+        <% if (question.isRepeated) { %>
+             <span class="difficulty-badge" style="background: rgba(163, 113, 247, 0.2); color: #a371f7; border: 1px solid rgba(163, 113, 247, 0.4); margin-left: 5px;">
+                ↻ Repeated
+            </span>
+        <% } %>
 
         <!-- Raw Text Hidden -->
         <div id="rawQuestionText" style="display: none;"><%= question.questionText %></div>

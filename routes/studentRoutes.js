@@ -10,6 +10,7 @@ const {
     getProfile,
     updateProfile,
     deleteAccount,
+    resetHistory,        // New Import
     getCreateCustomTest, // New Import
     createCustomTest,    // New Import
     deleteCustomTest     // New Import
@@ -36,6 +37,7 @@ router.get('/result/:id', getResultDetail);
 // Profile Management
 router.get('/profile', getProfile);
 router.post('/profile', updateProfile);
+router.post('/profile/reset-history', resetHistory); // New Route
 router.post('/profile/delete', deleteAccount);
 
 module.exports = router;

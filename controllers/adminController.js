@@ -2,6 +2,7 @@ const Question = require('../models/Question');
 const TestConfig = require('../models/TestConfig');
 const Result = require('../models/Result');
 const User = require('../models/User'); // Import User for profile management
+const SystemSetting = require('../models/SystemSetting'); // Import SystemSetting
 
 // @desc    Get Admin Dashboard
 // @route   GET /admin/dashboard
@@ -10,10 +11,42 @@ const getDashboard = async (req, res) => {
         const topics = await Question.distinct('topic');
         const questionCount = await Question.countDocuments();
         const tests = await TestConfig.find().sort({ createdAt: -1 });
-        res.render('admin/dashboard', { topics, questionCount, tests });
+        
+        // Fetch System Settings
+        let smartPracticeMode = await SystemSetting.findOne({ key: 'smartPracticeMode' });
+        // Default to false if not exists
+        if (!smartPracticeMode) {
+            smartPracticeMode = { value: false }; 
+        }
+
+        res.render('admin/dashboard', { 
+            topics, 
+            questionCount, 
+            tests,
+            smartPracticeMode: smartPracticeMode.value 
+        });
     } catch (error) {
         console.error(error);
         res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Toggle System Setting
+// @route   POST /admin/settings/toggle
+const toggleSetting = async (req, res) => {
+    const { key } = req.body;
+    try {
+        let setting = await SystemSetting.findOne({ key });
+        if (!setting) {
+            setting = new SystemSetting({ key, value: true }); // Default create as true if toggled first time
+        } else {
+            setting.value = !setting.value;
+        }
+        await setting.save();
+        res.json({ success: true, newValue: setting.value });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false });
     }
 };
 
@@ -458,6 +491,7 @@ const deleteQuestionsByTopic = async (req, res) => {
 
 module.exports = {
     getDashboard,
+    toggleSetting, // New Export
     getQuestions,
     addQuestion,
     deleteQuestion,

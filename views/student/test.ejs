@@ -510,6 +510,11 @@
                         <div class="q-header">
                             <span class="q-number">Question <%= index + 1 %></span>
                             <div class="q-badges">
+                                <% if (question.isRepeated) { %>
+                                    <span class="badge" style="background: rgba(163, 113, 247, 0.15); color: #d2a8ff; border: 1px solid rgba(163, 113, 247, 0.4);">
+                                        <span style="font-size: 0.9em; margin-right: 4px;">↻</span> Repeated
+                                    </span>
+                                <% } %>
                                 <span class="badge"><%= question.difficulty %></span>
                                 <span class="badge">+<%= test.markingScheme.correct %> / -<%= test.markingScheme.incorrect %></span>
                             </div>

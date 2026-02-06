@@ -2,6 +2,8 @@ const TestConfig = require('../models/TestConfig');
 const TestSession = require('../models/TestSession');
 const Question = require('../models/Question');
 const Result = require('../models/Result');
+const SystemSetting = require('../models/SystemSetting');
+const mongoose = require('mongoose');
 
 // Helper: Determine next difficulty
 const getNextDifficulty = (currentDiff, wasCorrect) => {
@@ -106,29 +108,70 @@ const getAdaptiveTestRunner = async (req, res) => {
             // Case: Fetch NEW Question
             const seenIds = session.questions;
 
-            // Try to find a question with current difficulty
-            const nextQ = await Question.aggregate([
-                { $match: { 
+            // Detect Smart Practice Mode
+            const smartMode = await SystemSetting.findOne({ key: 'smartPracticeMode' });
+            const prioritizeUnseen = smartMode && smartMode.value;
+
+            // Fetch User History if needed
+            let globalAttemptedIds = [];
+            if (prioritizeUnseen && req.user) {
+                const userId = new mongoose.Types.ObjectId(req.user.id);
+                try {
+                    const history = await Result.aggregate([
+                        { $match: { user: userId } },
+                        { $unwind: '$detailedResponses' },
+                        { $group: { _id: null, ids: { $addToSet: '$detailedResponses.question' } } }
+                    ]);
+                    if (history.length > 0) {
+                        globalAttemptedIds = history[0].ids;
+                    }
+                } catch (e) {
+                    console.error("Adaptive History Fetch Error", e);
+                }
+            }
+
+            // Exclude IDs based on prioritization
+            // Always exclude current session questions (seenIds)
+            let excludedIds = [...seenIds];
+            if (prioritizeUnseen) {
+                excludedIds = [...excludedIds, ...globalAttemptedIds];
+            }
+
+            // Helper to fetch question
+            const fetchQuestion = async (diff, excludeList) => {
+                const query = { 
                     topic: { $in: session.testConfig.topics },
-                    difficulty: session.currentDifficulty,
-                    _id: { $nin: seenIds }
-                }},
-                { $sample: { size: 1 } }
-            ]);
+                    _id: { $nin: excludeList }
+                };
+                if (diff) query.difficulty = diff;
+                
+                return await Question.aggregate([
+                    { $match: query },
+                    { $sample: { size: 1 } }
+                ]);
+            };
+
+            // 1. Try Target Difficulty (Prioritized)
+            let nextQ = await fetchQuestion(session.currentDifficulty, excludedIds);
+
+            // 2. Fallback: Target Difficulty (Allow Repeats if Smart Mode was strict)
+            if (nextQ.length === 0 && prioritizeUnseen) {
+                console.log("Adaptive: Relaxing to allow repeats for difficulty match");
+                nextQ = await fetchQuestion(session.currentDifficulty, seenIds);
+            }
 
             if (nextQ.length > 0) {
                 currentQuestionId = nextQ[0]._id;
                 session.questions.push(currentQuestionId);
                 await session.save();
             } else {
-                // FALLBACK: If no questions of that difficulty, try ANY difficulty not seen
-                const fallbackQ = await Question.aggregate([
-                    { $match: { 
-                        topic: { $in: session.testConfig.topics },
-                        _id: { $nin: seenIds }
-                    }},
-                    { $sample: { size: 1 } }
-                ]);
+                // 3. Fallback: Any Difficulty (Prioritized)
+                let fallbackQ = await fetchQuestion(null, excludedIds);
+
+                // 4. Fallback: Any Difficulty (Allow Repeats)
+                if (fallbackQ.length === 0 && prioritizeUnseen) {
+                    fallbackQ = await fetchQuestion(null, seenIds);
+                }
                 
                 if (fallbackQ.length > 0) {
                     currentQuestionId = fallbackQ[0]._id;
@@ -143,6 +186,18 @@ const getAdaptiveTestRunner = async (req, res) => {
 
         const question = await Question.findById(currentQuestionId);
         
+        // Calculate Repeat Status
+        let isRepeated = false;
+        if (req.user) {
+            // Check if this question ID exists in any of the user's past detailedResponses
+            const userId = new mongoose.Types.ObjectId(req.user.id);
+            const historyCheck = await Result.findOne({
+                 user: userId,
+                 'detailedResponses.question': question._id
+            });
+            if (historyCheck) isRepeated = true;
+        }
+
         // Calculate remaining time in seconds
         const durationSec = session.testConfig.duration * 60;
         const elapsedSec = Math.floor((new Date() - session.startTime) / 1000);
@@ -150,7 +205,7 @@ const getAdaptiveTestRunner = async (req, res) => {
 
         res.render('adaptive/test_runner', {
             test: session.testConfig,
-            question,
+            question: { ...question.toObject(), isRepeated },
             session,
             remainingSec,
             currentQuestionNum: session.responses.length + 1,
