@@ -1,0 +1,61 @@
+<%- include('../partials/header') %>
+
+<div style="max-width: 800px; margin: 40px auto;">
+    
+    <a href="/essay/student/dashboard" style="color: #8b949e; text-decoration: none; display: inline-flex; align-items: center; margin-bottom: 20px;">
+        &larr; Back to Dashboard
+    </a>
+
+    <div class="glass-card" style="border-top: 4px solid <%= submission.status === 'Checked' ? '#3fb950' : '#d29922' %>;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; border-bottom: 1px solid #30363d; padding-bottom: 20px;">
+            <div>
+                <span style="display: block; color: #8b949e; font-size: 0.9rem; margin-bottom: 5px;">TOPIC</span>
+                <h2 style="color: white; margin: 0; line-height: 1.4; font-size: 1.5rem;"><%= submission.topic.topic %></h2>
+            </div>
+            <div style="text-align: right;">
+                <span style="display: block; color: #8b949e; font-size: 0.9rem; margin-bottom: 8px;">STATUS</span>
+                <span style="padding: 6px 12px; border-radius: 20px; font-weight: 700; background: <%= submission.status === 'Checked' ? '#3fb950' : '#d29922' %>; color: #0d1117;">
+                    <%= submission.status %>
+                </span>
+            </div>
+        </div>
+
+        <% if (submission.status === 'Checked') { %>
+            <div style="background: rgba(46, 160, 67, 0.1); border: 1px solid rgba(46, 160, 67, 0.3); padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                <h3 style="color: #3fb950; margin-top: 0; display: flex; align-items: center; gap: 10px;">
+                    📝 Teacher's Evaluation
+                    <span style="margin-left: auto; font-size: 1.5rem; background: #0d1117; padding: 5px 15px; border-radius: 8px; color: white;">
+                        <%= submission.score %> <span style="font-size: 1rem; color: #8b949e;">/ 10</span>
+                    </span>
+                </h3>
+                
+                <% if (submission.feedback) { %>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(46, 160, 67, 0.3); color: #e6edf3;">
+                        <strong>Remarks:</strong><br>
+                        <p style="margin-top: 5px; line-height: 1.6;"><%= submission.feedback %></p>
+                    </div>
+                <% } else { %>
+                    <p style="color: #8b949e; font-style: italic;">No specific remarks provided.</p>
+                <% } %>
+            </div>
+        <% } else { %>
+            <div style="background: rgba(210, 153, 34, 0.1); border: 1px solid rgba(210, 153, 34, 0.3); padding: 20px; border-radius: 8px; margin-bottom: 30px; color: #d29922;">
+                ⏳ Your essay is currently waiting in the evaluation queue. Please check back later for your score.
+            </div>
+        <% } %>
+
+        <div>
+            <h4 style="color: #8b949e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">Your Answer</h4>
+            <div style="background: #0d1117; padding: 25px; border-radius: 8px; border: 1px solid #30363d; color: #e6edf3; line-height: 1.8; font-family: 'Georgia', serif; white-space: pre-wrap;">
+<%= submission.essayContent %>
+            </div>
+            <div style="text-align: right; margin-top: 10px; color: #8b949e; font-size: 0.85rem;">
+                Submitted on <%= new Date(submission.createdAt).toLocaleString() %>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

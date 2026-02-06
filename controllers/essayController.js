@@ -1,0 +1,175 @@
+const EssayTopic = require('../models/EssayTopic');
+const EssaySubmission = require('../models/EssaySubmission');
+
+// --- ADMIN CONTROLLERS ---
+
+// GET Admin Essay Dashboard (Manage Topics)
+exports.getAdminEssayDashboard = async (req, res) => {
+    try {
+        const topics = await EssayTopic.find().sort({ createdAt: -1 });
+        res.render('essay/admin_dashboard', { topics });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// POST Bulk Add Topics
+exports.addBulkTopics = async (req, res) => {
+    try {
+        const { topicsText } = req.body; // Expecting newline separated string
+        if (!topicsText) return res.redirect('/essay/admin/dashboard');
+
+        const lines = topicsText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        
+        const operations = lines.map(topic => ({
+            insertOne: {
+                document: { topic, createdBy: req.user._id }
+            }
+        }));
+
+        if (operations.length > 0) {
+            await EssayTopic.bulkWrite(operations);
+        }
+        
+        res.redirect('/essay/admin/dashboard');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// POST Toggle Topic Status
+exports.toggleTopicStatus = async (req, res) => {
+    try {
+        const topic = await EssayTopic.findById(req.params.id);
+        if (topic) {
+            topic.isActive = !topic.isActive;
+            await topic.save();
+        }
+        res.redirect('/essay/admin/dashboard');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// GET Submissions List
+exports.getAdminSubmissions = async (req, res) => {
+    try {
+        const submissions = await EssaySubmission.find()
+            .populate('user', 'name email')
+            .populate('topic', 'topic')
+            .sort({ createdAt: -1 });
+        
+        res.render('essay/admin_submissions', { submissions });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// GET Evaluate Submission
+exports.getEvaluatePage = async (req, res) => {
+    try {
+        const submission = await EssaySubmission.findById(req.params.id)
+            .populate('user', 'name')
+            .populate('topic', 'topic');
+            
+        if (!submission) return res.redirect('/essay/admin/submissions');
+        
+        res.render('essay/admin_evaluate', { submission });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// POST Submit Evaluation
+exports.submitEvaluation = async (req, res) => {
+    try {
+        const { score, feedback } = req.body;
+        const submission = await EssaySubmission.findById(req.params.id);
+        
+        if (submission) {
+            submission.score = parseFloat(score);
+            submission.feedback = feedback;
+            submission.status = 'Checked';
+            await submission.save();
+        }
+        res.redirect('/essay/admin/submissions');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// --- STUDENT CONTROLLERS ---
+
+// GET Student Essay Dashboard
+exports.getStudentEssayDashboard = async (req, res) => {
+    try {
+        const submissions = await EssaySubmission.find({ user: req.user._id })
+            .populate('topic', 'topic')
+            .sort({ createdAt: -1 });
+            
+        res.render('essay/student_dashboard', { submissions });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// GET Start Random Essay
+exports.startEssayTest = async (req, res) => {
+    try {
+        // Find a random ACTIVE topic
+        const count = await EssayTopic.countDocuments({ isActive: true });
+        if (count === 0) return res.send('No essay topics available. Please ask admin to add some.');
+
+        const random = Math.floor(Math.random() * count);
+        const topic = await EssayTopic.findOne({ isActive: true }).skip(random);
+
+        if (!topic) return res.redirect('/essay/student/dashboard');
+
+        res.render('essay/write', { topic });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// POST Submit Essay
+exports.submitEssay = async (req, res) => {
+    try {
+        const { topicId, essayContent } = req.body;
+        
+        await EssaySubmission.create({
+            user: req.user._id,
+            topic: topicId,
+            essayContent
+        });
+
+        res.redirect('/essay/student/dashboard');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// GET View Result
+exports.getViewResult = async (req, res) => {
+    try {
+        const submission = await EssaySubmission.findOne({ 
+            _id: req.params.id, 
+            user: req.user._id 
+        }).populate('topic', 'topic');
+        
+        if (!submission) return res.redirect('/essay/student/dashboard');
+        
+        res.render('essay/view_result', { submission });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};

@@ -1,0 +1,52 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #1f2937, #111827);">
+    <div class="banner-title" style="background: linear-gradient(90deg, #f472b6, #db2777); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Essay Submissions</div>
+    <div class="banner-subtitle">Review and grade student essays.</div>
+</div>
+
+<a href="/essay/admin/dashboard" class="btn btn-primary" style="text-decoration: none; margin-bottom: 20px; display: inline-block;">&larr; Back to Topics</a>
+
+<div class="glass-card" style="padding: 0; overflow: hidden;">
+    <table style="width: 100%; border-collapse: collapse; text-align: left; color: #e6edf3;">
+        <thead>
+            <tr style="background: #161b22; border-bottom: 2px solid #30363d;">
+                <th style="padding: 15px; color: #8b949e;">Student</th>
+                <th style="padding: 15px; color: #8b949e;">Topic</th>
+                <th style="padding: 15px; color: #8b949e;">Date</th>
+                <th style="padding: 15px; color: #8b949e;">Status</th>
+                <th style="padding: 15px; color: #8b949e;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (submissions.length === 0) { %>
+                <tr>
+                    <td colspan="5" style="padding: 20px; text-align: center; color: #8b949e;">No submissions yet.</td>
+                </tr>
+            <% } else { %>
+                <% submissions.forEach(sub => { %>
+                    <tr style="border-bottom: 1px solid #30363d; transition: background 0.2s;">
+                        <td style="padding: 15px;"><%= sub.user ? sub.user.name : 'Unknown' %></td>
+                        <td style="padding: 15px; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><%= sub.topic.topic %></td>
+                        <td style="padding: 15px;"><%= new Date(sub.createdAt).toLocaleDateString() %></td>
+                        <td style="padding: 15px;">
+                            <span style="padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; 
+                                background: <%= sub.status === 'Checked' ? 'rgba(46, 160, 67, 0.2)' : 'rgba(210, 153, 34, 0.2)' %>;
+                                color: <%= sub.status === 'Checked' ? '#3fb950' : '#d29922' %>;">
+                                <%= sub.status %>
+                            </span>
+                        </td>
+                        <td style="padding: 15px;">
+                            <a href="/essay/admin/evaluate/<%= sub._id %>" 
+                               style="color: #58a6ff; text-decoration: none; font-weight: 600;">
+                               <%= sub.status === 'Checked' ? 'Re-Evaluate' : 'Evaluate' %> &rarr;
+                            </a>
+                        </td>
+                    </tr>
+                <% }) %>
+            <% } %>
+        </tbody>
+    </table>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,55 @@
+<%- include('../partials/header') %>
+
+<div style="max-width: 800px; margin: 40px auto;">
+    
+    <a href="/essay/admin/submissions" style="color: #8b949e; text-decoration: none; display: inline-flex; align-items: center; margin-bottom: 20px;">
+        &larr; Back to List
+    </a>
+
+    <div class="glass-card" style="border-top: 4px solid #f472b6;">
+        <h2 style="margin-top: 0; color: white;">Evaluation Console</h2>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; font-size: 0.95rem; background: #0d1117; padding: 15px; border-radius: 8px; border: 1px solid #30363d;">
+            <div>
+                <span style="display: block; color: #8b949e; font-size: 0.8rem;">Student</span>
+                <strong style="color: #e6edf3;"><%= submission.user.name %></strong>
+            </div>
+            <div>
+                <span style="display: block; color: #8b949e; font-size: 0.8rem;">Submitted On</span>
+                <strong style="color: #e6edf3;"><%= new Date(submission.createdAt).toLocaleString() %></strong>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 30px;">
+            <label style="color: #f472b6; font-weight: 600; display: block; margin-bottom: 10px;">TOPIC:</label>
+            <h3 style="margin: 0 0 20px 0; color: #e6edf3; font-weight: 500;"><%= submission.topic.topic %></h3>
+            
+            <label style="color: #f472b6; font-weight: 600; display: block; margin-bottom: 10px;">ESSAY CONTENT:</label>
+            <div style="background: white; color: black; padding: 30px; border-radius: 6px; line-height: 1.8; font-family: 'Georgia', serif;">
+                <%= submission.essayContent %>
+            </div>
+        </div>
+
+        <form action="/essay/admin/evaluate/<%= submission._id %>" method="POST" style="background: #161b22; padding: 25px; border-radius: 8px; border: 1px solid #30363d;">
+            <h3 style="color: white; margin-top: 0;">Grade This Essay</h3>
+            
+            <div class="form-group">
+                <label style="color: #8b949e; display: block; margin-bottom: 8px;">Score (Out of 10)</label>
+                <input type="number" name="score" step="0.5" min="0" max="10" value="<%= submission.score || '' %>" required
+                    style="width: 100px; padding: 10px; background: #0d1117; border: 1px solid #30363d; color: white; border-radius: 6px; font-size: 1.1rem;">
+            </div>
+
+            <div class="form-group">
+                <label style="color: #8b949e; display: block; margin-bottom: 8px;">Feedback / Remarks</label>
+                <textarea name="feedback" rows="4" 
+                    style="width: 100%; padding: 12px; background: #0d1117; border: 1px solid #30363d; color: white; border-radius: 6px;"
+                    placeholder="E.g., Good structure, but improve vocabulary..."><%= submission.feedback || '' %></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; background: #238636; border: none;">Save Evaluation</button>
+        </form>
+
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

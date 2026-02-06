@@ -1,0 +1,53 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #1f2937, #111827);">
+    <div class="banner-title" style="background: linear-gradient(90deg, #f472b6, #db2777); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Essay Admin Console</div>
+    <div class="banner-subtitle">Manage essay topics and control active status.</div>
+</div>
+
+<div style="display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
+    <a href="/essay/admin/submissions" class="btn btn-primary" style="text-decoration: none;">📄 View Submissions</a>
+    <a href="/admin/dashboard" class="btn btn-danger" style="text-decoration: none; color: white;">Back to Main Admin</a>
+</div>
+
+<div class="cards-grid" style="grid-template-columns: 1fr 1fr;">
+    
+    <!-- Bulk Add Section -->
+    <div class="quiz-card">
+        <h3 style="color:white; margin-top:0;">Bulk Add Topics</h3>
+        <p style="color: #8b949e; font-size: 0.9rem;">Paste topics (one per line). Adds 50+ instantly.</p>
+        <form action="/essay/admin/topics/add" method="POST">
+            <textarea name="topicsText" rows="10" 
+                style="width: 100%; background: #0d1117; border: 1px solid #30363d; color: white; border-radius: 6px; padding: 10px; font-family: monospace;" 
+                placeholder="The Impact of AI on Society&#10;Global Warming and Climate Change&#10;The Future of Remote Work..."></textarea>
+            <button type="submit" class="btn btn-primary" style="margin-top: 15px; width: 100%;">Add Topics</button>
+        </form>
+    </div>
+
+    <!-- Topics List -->
+    <div class="quiz-card">
+        <h3 style="color:white; margin-top:0;">Existing Topics (<%= topics.length %>)</h3>
+        <div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+            <% if (topics.length === 0) { %>
+                <p style="color: #8b949e;">No topics found.</p>
+            <% } else { %>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <% topics.forEach(t => { %>
+                        <div style="background: #0d1117; padding: 10px; border-radius: 6px; border: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: #e6edf3; font-size: 0.9rem;"><%= t.topic.substring(0, 40) %>...</span>
+                            
+                            <form action="/essay/admin/topics/toggle/<%= t._id %>" method="POST" style="margin:0;">
+                                <button type="submit" 
+                                    style="padding: 4px 8px; border-radius: 4px; border: none; font-size:0.7rem; font-weight: bold; cursor: pointer; background: <%= t.isActive ? 'rgba(46, 160, 67, 0.2)' : 'rgba(218, 54, 51, 0.2)' %>; color: <%= t.isActive ? '#3fb950' : '#ff7b72' %>;">
+                                    <%= t.isActive ? 'ACTIVE' : 'INACTIVE' %>
+                                </button>
+                            </form>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

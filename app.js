@@ -31,6 +31,7 @@ app.use('/auth', require('./routes/authRoutes'));
 app.use('/student', require('./routes/studentRoutes'));
 app.use('/admin', require('./routes/adminRoutes'));
 app.use('/adaptive', require('./routes/adaptiveRoutes'));
+app.use('/essay', require('./routes/essayRoutes')); // New Essay Feature
 
 // Public Routes (Login/Register Pages)
 app.get('/', (req, res) => res.redirect('/student/dashboard'));

@@ -1,0 +1,57 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #1f2937, #111827);">
+    <div class="banner-title" style="background: linear-gradient(90deg, #f472b6, #db2777); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">My Essay Dashboard</div>
+    <div class="banner-subtitle">Practice writing and get evaluated by admins.</div>
+</div>
+
+<div style="margin-bottom: 40px; text-align: center;">
+    <a href="/essay/student/start" class="btn btn-primary" 
+       style="background: linear-gradient(135deg, #f472b6, #db2777); border: none; padding: 15px 30px; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(219, 39, 119, 0.4);">
+        ✍️ Start New Essay Test
+    </a>
+    <p style="margin-top: 15px; color: #8b949e;">System will pick a random topic for you.</p>
+</div>
+
+<h2 style="color: white; margin-bottom: 20px;">My Submissions</h2>
+
+<div class="cards-grid">
+    <% if (submissions.length === 0) { %>
+        <p style="color: #8b949e;">You haven't submitted any essays yet.</p>
+    <% } %>
+
+    <% submissions.forEach(sub => { %>
+        <div class="quiz-card" style="border-left: 4px solid <%= sub.status === 'Checked' ? '#3fb950' : '#d29922' %>;">
+            <div class="card-header">
+                <span class="status-badge" style="background: #0d1117; color: #8b949e;">
+                    <%= new Date(sub.createdAt).toLocaleDateString() %>
+                </span>
+                <span class="status-badge" 
+                      style="background: <%= sub.status === 'Checked' ? 'rgba(46, 160, 67, 0.2)' : 'rgba(210, 153, 34, 0.2)' %>;
+                             color: <%= sub.status === 'Checked' ? '#3fb950' : '#d29922' %>;">
+                    <%= sub.status %>
+                </span>
+            </div>
+            
+            <h3 style="color: #e6edf3; margin-top: 0; font-size: 1.1rem; line-height: 1.5; min-height: 50px;">
+                <%= sub.topic.topic %>
+            </h3>
+
+            <div class="card-meta">
+                <% if (sub.status === 'Checked') { %>
+                    <span style="font-size: 1.2rem; font-weight: 800; color: #e6edf3;">
+                        Score: <span style="color: #f472b6;"><%= sub.score %></span>/10
+                    </span>
+                <% } else { %>
+                    <span style="color: #8b949e;">Waiting for grade...</span>
+                <% } %>
+            </div>
+
+            <a href="/essay/student/result/<%= sub._id %>" class="btn-start" style="margin-top: 15px;">
+                View Details &rarr;
+            </a>
+        </div>
+    <% }) %>
+</div>
+
+<%- include('../partials/footer') %>
