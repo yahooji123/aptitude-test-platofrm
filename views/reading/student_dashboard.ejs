@@ -1,0 +1,58 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #1f2937, #111827); margin-bottom: 30px;">
+    <div class="banner-title" style="background: linear-gradient(90deg, #60a5fa, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Reading Comprehension</div>
+    <div class="banner-subtitle">Improve your analytical skills with passage-based questions.</div>
+</div>
+
+<div class="cards-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 40px;">
+    <!-- Start Panel -->
+    <div style="grid-column: 1 / -1; text-align: center; background: rgba(13, 17, 23, 0.5); padding: 40px; border-radius: 12px; border: 1px solid #30363d;">
+        <div style="font-size: 3rem; margin-bottom: 20px;">📚</div>
+        <h2 style="color: white; margin-bottom: 15px;">Start Reading Test</h2>
+        <p style="color: #8b949e; max-width: 600px; margin: 0 auto 30px auto;">
+            Each passage has <strong>5 Questions</strong>. Select how many passages you want to attempt.
+        </p>
+        
+        <form action="/reading/student/start" method="GET" style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label for="passageCount" style="color: #c9d1d9; font-weight: 600;">Number of Passages:</label>
+                <select name="count" id="passageCount" style="padding: 10px; border-radius: 6px; background: #0d1117; color: white; border: 1px solid #30363d; font-size: 1rem;">
+                    <option value="1">1 Passage (5 Qs)</option>
+                    <option value="2">2 Passages (10 Qs)</option>
+                    <option value="3">3 Passages (15 Qs)</option>
+                    <option value="4" selected>4 Passages (20 Qs)</option>
+                    <option value="5">5 Passages (25 Qs)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary" 
+               style="background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; padding: 15px 40px; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); cursor: pointer;">
+                Start Test
+            </button>
+        </form>
+    </div>
+</div>
+
+<h3 style="color: #e6edf3;">Recent Results</h3>
+<div class="cards-grid">
+    <% if(results.length === 0) { %>
+        <p style="color: #8b949e;">No tests taken yet.</p>
+    <% } %>
+
+    <% results.forEach(r => { %>
+        <div class="quiz-card" style="border-left: 4px solid #3b82f6;">
+            <div class="card-header">
+                <span style="color: #8b949e; font-size: 0.85rem;"><%= new Date(r.completedAt).toLocaleDateString() %></span>
+            </div>
+            <div style="margin: 15px 0;">
+                <span style="font-size: 2rem; font-weight: 700; color: white;"><%= r.totalScore %></span>
+                <span style="color: #8b949e; font-size: 1rem;">/ <%= r.maxScore %></span>
+            </div>
+            
+            <a href="/reading/student/result/<%= r._id %>" style="color: #58a6ff; text-decoration: none; font-weight: 600;">View Analysis &rarr;</a>
+        </div>
+    <% }) %>
+</div>
+
+<%- include('../partials/footer') %>

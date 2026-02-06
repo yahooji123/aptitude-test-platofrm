@@ -6,11 +6,24 @@
 </div>
 
 <div style="margin-bottom: 40px; text-align: center;">
-    <a href="/essay/student/start" class="btn btn-primary" 
-       style="background: linear-gradient(135deg, #f472b6, #db2777); border: none; padding: 15px 30px; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(219, 39, 119, 0.4);">
-        ✍️ Start New Essay Test
-    </a>
-    <p style="margin-top: 15px; color: #8b949e;">System will pick a random topic for you.</p>
+    <div style="background: rgba(30, 41, 59, 0.5); padding: 30px; border-radius: 12px; display: inline-block; border: 1px solid #30363d; max-width: 600px; width: 100%;">
+        <h3 style="color: white; margin-top: 0; margin-bottom: 20px;">Start New Essay</h3>
+        
+        <div style="display: flex; gap: 20px; justify-content: center; margin-bottom: 20px;">
+            <a href="/essay/student/start?mode=practice" class="btn btn-primary" 
+               style="flex: 1; background: #238636; border: none; padding: 15px; font-size: 1rem; text-decoration: none; display: flex; flex-direction: column; gap: 5px;">
+                <span style="font-size: 1.2rem;">🧘 Practice Mode</span>
+                <span style="font-size: 0.8rem; opacity: 0.8;">No Timer • Relaxed</span>
+            </a>
+            
+            <a href="/essay/student/start?mode=exam" class="btn btn-primary" 
+               style="flex: 1; background: #da3633; border: none; padding: 15px; font-size: 1rem; text-decoration: none; display: flex; flex-direction: column; gap: 5px;">
+                <span style="font-size: 1.2rem;">⏱️ Exam Mode</span>
+                <span style="font-size: 0.8rem; opacity: 0.8;">30 Min Timer • Strict</span>
+            </a>
+        </div>
+        <p style="margin: 0; color: #8b949e; font-size: 0.9rem;">System will pick a random topic for you.</p>
+    </div>
 </div>
 
 <h2 style="color: white; margin-bottom: 20px;">My Submissions</h2>

@@ -16,7 +16,8 @@ router.post('/admin/submissions/delete/:id', protect, authorize('admin'), essayC
 
 // --- STUDENT ROUTES ---
 router.get('/student/dashboard', protect, authorize('student'), essayController.getStudentEssayDashboard);
-router.get('/student/start', protect, authorize('student'), essayController.startEssayTest);
+router.get('/student/start', protect, authorize('student'), essayController.startEssayTest); // Init & Redirect
+router.get('/student/write/:id', protect, authorize('student'), essayController.renderWritePage); // Actual Page
 router.post('/student/submit', protect, authorize('student'), essayController.submitEssay);
 router.get('/student/result/:id', protect, authorize('student'), essayController.getViewResult);
 

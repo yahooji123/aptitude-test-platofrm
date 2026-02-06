@@ -1,0 +1,512 @@
+<%- include('../partials/header') %>
+
+<!-- TEST DATA PAYLOAD -->
+<div id="testDataPayload" style="display:none;"><%= testData %></div>
+
+
+<style>
+    /* Fullscreen Focus Layout */
+    .container {
+        max-width: 100vw !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100vw;
+    }
+    
+    body {
+        overflow: hidden; /* Prevent body scroll, custom split scrolling */
+        background: #0d1117; 
+        color: #c9d1d9;
+    }
+
+    /* SPLIT CONTAINER */
+    .reading-test-container {
+        display: flex;
+        height: calc(100vh - 70px);
+        width: 100%;
+        overflow: hidden;
+    }
+
+    /* LEFT: PASSAGE (50%) */
+    .passage-panel {
+        width: 50%;
+        background: #161b22;
+        border-right: 1px solid #30363d;
+        display: flex;
+        flex-direction: column;
+        transition: width 0.3s ease;
+    }
+
+    .passage-header {
+        padding: 12px 20px;
+        background: #0d1117;
+        border-bottom: 1px solid #30363d;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    
+    .passage-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 30px;
+        font-family: 'Georgia', serif;
+        line-height: 1.8;
+        color: #e6edf3;
+        font-size: 1.1rem; /* Default */
+    }
+
+    /* RIGHT: QUESTIONS (50%) */
+    .questions-panel {
+        width: 50%;
+        background: #0d1117;
+        display: flex;
+        flex-direction: column;
+        transition: width 0.3s ease;
+    }
+
+    .questions-header {
+        padding: 12px 20px;
+        border-bottom: 1px solid #30363d;
+        background: #161b22;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .questions-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        scroll-behavior: smooth;
+    }
+
+    /* Typeography enhancements for Passage */
+    .passage-body h2 {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.5rem;
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #fff;
+        border-bottom: 1px solid #30363d;
+        padding-bottom: 10px;
+    }
+    .passage-body p {
+        margin-bottom: 1.2rem;
+    }
+
+    /* Question Card Enhanced */
+    .question-card {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 25px;
+        border-left: 4px solid transparent; /* Highlight marker */
+        transition: border-color 0.2s;
+    }
+    .question-card:hover {
+        border-color: #58a6ff;
+        border-left-color: #58a6ff;
+    }
+    .question-card.answered {
+        border-left-color: #238636;
+    }
+
+    .q-text {
+        color: #fff;
+        font-weight: 600;
+        margin-bottom: 15px;
+        display: block;
+        font-size: 1rem;
+    }
+
+    .q-opt {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        margin-bottom: 8px;
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+        color: #c9d1d9;
+        transition: all 0.2s;
+        font-family: inherit;
+    }
+
+    .q-opt:hover { 
+        background: #1f242c;
+        border-color: #8b949e; 
+    }
+    
+    .q-opt.selected { 
+        background: rgba(56, 139, 253, 0.1); 
+        border-color: #58a6ff; 
+        color: #58a6ff; 
+        font-weight: 500;
+    }
+
+    .opt-circle {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid #30363d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        color: #8b949e;
+        flex-shrink: 0;
+    }
+
+    .q-opt.selected .opt-circle {
+        border-color: #58a6ff;
+        background: #58a6ff;
+        color: white;
+    }
+
+    /* FOOTER NAV */
+    .test-footer {
+        height: 70px;
+        background: #161b22;
+        border-top: 1px solid #30363d;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 30px;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        z-index: 100;
+        box-shadow: 0 -4px 12px rgba(0,0,0,0.2);
+    }
+
+    /* Font Controls */
+    .font-control {
+        background: #21262d;
+        border: 1px solid #30363d;
+        color: #c9d1d9;
+        border-radius: 6px;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.2s;
+    }
+    .font-control:hover {
+        background: #30363d;
+        color: white;
+    }
+
+    /* Mobile Tabs (Hidden on Desktop) */
+    .mobile-tabs {
+        display: none;
+        width: 100%;
+        background: #161b22;
+        border-bottom: 1px solid #30363d;
+    }
+    .mobile-tab-btn {
+        flex: 1;
+        padding: 10px;
+        background: none;
+        border: none;
+        color: #8b949e;
+        font-weight: 600;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+    }
+    .mobile-tab-btn.active {
+        color: #58a6ff;
+        border-bottom-color: #58a6ff;
+    }
+
+    /* RESPONSIVE DESIGN */
+    @media (max-width: 768px) {
+        .reading-test-container {
+            flex-direction: column;
+            height: calc(100vh - 120px); /* Account for tabs + footer */
+        }
+        
+        .passage-panel, .questions-panel {
+            width: 100%;
+            display: none; /* Controlled by JS */
+            height: 100%;
+            border-right: none;
+        }
+
+        .passage-panel.active, .questions-panel.active {
+            display: flex;
+        }
+        
+        .mobile-tabs {
+            display: flex;
+        }
+
+        .passage-body {
+            padding: 20px;
+            font-size: 1rem;
+        }
+        
+        .test-footer {
+            padding: 0 15px;
+            height: 60px;
+        }
+        
+        .test-footer .btn {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+    }
+
+</style>
+
+<!-- Mobile Tab Switcher -->
+<div class="mobile-tabs">
+    <button class="mobile-tab-btn active" onclick="switchMobileTab('passage')">📖 Passage</button>
+    <button class="mobile-tab-btn" onclick="switchMobileTab('questions')">📝 Questions</button>
+</div>
+
+<div class="reading-test-container">
+    
+    <!-- LEFT PANEL -->
+    <div class="passage-panel active" id="panelPassage">
+        <div class="passage-header">
+            <h3 style="margin:0; font-size: 1rem; color: #58a6ff; display: flex; align-items: center; gap: 8px;">
+                <span>📄</span> Passage Text
+            </h3>
+            <div style="display: flex; gap: 5px; align-items: center;">
+                <span style="font-size: 0.8rem; margin-right: 5px; color: #8b949e;">Size</span>
+                <button class="font-control" onclick="changeFontSize(-1)">A-</button>
+                <div style="width: 1px; height: 20px; background: #30363d; margin: 0 5px;"></div>
+                <button class="font-control" onclick="changeFontSize(1)">A+</button>
+            </div>
+        </div>
+        <div class="passage-body" id="passageContent">
+            <!-- Content injected via JS -->
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="questions-panel" id="panelQuestions">
+        <div class="questions-header">
+            <h3 style="margin:0; font-size: 1rem; color: #e6edf3;">Questions</h3>
+            <span style="font-size: 0.85rem; color: #8b949e; background: #21262d; padding: 4px 8px; border-radius: 12px; border: 1px solid #30363d;" id="progressIndicator">
+                1 / 4
+            </span>
+        </div>
+        
+        <div class="questions-list" id="questionsContainer">
+            <!-- Questions injected via JS -->
+        </div>
+    </div>
+
+</div>
+
+<!-- NAV FOOTER -->
+<div class="test-footer">
+    <button class="btn btn-secondary" id="btnPrev" onclick="navigate(-1)" disabled style="background: transparent; border: 1px solid #30363d; color: #8b949e;">
+        &larr; Previous
+    </button>
+    
+    <div style="text-align: center; display: none;">
+        <span style="font-weight: 600; color: #e6edf3;">Reading Section</span>
+    </div>
+
+    <!-- Container for Next/Submit ensures they occupy same space -->
+    <div>
+        <button class="btn btn-primary" id="btnNext" onclick="navigate(1)" style="min-width: 120px;">
+            Next Passage &rarr;
+        </button>
+        <button class="btn btn-success" id="btnSubmit" onclick="submitTest()" style="display: none; background: #238636; border: none; padding: 10px 20px; cursor: pointer; border-radius: 6px; color: white; min-width: 120px; box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4);">
+            Submit Test ✅
+        </button>
+    </div>
+</div>
+
+<script>
+    // --- DATA ---
+    const rawData = document.getElementById('testDataPayload').innerText;
+    const passages = JSON.parse(decodeURIComponent(rawData));
+    
+    // State
+    let currentIndex = 0;
+    let fontSize = 18; // px
+    
+    // Stores answers: { "passageId": [0, 2, 1, 3, 0] }
+    const userAnswers = {};
+
+    // Initialize Empty Answers
+    passages.forEach(p => {
+        userAnswers[p._id] = [-1, -1, -1, -1, -1];
+    });
+
+    // --- RENDER ---
+    function renderCurrent() {
+        const p = passages[currentIndex];
+        
+        // 1. Render Passage
+        document.getElementById('passageContent').innerHTML = `
+            <h2>${p.title}</h2>
+            <div>${p.content.replace(/\r\n/g, '\n').split('\n').filter(l => l.trim()).map(l => `<p>${l}</p>`).join('')}</div>
+        `;
+
+        // 2. Render Questions
+        const qContainer = document.getElementById('questionsContainer');
+        qContainer.innerHTML = '';
+        
+        p.questions.forEach((q, qIdx) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            // Mark as answered if already selected
+            if(userAnswers[p._id][qIdx] !== -1) card.classList.add('answered');
+            
+            let optionsHtml = '';
+            q.options.forEach((opt, optIdx) => {
+                const isSelected = userAnswers[p._id][qIdx] === optIdx;
+                optionsHtml += `
+                    <div class="q-opt ${isSelected ? 'selected' : ''}" 
+                        onclick="selectOption('${p._id}', ${qIdx}, ${optIdx}, this)">
+                        <div class="opt-circle">${['A','B','C','D'][optIdx]}</div>
+                        <span>${opt}</span>
+                    </div>
+                `;
+            });
+
+            card.innerHTML = `
+                <span class="q-text">Q${qIdx+1}. ${q.questionText}</span>
+                <div class="options-grid">${optionsHtml}</div>
+            `;
+            qContainer.appendChild(card);
+        });
+
+        // 3. Update UI
+        document.getElementById('progressIndicator').innerText = `Passage ${currentIndex + 1} / ${passages.length}`;
+        
+        // Buttons
+        document.getElementById('btnPrev').disabled = (currentIndex === 0);
+        
+        if (currentIndex === passages.length - 1) {
+            document.getElementById('btnNext').style.display = 'none';
+            document.getElementById('btnSubmit').style.display = 'block';
+        } else {
+            document.getElementById('btnNext').style.display = 'block';
+            document.getElementById('btnNext').innerHTML = 'Next Passage &rarr;';
+            document.getElementById('btnSubmit').style.display = 'none';
+        }
+
+        // Scroll tops
+        document.getElementById('passageContent').scrollTop = 0;
+        document.getElementById('questionsContainer').scrollTop = 0;
+    }
+
+    // --- ACTIONS ---
+
+    function selectOption(pId, qIdx, optIdx, btnElement) {
+        // Update State
+        userAnswers[pId][qIdx] = optIdx;
+        
+        // Update UI (Sibling buttons)
+        const parent = btnElement.parentElement; // .options-grid
+        Array.from(parent.children).forEach(child => child.classList.remove('selected'));
+        btnElement.classList.add('selected');
+
+        // Mark card as answered
+        const card = parent.parentElement;
+        card.classList.add('answered');
+    }
+
+    function navigate(dir) {
+        // Validate current passage completion? (Optional)
+        currentIndex += dir;
+        renderCurrent();
+        
+        // Mobile Reset: Switch back to passage view on new passage
+        if(window.innerWidth <= 768 && dir !== 0) {
+            switchMobileTab('passage');
+        }
+    }
+
+    function changeFontSize(delta) {
+        fontSize += delta;
+        if(fontSize < 14) fontSize = 14;
+        if(fontSize > 26) fontSize = 26;
+        document.getElementById('passageContent').style.fontSize = fontSize + 'px';
+    }
+
+    async function submitTest() {
+        // 1. Check if all answered
+        let totalQs = 0;
+        let totalAnswered = 0;
+
+        for (let pId in userAnswers) {
+            userAnswers[pId].forEach(a => {
+                totalQs++;
+                if (a !== -1) totalAnswered++;
+            });
+        }
+
+        if (totalAnswered < totalQs) {
+             if (!confirm(`You have answered ${totalAnswered}/${totalQs} questions. Unanswered questions will be marked incorrect. Submit anyway?`)) return;
+        } else {
+             if (!confirm("Ready to submit your Reading test?")) return;
+        }
+
+        // 2. Post Data
+        try {
+            const res = await fetch('/reading/student/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userAnswers)
+            });
+            
+            const data = await res.json();
+            if (data.success) {
+                window.location.href = data.redirectUrl;
+            } else {
+                alert('Submission failed: ' + data.message);
+            }
+        } catch (e) {
+             console.error(e);
+             alert('Network error. Please try again.');
+        }
+    }
+
+    // --- MOBILE TABS ---
+    function switchMobileTab(tab) {
+        // Reset
+        document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('panelPassage').classList.remove('active');
+        document.getElementById('panelQuestions').classList.remove('active');
+
+        // Activate
+        if (tab === 'passage') {
+            document.querySelector('.mobile-tab-btn:nth-child(1)').classList.add('active');
+            document.getElementById('panelPassage').classList.add('active');
+        } else {
+            document.querySelector('.mobile-tab-btn:nth-child(2)').classList.add('active');
+            document.getElementById('panelQuestions').classList.add('active');
+        }
+    }
+
+    // Init
+    renderCurrent();
+
+</script>
+
+
+<!-- Note: Footer included but hidden visually/pushed down -->
+<div style="display: none;">
+<%- include('../partials/footer') %>
+</div>

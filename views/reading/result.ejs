@@ -1,0 +1,100 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #1f2937, #111827); margin-bottom: 30px;">
+    <div class="banner-title" style="background: linear-gradient(90deg, #3b82f6, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Reading Test Result</div>
+    <div class="banner-subtitle">Detailed Performance Analysis</div>
+</div>
+
+<!-- Score Header -->
+<div style="text-align: center; margin-bottom: 40px; background: rgba(13, 17, 23, 0.5); padding: 40px; border-radius: 12px; border: 1px solid #30363d;">
+    
+    <div style="font-size: 1.2rem; color: #8b949e; margin-bottom: 10px;">Total Score</div>
+    <div style="font-size: 4rem; font-weight: 800; color: white; line-height: 1;">
+        <%= result.totalScore %> <span style="font-size: 2rem; color: #8b949e; font-weight: 400;">/ <%= result.maxScore %></span>
+    </div>
+    
+    <div style="margin-top: 20px;">
+        <% const percentage = (result.totalScore / result.maxScore) * 100; %>
+        <div style="max-width: 300px; height: 10px; background: #21262d; border-radius: 5px; margin: 0 auto; overflow: hidden;">
+            <div style="width: <%= percentage %>%; height: 100%; background: <%= percentage >= 70 ? '#3fb950' : (percentage >= 40 ? '#d29922' : '#f85149') %>;"></div>
+        </div>
+        <div style="margin-top: 10px; color: <%= percentage >= 70 ? '#3fb950' : (percentage >= 40 ? '#d29922' : '#f85149') %>; font-weight: 600;">
+            <%= percentage.toFixed(1) %>% Accuracy
+        </div>
+    </div>
+
+    <a href="/reading/student/dashboard" class="btn btn-secondary" style="margin-top: 30px; display: inline-block;">Return to Dashboard</a>
+</div>
+
+<!-- Detailed Analysis -->
+<h3 style="color: #e6edf3; border-bottom: 1px solid #30363d; padding-bottom: 10px;">Passage Breakdown</h3>
+
+<% result.passages.forEach((pRef, pIdx) => { %>
+    <div style="background: #0d1117; border: 1px solid #30363d; border-radius: 8px; margin-bottom: 30px; overflow: hidden;">
+        
+        <!-- Passage Header Score -->
+        <div style="padding: 15px 20px; background: #161b22; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center;">
+            <h4 style="margin: 0; color: #e6edf3;">Passage <%= pIdx + 1 %>: <%= pRef.passageId.title %></h4>
+            <span style="background: #21262d; padding: 4px 10px; border-radius: 20px; color: #e6edf3; font-weight: 600;">
+                Score: <%= pRef.passageScore %>/5
+            </span>
+        </div>
+
+        <!-- Content Preview (Folded) -->
+        <div style="padding: 15px 20px; font-size: 0.9rem; color: #8b949e; border-bottom: 1px solid #30363d; background: #0d1117;">
+            <em>"<%= pRef.passageId.content.substring(0, 100) %>..."</em>
+        </div>
+
+        <!-- Questions Review -->
+        <div style="padding: 20px;">
+            <% pRef.passageId.questions.forEach((q, qIdx) => { %>
+                <% 
+                    const userAnsIdx = pRef.answers[qIdx];
+                    const isCorrect = userAnsIdx === q.correctOption;
+                    const isSkipped = userAnsIdx === -1;
+                %>
+                
+                <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #21262d;">
+                    <div style="display: flex; gap: 10px; align-items: flex-start;">
+                        <span style="font-size: 1.2rem;">
+                            <%= isCorrect ? '✅' : '❌' %>
+                        </span>
+                        <div style="flex: 1;">
+                            <strong style="color: #e6edf3; display: block; margin-bottom: 8px;">Q<%= qIdx+1 %>. <%= q.questionText %></strong>
+                            
+                            <!-- Options -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <% q.options.forEach((opt, optIdx) => { %>
+                                    <% 
+                                        let style = "padding: 8px; border-radius: 4px; font-size: 0.9rem; color: #8b949e; border: 1px solid #30363d;";
+                                        
+                                        // Highlight Logic
+                                        if (optIdx === q.correctOption) {
+                                            style = "padding: 8px; border-radius: 4px; font-size: 0.9rem; background: rgba(46, 160, 67, 0.15); color: #3fb950; border: 1px solid #3fb950;";
+                                        } else if (optIdx === userAnsIdx && !isCorrect) {
+                                            style = "padding: 8px; border-radius: 4px; font-size: 0.9rem; background: rgba(248, 81, 73, 0.15); color: #ff7b72; border: 1px solid #ff7b72;";
+                                        }
+                                    %>
+                                    <div style="<%= style %>">
+                                        <%= ['A','B','C','D'][optIdx] %>) <%= opt %>
+                                        <% if (optIdx === userAnsIdx) { %> (You) <% } %>
+                                        <% if (optIdx === q.correctOption) { %> (Correct) <% } %>
+                                    </div>
+                                <% }) %>
+                            </div>
+
+                            <!-- Explanation -->
+                            <div style="margin-top: 10px; background: #161b22; padding: 10px; border-left: 3px solid #3b82f6; font-size: 0.9rem; color: #c9d1d9;">
+                                <strong>Explanation:</strong> <%= q.explanation %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            <% }) %>
+        </div>
+
+    </div>
+<% }) %>
+
+<%- include('../partials/footer') %>

@@ -144,9 +144,11 @@ exports.getStudentEssayDashboard = async (req, res) => {
     }
 };
 
-// GET Start Random Essay
+// GET Start Random Essay (Redirects to persistent URL)
 exports.startEssayTest = async (req, res) => {
     try {
+        const { mode } = req.query; // 'exam' or 'practice'
+
         // Find a random ACTIVE topic
         const count = await EssayTopic.countDocuments({ isActive: true });
         if (count === 0) return res.send('No essay topics available. Please ask admin to add some.');
@@ -156,7 +158,24 @@ exports.startEssayTest = async (req, res) => {
 
         if (!topic) return res.redirect('/essay/student/dashboard');
 
-        res.render('essay/write', { topic });
+        // Redirect to a specific URL so refreshing doesn't change the topic
+        res.redirect(`/essay/student/write/${topic._id}?mode=${mode || 'practice'}`);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// GET Render Write Page (Persistent URL)
+exports.renderWritePage = async (req, res) => {
+    try {
+        const topic = await EssayTopic.findById(req.params.id);
+        if (!topic) return res.redirect('/essay/student/dashboard');
+
+        const mode = req.query.mode || 'practice';
+        
+        // Pass topic and mode to the view
+        res.render('essay/write', { topic, mode });
     } catch (error) {
         console.error(error);
         res.status(500).send('Server Error');

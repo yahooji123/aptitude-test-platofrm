@@ -321,7 +321,15 @@
     const focusBtnText = document.getElementById('focusText');
     const focusBtnIcon = document.getElementById('focusIcon');
     let isFocusMode = false;
-    let secondsElapsed = 0;
+    
+    // Config from Server
+    const ESSAY_MODE = "<%= mode %>"; // 'practice' or 'exam'
+    const EXAM_DURATION_MINUTES = 30; 
+    let secondsTotal = 0;
+    
+    // Topic specific storage key
+    const TOPIC_ID = "<%= topic._id %>";
+    const DRAFT_KEY = `essay_draft_${TOPIC_ID}`;
 
     // --- INITIALIZATION ---
     document.addEventListener('DOMContentLoaded', () => {
@@ -331,9 +339,70 @@
             enableFocusMode();
         }
 
-        // Start Timer
-        setInterval(updateTimer, 1000);
+        // Load Draft
+        const savedDraft = localStorage.getItem(DRAFT_KEY);
+        if(savedDraft) {
+            const textarea = document.querySelector('textarea');
+            textarea.value = savedDraft;
+            updateStats(textarea);
+            console.log('Draft restored for topic:', TOPIC_ID);
+        }
+
+        // Start Timer based on Mode
+        if (ESSAY_MODE === 'exam') {
+            startExamTimer();
+        } else {
+            startPracticeTimer();
+        }
     });
+
+    // --- TIMERS ---
+    
+    // Practice: Count UP
+    function startPracticeTimer() {
+        setInterval(() => {
+            secondsTotal++;
+            updateTimerDisplay(secondsTotal);
+        }, 1000);
+    }
+
+    // Exam: Count DOWN
+    function startExamTimer() {
+        // Check if there's a start time stored for this exam session? 
+        // For simplicity, we restart timer on refresh for now, or we could store startTime in localStorage too.
+        // Let's implement a simple countdown for this session.
+        
+        let timeLeft = EXAM_DURATION_MINUTES * 60;
+        
+        const timerLabel = document.getElementById('sessionTimer');
+        timerLabel.style.color = '#ef4444'; // Red for exam
+        timerLabel.style.fontWeight = 'bold';
+
+        const interval = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(interval);
+                alert("Time's up! Your essay will be submitted automatically.");
+                submitForm(true); // Force submit
+            } else {
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerLabel.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Warning at 5 mins
+                if (timeLeft === 300) {
+                     alert("5 minutes remaining!");
+                }
+            }
+        }, 1000);
+    }
+
+    function updateTimerDisplay(secondsElapsed) {
+        const minutes = Math.floor(secondsElapsed / 60);
+        const seconds = secondsElapsed % 60;
+        document.getElementById('sessionTimer').innerText = 
+            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
 
     // --- FOCUS MODE TOGGLE ---
     function toggleFocusMode() {
@@ -360,29 +429,14 @@
         localStorage.setItem('essayFocusMode', 'false');
     }
 
-    // --- LIVE STATS ---
+    // --- LIVE STATS & AUTO SAVE ---
     function updateStats(textarea) {
         const text = textarea.value.trim();
         const wordCount = text ? text.split(/\s+/).length : 0;
         document.getElementById('wordCount').innerText = wordCount + " words";
         
-        // Auto-save logic could go here (e.g., save to localStorage)
-        localStorage.setItem('currentEssayDraft', textarea.value);
-    }
-    
-    // Restore draft if exists
-    const savedDraft = localStorage.getItem('currentEssayDraft');
-    if(savedDraft) {
-        document.querySelector('textarea').value = savedDraft;
-        updateStats(document.querySelector('textarea'));
-    }
-
-    function updateTimer() {
-        secondsElapsed++;
-        const minutes = Math.floor(secondsElapsed / 60);
-        const seconds = secondsElapsed % 60;
-        document.getElementById('sessionTimer').innerText = 
-            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        // Auto-save logic
+        localStorage.setItem(DRAFT_KEY, textarea.value);
     }
 
     // --- SUBMISSION ---
@@ -393,11 +447,21 @@
             return false;
         }
         if(confirm("Are you sure you want to submit? This cannot be undone.")) {
-            // Clear local storage draft upon clean submission
-            localStorage.removeItem('currentEssayDraft');
-            return true;
+            submitForm(false);
+            return true; // Form handles submission
         }
         return false;
+    }
+
+    function submitForm(force) {
+        // Clear draft
+        localStorage.removeItem(DRAFT_KEY);
+        
+        if (force) {
+            // Bypass validation and events
+            window.onbeforeunload = null;
+            document.getElementById('essayForm').submit();
+        }
     }
 </script>
 
