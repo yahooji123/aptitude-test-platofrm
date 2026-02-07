@@ -123,6 +123,10 @@ exports.bulkAddWords = async (req, res) => {
         // Format Expectation: "Word = Meaning" per line
         const lines = wordsData.split(/\r?\n/);
         const newWords = [];
+        
+        // Fetch existing words to prevent duplicates
+        const existingDocs = await EnglishWord.find({ topic: topicId }).select('word');
+        const existingSet = new Set(existingDocs.map(d => d.word.toLowerCase()));
 
         for (let line of lines) {
             line = line.trim();
@@ -130,12 +134,18 @@ exports.bulkAddWords = async (req, res) => {
             
             const parts = line.split('=');
             if (parts.length >= 2) {
-                newWords.push({
-                    word: parts[0].trim(),
-                    hindiMeaning: parts[1].trim(),
-                    topic: topicId,
-                    difficulty: 'medium'
-                });
+                const wordText = parts[0].trim();
+                
+                // Only add if not duplicate
+                if (!existingSet.has(wordText.toLowerCase())) {
+                    newWords.push({
+                        word: wordText,
+                        hindiMeaning: parts[1].trim(),
+                        topic: topicId,
+                        difficulty: 'medium'
+                    });
+                    existingSet.add(wordText.toLowerCase()); // Add to set to prevent duplicates within the same bulk paste
+                }
             }
         }
 
@@ -293,17 +303,33 @@ exports.generateTest = async (req, res) => {
 
         // Weighted Random Selection
         // Sort by weight (descending) with random factor
-        // If Smart Mode is on, we want deterministic sort for the unseen ones (weight 1000)
+        // If Smart Mode is on, we want deterministic sort for the unseen ones (weight 1000) but randomized amongst themselves
         weightedWords.sort((a, b) => {
-             // If weights are massive (Smart Mode Unseen), purely sort by weight first to ensure they are picked
+             // If weights are massive (Smart Mode Unseen)
              if (prioritizeUnseen && (a.weight >= 1000 || b.weight >= 1000)) {
-                 return b.weight - a.weight; 
+                 const diff = b.weight - a.weight;
+                 if (diff !== 0) return diff; // Higher weight wins
+                 return Math.random() - 0.5; // If weights are equal (both unseen), randomize/shuffle them
              }
              // Otherwise use randomized weight for variety
              return (Math.random() * b.weight) - (Math.random() * a.weight);
         });
         
-        const finalSelection = weightedWords.slice(0, limit).map(w => w.word);
+        // Deduplicate selection to ensure variety (Keep first instance of any word string)
+        const seenWords = new Set();
+        const uniqueWeighted = weightedWords.filter(w => {
+            const txt = w.word.word.toLowerCase().trim();
+            if (seenWords.has(txt)) return false;
+            seenWords.add(txt);
+            return true;
+        });
+
+        const finalSelection = uniqueWeighted.slice(0, limit).map(w => {
+            const wordObj = w.word.toObject ? w.word.toObject() : w.word;
+            const p = progressMap[wordObj._id.toString()];
+            wordObj.attempts = p ? p.attempts : 0;
+            return wordObj;
+        });
 
         // Prepare test object for UI consistency
         const testObj = {

@@ -190,7 +190,7 @@ const getAdaptiveTestRunner = async (req, res) => {
         let isRepeated = false;
         if (req.user) {
             // Check if this question ID exists in any of the user's past detailedResponses
-            const userId = new mongoose.Types.ObjectId(req.user.id);
+            const userId = req.user._id;
             const historyCheck = await Result.findOne({
                  user: userId,
                  'detailedResponses.question': question._id

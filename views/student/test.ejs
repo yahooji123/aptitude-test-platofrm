@@ -148,6 +148,20 @@
         border: 1px solid var(--exam-border);
     }
 
+    /* Repeated Question Badge Style */
+    .badge-repeated {
+        background: rgba(239, 68, 68, 0.1); 
+        color: #fca5a5;
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+    
+    /* New / Fresh Question Badge Style */
+    .badge-new {
+        background: rgba(52, 211, 153, 0.1);
+        color: #34d399;
+        border-color: rgba(52, 211, 153, 0.3);
+    }
+
     .q-text {
         font-size: 1.15rem;
         line-height: 1.6;
@@ -511,12 +525,16 @@
                             <span class="q-number">Question <%= index + 1 %></span>
                             <div class="q-badges">
                                 <% if (question.isRepeated) { %>
-                                    <span class="badge" style="background: rgba(163, 113, 247, 0.15); color: #d2a8ff; border: 1px solid rgba(163, 113, 247, 0.4);">
+                                    <span class="badge" style="background: rgba(239, 68, 68, 0.1); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3);">
                                         <span style="font-size: 0.9em; margin-right: 4px;">↻</span> Repeated
                                     </span>
+                                <% } else { %>
+                                    <span class="badge" style="background: rgba(52, 211, 153, 0.1); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3);">
+                                        <span style="font-size: 0.9em; margin-right: 4px;">✨</span> New
+                                    </span>
                                 <% } %>
-                                <span class="badge"><%= question.difficulty %></span>
-                                <span class="badge">+<%= test.markingScheme.correct %> / -<%= test.markingScheme.incorrect %></span>
+                                <span class="badge" style="text-transform: capitalize;"><%= question.difficulty %></span>
+                                <span class="badge">+<%= (test.markingScheme && test.markingScheme.correct) || 1 %> / <%= (test.markingScheme && test.markingScheme.incorrect) || 0 %></span>
                             </div>
                         </div>
                         
