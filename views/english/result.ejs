@@ -82,6 +82,9 @@
                             </td>
                             <td style="padding: 15px 20px; color: #e2e8f0; font-weight: 600;"><%= result.correctAnswer %></td>
                             <td style="padding: 15px 20px; text-align: right;">
+                                <% if (result.wasMarked) { %>
+                                    <span title="Marked for Review" style="margin-right: 8px; font-size: 1rem; cursor: help;">🚩</span>
+                                <% } %>
                                 <% if (result.isCorrect) { %>
                                     <span style="color: #34d399; background: rgba(52, 211, 153, 0.1); padding: 4px 10px; border-radius: 4px; font-size: 0.85rem;">Correct</span>
                                 <% } else { %>

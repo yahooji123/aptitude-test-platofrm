@@ -83,9 +83,32 @@ exports.deleteTopic = async (req, res) => {
 exports.getManageWords = async (req, res) => {
     try {
         const { topicId } = req.params;
+        const { search, difficulty } = req.query; // Capture query parameters
+
         const topic = await EnglishTopic.findById(topicId);
-        const words = await EnglishWord.find({ topic: topicId });
-        res.render('english/manage_words', { topic, words, user: req.user });
+        
+        // Build search query
+        let query = { topic: topicId };
+        
+        if (search) {
+            query.$or = [
+                { word: { $regex: search, $options: 'i' } },
+                { hindiMeaning: { $regex: search, $options: 'i' } }
+            ];
+        }
+        
+        if (difficulty) {
+            query.difficulty = difficulty;
+        }
+
+        const words = await EnglishWord.find(query);
+        
+        res.render('english/manage_words', { 
+            topic, 
+            words, 
+            user: req.user,
+            query: { search, difficulty } // Pass current filters back to view
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
@@ -285,20 +308,16 @@ exports.generateTest = async (req, res) => {
         // Prepare test object for UI consistency
         const testObj = {
             _id: testId || 'practice',
-            title: testConfig ? testConfig.title : 'English Practice Session',
-            duration: testConfig ? testConfig.duration : 15, // Default 15 mins
-            markingScheme: { correct: 1, incorrect: 0 },
+            title: testConfig ? testConfig.title : 'Practice Session',
+            duration: testConfig ? testConfig.duration : 20,
             isSmartMode: prioritizeUnseen
         };
 
-        res.render('english/test_runner', { 
-            questions: finalSelection, 
-            topicId,
-            testId: testId || null,
+        res.render('english/test_runner', {
             test: testObj,
-            user: req.user 
+            topicId,
+            questions: finalSelection
         });
-
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
@@ -307,9 +326,17 @@ exports.generateTest = async (req, res) => {
 
 exports.submitTest = async (req, res) => {
     try {
-        const { topicId, answers } = req.body; 
-        if(!answers) {
+        const { topicId, answers, reviewData } = req.body;
+        if (!answers) {
              return res.redirect('/english/dashboard');
+        }
+
+        // Parse reviewData
+        let markedIds = [];
+        try {
+            if (reviewData) markedIds = JSON.parse(reviewData);
+        } catch (e) {
+            console.error("Error parsing review data", e);
         }
 
         // answers is expected to be object { wordId: userTypedAnswer }
@@ -331,7 +358,8 @@ exports.submitTest = async (req, res) => {
                 hindi: word.hindiMeaning,
                 userAnswer,
                 isCorrect,
-                correctAnswer: word.word
+                correctAnswer: word.word,
+                wasMarked: markedIds.includes(wordId)
             });
 
             if (isCorrect) correctWords.push(wordId);

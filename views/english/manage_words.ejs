@@ -53,6 +53,22 @@
                 <span style="background: #334155; color: #94a3b8; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem;"><%= words.length %> words</span>
             </div>
 
+            <div style="padding: 20px; border-bottom: 1px solid #334155; background: #161e2e;">
+                <form action="/english/admin/manage-words/<%= topic._id %>" method="GET" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" name="search" placeholder="Search words..." value="<%= (typeof query !== 'undefined' && query.search) ? query.search : '' %>" style="flex: 1; min-width: 200px; background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 10px; border-radius: 6px;">
+                    <select name="difficulty" style="background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 10px; border-radius: 6px;">
+                        <option value="">All Difficulties</option>
+                        <option value="easy" <%= (typeof query !== 'undefined' && query.difficulty === 'easy') ? 'selected' : '' %>>Easy</option>
+                        <option value="medium" <%= (typeof query !== 'undefined' && query.difficulty === 'medium') ? 'selected' : '' %>>Medium</option>
+                        <option value="hard" <%= (typeof query !== 'undefined' && query.difficulty === 'hard') ? 'selected' : '' %>>Hard</option>
+                    </select>
+                    <button type="submit" style="background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500;">Search</button>
+                    <% if (typeof query !== 'undefined' && (query.search || query.difficulty)) { %>
+                        <a href="/english/admin/manage-words/<%= topic._id %>" style="display: flex; align-items: center; color: #ef4444; text-decoration: none; padding: 0 10px; font-weight: 500;">Clear</a>
+                    <% } %>
+                </form>
+            </div>
+
             <% if (words.length > 0) { %>
                 <div class="table-responsive">
                     <table style="width: 100%; border-collapse: collapse;">
@@ -60,6 +76,7 @@
                             <tr style="background: #0f172a; text-align: left;">
                                 <th style="padding: 15px 20px; color: #94a3b8; font-weight: 500; font-size: 0.9rem;">Word (English)</th>
                                 <th style="padding: 15px 20px; color: #94a3b8; font-weight: 500; font-size: 0.9rem;">Meaning (Hindi)</th>
+                                <th style="padding: 15px 20px; color: #94a3b8; font-weight: 500; font-size: 0.9rem;">Difficulty</th>
                                 <th style="padding: 15px 20px; color: #94a3b8; font-weight: 500; font-size: 0.9rem; text-align: right;">Actions</th>
                             </tr>
                         </thead>
@@ -68,6 +85,7 @@
                                 <tr style="border-bottom: 1px solid #334155;">
                                     <td style="padding: 15px 20px; color: #e2e8f0; font-weight: 600;"><%= word.word %></td>
                                     <td style="padding: 15px 20px; color: #cbd5e1;"><%= word.hindiMeaning %></td>
+                                    <td style="padding: 15px 20px; color: #94a3b8; text-transform: capitalize;"><%= word.difficulty || 'medium' %></td>
                                     <td style="padding: 15px 20px; text-align: right;">
                                         <a href="/english/admin/delete-word/<%= topic._id %>/<%= word._id %>" 
                                            style="color: #ef4444; text-decoration: none; font-size: 1.2rem; padding: 5px 10px; border-radius: 4px; transition: background 0.2s;"

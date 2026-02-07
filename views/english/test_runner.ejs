@@ -481,6 +481,7 @@
     <div class="question-area">
         <form id="testForm" action="/english/test/submit" method="POST">
             <input type="hidden" name="topicId" value="<%= topicId %>">
+            <input type="hidden" name="reviewData" id="reviewDataInput" value="[]">
             
             <% questions.forEach((question, index) => { %>
                 <!-- We use hidden input to submit if JS submit logic was standard, but we use AJAX so this is just container -->
@@ -605,6 +606,7 @@
     // --- State ---
     let currentIndex = 0;
     const totalQuestions = <%= questions.length %>;
+    const questionIds = <%- JSON.stringify(questions.map(q => q._id)) %>;
     const reviewStatus = new Array(totalQuestions).fill(false);
     
     // --- Initialization ---
@@ -753,8 +755,11 @@
     async function submitTest() {
         clearInterval(timerInterval);
         
-        const form = document.getElementById('testForm');
-        // We can just submit the form normally since English implementation expects POST with answers
+        
+        // Populate review data
+        const markedIds = questionIds.filter((_, index) => reviewStatus[index]);
+        document.getElementById('reviewDataInput').value = JSON.stringify(markedIds);
+ce English implementation expects POST with answers
         // using the standard form submission logic
         form.submit();
     }
