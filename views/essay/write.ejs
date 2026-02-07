@@ -292,6 +292,9 @@
                         <span>📝</span> <span id="wordCount">0 words</span>
                     </div>
                     <div class="stat-badge">
+                        <span>🔤</span> <span id="charCount">0 chars</span>
+                    </div>
+                    <div class="stat-badge">
                         <span>⏱️</span> <span id="sessionTimer">00:00</span>
                     </div>
                 </div>
@@ -342,10 +345,12 @@
         // Load Draft
         const savedDraft = localStorage.getItem(DRAFT_KEY);
         if(savedDraft) {
-            const textarea = document.querySelector('textarea');
-            textarea.value = savedDraft;
-            updateStats(textarea);
-            console.log('Draft restored for topic:', TOPIC_ID);
+            const textarea = document.querySelector('.essay-input');
+            if(textarea) {
+                textarea.value = savedDraft;
+                updateStats(textarea);
+                console.log('Draft restored for topic:', TOPIC_ID);
+            }
         }
 
         // Start Timer based on Mode
@@ -431,17 +436,36 @@
 
     // --- LIVE STATS & AUTO SAVE ---
     function updateStats(textarea) {
+        if (!textarea) return;
+
         const text = textarea.value.trim();
-        const wordCount = text ? text.split(/\s+/).length : 0;
-        document.getElementById('wordCount').innerText = wordCount + " words";
+        // Robust counting: match non-whitespace sequences
+        const count = (text.match(/\S+/g) || []).length;
         
-        // Auto-save logic
-        localStorage.setItem(DRAFT_KEY, textarea.value);
+        const badge = document.getElementById('wordCount');
+        if (badge) {
+            badge.innerText = count + " words";
+        }
+
+        const charBadge = document.getElementById('charCount');
+        if (charBadge) {
+            charBadge.innerText = text.length + " chars";
+        }
+        
+        // Auto-save logic (Safe)
+        try {
+            localStorage.setItem(DRAFT_KEY, textarea.value);
+        } catch(e) {
+            // Quota exceeded or private mode
+            console.warn("Auto-save failed", e);
+        }
     }
 
     // --- SUBMISSION ---
     function confirmSubmit() {
-        const text = document.querySelector('textarea').value.trim();
+        const textarea = document.querySelector('.essay-input');
+        const text = textarea ? textarea.value.trim() : "";
+        
         if(text.length < 50) {
             alert("Please write at least 50 characters before submitting.");
             return false;

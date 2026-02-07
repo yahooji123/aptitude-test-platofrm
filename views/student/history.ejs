@@ -219,23 +219,7 @@
     }
 </style>
 
-<!-- Calculation Logic (Client/View Side for simplicity) -->
-<%
-    let totalTests = results.length;
-    let avgScore = 0;
-    let highestScore = 0;
-    let totalScoreSum = 0;
-    let totalQuestionsSum = 0;
-
-    results.forEach(r => {
-        if(r.score > highestScore) highestScore = r.score;
-        totalScoreSum += r.score;
-    });
-
-    if(totalTests > 0) {
-        avgScore = (totalScoreSum / totalTests).toFixed(1);
-    }
-%>
+<!-- Stats calculated on server -->
 
 <div class="history-container">
     
@@ -329,6 +313,22 @@
             </div>
         <% } %>
     </div>
+
+    <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+    <div style="display: flex; justify-content: center; margin-top: 30px; gap: 10px;">
+        <% if (currentPage > 1) { %>
+            <a href="?page=<%= currentPage - 1 %>" style="background: transparent; border: 1px solid #30363d; color: #c9d1d9; padding: 8px 16px; border-radius: 6px; text-decoration: none;">&larr; Prev</a>
+        <% } %>
+        
+        <span style="background: #161b22; border: 1px solid #30363d; color: #58a6ff; padding: 8px 16px; border-radius: 6px;">
+            Page <%= currentPage %> of <%= totalPages %>
+        </span>
+
+        <% if (currentPage < totalPages) { %>
+            <a href="?page=<%= currentPage + 1 %>" style="background: transparent; border: 1px solid #30363d; color: #c9d1d9; padding: 8px 16px; border-radius: 6px; text-decoration: none;">Next &rarr;</a>
+        <% } %>
+    </div>
+    <% } %>
 </div>
 
 <%- include('../partials/footer') %>

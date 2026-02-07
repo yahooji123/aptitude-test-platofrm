@@ -94,8 +94,26 @@ function parseReadingContent(rawText) {
 
 exports.getAdminDashboard = async (req, res) => {
     try {
-        const passages = await ReadingPassage.find().sort({ createdAt: -1 });
-        res.render('reading/admin_dashboard', { passages });
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const skip = (page - 1) * limit;
+
+        const [passages, total] = await Promise.all([
+            ReadingPassage.find()
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            ReadingPassage.countDocuments()
+        ]);
+
+        const totalPages = Math.ceil(total / limit);
+
+        res.render('reading/admin_dashboard', { 
+            passages,
+            currentPage: page,
+            totalPages
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send("Server Error");
@@ -145,8 +163,26 @@ exports.deletePassage = async (req, res) => {
 
 exports.getStudentDashboard = async (req, res) => {
     try {
-        const results = await ReadingResult.find({ user: req.user._id }).sort({ completedAt: -1 });
-        res.render('reading/student_dashboard', { results });
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const skip = (page - 1) * limit;
+
+        const [results, total] = await Promise.all([
+            ReadingResult.find({ user: req.user._id })
+                .sort({ completedAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            ReadingResult.countDocuments({ user: req.user._id })
+        ]);
+        
+        const totalPages = Math.ceil(total / limit);
+
+        res.render('reading/student_dashboard', { 
+            results,
+            currentPage: page,
+            totalPages
+        });
     } catch (err) {
         res.status(500).send("Server Error");
     }
@@ -233,6 +269,18 @@ exports.submitTest = async (req, res) => {
                 passageScore: pScore
             });
         });
+
+        // Anti-Double-Submission: Check for recent result with same score and passage count
+        const recent = await ReadingResult.findOne({
+            user: req.user._id,
+            totalScore: totalScore,
+            passages: { $size: resultPassages.length },
+            createdAt: { $gt: new Date(Date.now() - 5000) }
+        });
+
+        if (recent) {
+            return res.json({ success: true, redirectUrl: `/reading/student/result/${recent._id}` });
+        }
 
         const newResult = await ReadingResult.create({
             user: req.user._id,

@@ -32,6 +32,7 @@ const testSessionSchema = new mongoose.Schema({
     responses: [{
         question: { type: mongoose.Schema.Types.ObjectId, ref: 'Question' },
         selectedOption: Number,
+        correctOption: Number,
         isCorrect: Boolean,
         timeTaken: Number
     }],

@@ -100,12 +100,28 @@ exports.deleteSelectedTopics = async (req, res) => {
 // GET Submissions List
 exports.getAdminSubmissions = async (req, res) => {
     try {
-        const submissions = await EssaySubmission.find()
-            .populate('user', 'name email')
-            .populate('topic', 'topic')
-            .sort({ createdAt: -1 });
+        const page = parseInt(req.query.page) || 1;
+        const limit = 20;
+        const skip = (page - 1) * limit;
+
+        const [submissions, total] = await Promise.all([
+            EssaySubmission.find()
+                .populate('user', 'name email')
+                .populate('topic', 'topic')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            EssaySubmission.countDocuments()
+        ]);
         
-        res.render('essay/admin_submissions', { submissions });
+        const totalPages = Math.ceil(total / limit);
+        
+        res.render('essay/admin_submissions', { 
+            submissions,
+            currentPage: page,
+            totalPages
+        });
     } catch (error) {
         console.error(error);
         res.status(500).send('Server Error');
@@ -163,11 +179,27 @@ exports.deleteSubmission = async (req, res) => {
 // GET Student Essay Dashboard
 exports.getStudentEssayDashboard = async (req, res) => {
     try {
-        const submissions = await EssaySubmission.find({ user: req.user._id })
-            .populate('topic', 'topic')
-            .sort({ createdAt: -1 });
-            
-        res.render('essay/student_dashboard', { submissions });
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const skip = (page - 1) * limit;
+
+        const [submissions, total] = await Promise.all([
+            EssaySubmission.find({ user: req.user._id })
+                .populate('topic', 'topic')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            EssaySubmission.countDocuments({ user: req.user._id })
+        ]);
+        
+        const totalPages = Math.ceil(total / limit);
+
+        res.render('essay/student_dashboard', { 
+            submissions,
+            currentPage: page,
+            totalPages
+        });
     } catch (error) {
         console.error(error);
         res.status(500).send('Server Error');
@@ -217,6 +249,17 @@ exports.submitEssay = async (req, res) => {
     try {
         const { topicId, essayContent } = req.body;
         
+        // Idempotency: Prevent double submission of same content
+        const duplicate = await EssaySubmission.findOne({
+            user: req.user._id,
+            topic: topicId,
+            essayContent
+        });
+
+        if (duplicate) {
+             return res.redirect('/essay/student/dashboard');
+        }
+
         await EssaySubmission.create({
             user: req.user._id,
             topic: topicId,

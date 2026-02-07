@@ -10,6 +10,10 @@ const SystemSetting = require('../models/SystemSetting');
 // @route   GET /student/dashboard
 const getDashboard = async (req, res) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 12;
+        const skip = (page - 1) * limit;
+
         // Fetch active tests (Admin created) OR Custom tests created by this user
         const queryConditions = [
             { isActive: true, createdBy: null }, // Admin tests
@@ -17,17 +21,27 @@ const getDashboard = async (req, res) => {
         ];
 
         if (req.user) {
-            queryConditions.push({ createdBy: req.user.id }); // User's own tests
+            queryConditions.push({ createdBy: req.user._id }); // User's own tests
         }
 
-        const tests = await TestConfig.find({
-            $or: queryConditions
-        }).sort({ createdAt: -1 });
+        const query = { $or: queryConditions };
+
+        const [tests, total] = await Promise.all([
+            TestConfig.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+            TestConfig.countDocuments(query)
+        ]);
         
-        res.render('student/dashboard', { tests, user: req.user });
+        const totalPages = Math.ceil(total / limit);
+
+        res.render('student/dashboard', { 
+            tests, 
+            user: req.user,
+            currentPage: page,
+            totalPages
+        });
     } catch (error) {
         console.error(error);
-        res.status(500).send('Server Error');
+        res.status(500).render('error', { user: req.user, code: 500, message: 'Server Error' });
     }
 };
 
@@ -77,7 +91,7 @@ const createCustomTest = async (req, res) => {
             difficultyDistribution: distribution,
             isAdaptive: isAdaptive === 'on',
             category: 'Practice Set', // Custom tests are practice by default
-            createdBy: req.user.id,
+            createdBy: req.user._id,
             expireAt: new Date(Date.now() + 3 * 60 * 60 * 1000) // 3 Hours TTL
         });
 
@@ -92,7 +106,7 @@ const createCustomTest = async (req, res) => {
 // @route   POST /student/custom-test/delete/:id
 const deleteCustomTest = async (req, res) => {
     try {
-        const test = await TestConfig.findOne({ _id: req.params.id, createdBy: req.user.id });
+        const test = await TestConfig.findOne({ _id: req.params.id, createdBy: req.user._id });
         if(test) {
             await TestConfig.findByIdAndDelete(req.params.id);
         }
@@ -110,7 +124,8 @@ const getPractice = async (req, res) => {
     if (!topic) return res.redirect('/student/dashboard');
 
     try {
-        const questions = await Question.find({ topic });
+        // Limit to 50 questions for performance (Legacy Mode)
+        const questions = await Question.find({ topic }).limit(50);
         res.render('student/practice', { topic, questions });
     } catch (error) {
         console.error(error);
@@ -137,26 +152,18 @@ const startTest = async (req, res) => {
         }
 
         if (startTime && startTime > now) {
-            return res.status(403).send(`
-                <html>
-                <body style="background:#0d1117; color:#c9d1d9; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; flex-direction:column;">
-                    <h2 style="color:#58a6ff;">Test Not Started</h2>
-                    <p>This test is scheduled to start on ${startTime.toLocaleString()}.</p>
-                    <a href="/student/dashboard" style="color:#fff; text-decoration:underline;">Back to Dashboard</a>
-                </body>
-                </html>
-            `);
+            return res.status(403).render('error', { 
+                code: 'Test Not Started', 
+                message: `This test is scheduled to start on ${startTime.toLocaleString()}.`,
+                user: req.user
+            });
         }
         if (endTime && endTime < now) {
-            return res.status(403).send(`
-                <html>
-                <body style="background:#0d1117; color:#c9d1d9; font-family:sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; flex-direction:column;">
-                    <h2 style="color:#f85149;">Test Ended</h2>
-                    <p>This test closed on ${endTime.toLocaleString()}.</p>
-                    <a href="/student/dashboard" style="color:#fff; text-decoration:underline;">Back to Dashboard</a>
-                </body>
-                </html>
-            `);
+            return res.status(403).render('error', {
+                code: 'Test Ended',
+                message: `This test closed on ${endTime.toLocaleString()}.`,
+                user: req.user
+            });
         }
 
         // Check for existing active session
@@ -190,7 +197,7 @@ const startTest = async (req, res) => {
             let attemptedIds = [];
             if (req.user) {
                 try {
-                    const userId = new mongoose.Types.ObjectId(req.user.id);
+                    const userId = new mongoose.Types.ObjectId(req.user._id);
                     const rawIds = await Result.aggregate([
                         { $match: { user: userId } },
                         { $unwind: '$detailedResponses' },
@@ -273,7 +280,7 @@ const startTest = async (req, res) => {
              // If we already fetched attemptedIds in the new session block, use it. 
              // But existing session block didn't run that code.
              // We can just quick-fetch simple distinct aggregation here for the UI flag if not present.
-             const userId = new mongoose.Types.ObjectId(req.user.id);
+             const userId = new mongoose.Types.ObjectId(req.user._id);
              const rawIds = await Result.aggregate([
                 { $match: { user: userId } },
                 { $unwind: '$detailedResponses' },
@@ -303,6 +310,11 @@ const startTest = async (req, res) => {
 // @desc    Submit Test
 // @route   POST /student/test/submit
 const submitTest = async (req, res) => {
+    // Basic validation
+    if (!req.body || !req.body.testId) {
+        return res.status(400).json({ success: false, message: 'Invalid submission data' });
+    }
+
     const { answers, testId, timeTaken } = req.body; 
     
     try {
@@ -310,11 +322,18 @@ const submitTest = async (req, res) => {
         if (!test) return res.status(404).json({ success: false, message: 'Test not found' });
 
         // Mark session as completed
+        // ATOMICITY CRITICAL: Check status to prevent double submission
         const session = await TestSession.findOneAndUpdate(
             { user: req.user._id, testConfig: testId, status: 'inprogress' },
             { status: 'completed' },
             { new: true }
         );
+
+        // Security Check: If no in-progress session found, they might have already submitted or never started.
+        if (!session) {
+             console.warn(`Duplicate submission attempt by user ${req.user._id} for test ${testId}`);
+             return res.status(400).json({ success: false, message: 'Test already submitted or session invalid.' });
+        }
 
         let score = 0;
         let correctAnswers = 0;
@@ -323,38 +342,39 @@ const submitTest = async (req, res) => {
         let detailedResponses = [];
         
         // Use questions from the session to ensure we account for all questions served
-        // If no session (shouldn't happen technically due to findOneAndUpdate above), fallback to answers keys or test logic
-        // But assuming session exists since we just updated it.
-        const questionIds = session && session.questions && session.questions.length > 0 
+        // If no session questions (should trigger warning/error normally), fallback to empty.
+        const questionIds = session.questions && session.questions.length > 0 
             ? session.questions 
-            : Object.keys(answers); // Fallback: only answered questions (not ideal but safe)
+            : []; 
 
-        const questionsToCheck = await Question.find({ _id: { $in: questionIds } });
+        if (questionIds.length === 0) {
+            // Fallback for extreme edge case or legacy tests with no session questions
+             return res.status(500).json({ success: false, message: 'Session data corrupted, contact admin.' });
+        }
+
+        const questionsToCheck = await Question.find({ _id: { $in: questionIds } }).lean();
         
-        // Map questions by ID for easy lookup to maintain order if needed, or just iterate
+        // Map questions by ID for easy lookup
         const questionMap = new Map(questionsToCheck.map(q => [q._id.toString(), q]));
         
         // Iterate over session question IDs to preserve order and include skipped ones
-        const idsToProcess = session && session.questions && session.questions.length > 0
-            ? session.questions.map(id => id.toString())
-            : Object.keys(answers);
-
-        idsToProcess.forEach(qId => {
-            const q = questionMap.get(qId);
+        questionIds.forEach(qId => {
+            const idStr = qId.toString();
+            const q = questionMap.get(idStr);
             if (!q) return;
 
-            const selectedOption = parseInt(answers[q._id.toString()]);
+            const selectedOption = answers ? parseInt(answers[idStr]) : NaN;
             let status = 'skipped';
             let isCorrect = false;
 
             if (!isNaN(selectedOption)) {
                 if (selectedOption === q.correctOption) {
-                    score += test.markingScheme.correct;
+                    score += (test.markingScheme && test.markingScheme.correct) || 1;
                     correctAnswers++;
                     status = 'correct';
                     isCorrect = true;
                 } else {
-                    score += test.markingScheme.incorrect; // Adding negative number
+                    score += (test.markingScheme && test.markingScheme.incorrect) || 0; // Adding negative number handled if stored as negative in DB
                     incorrectAnswers++;
                     status = 'wrong';
                     isCorrect = false;
@@ -371,43 +391,28 @@ const submitTest = async (req, res) => {
                 status
             });
         });
-        
-        // If we didn't calculate skippedAnswers correctly above (e.g. fallback path)
-        // Recalculate based on counts if needed, but the loop handles it.
-        // Wait, the original code used totalQuestions from test config.
-        // If randomized, session.questions.length should matches test.totalQuestions.
-        
-        // Double check skipped count
-        const totalQuestions = session && session.questions ? session.questions.length : test.totalQuestions;
-        // The loop increments skippedAnswers, so we should be good. 
-        // IMPORTANT: The original code calculated skippedAnswers = total - (correct + incorrect).
-        // My loop increments skippedAnswers, so I don't need that formula unless as a sanity check.
 
-        // Attempt Count Logic
+        // Attempt Count Logic (DB Query for stats)
         const existingAttempts = await Result.countDocuments({ user: req.user._id, testConfig: test._id });
         const attemptNumber = existingAttempts + 1;
-
-        console.log('Detailed Responses being saved:', detailedResponses.length); // Debug Log
 
         const result = await Result.create({
             user: req.user._id,
             testConfig: test._id,
             score: parseFloat(score.toFixed(2)), // Handle float precision
-            totalQuestions,
+            totalQuestions: questionIds.length,
             correctAnswers,
             incorrectAnswers,
             skippedAnswers,
-            timeTaken: timeTaken || 0,
-            topic: test.title, // Keep for backward compatibility or display
+            timeTaken: parseInt(timeTaken) || 0,
+            topic: test.title,
             attemptNumber,
-            detailedResponses, // Save detailed responses
+            detailedResponses,
         });
         
-        console.log('Result Saved ID:', result._id); // Debug Log
-
         res.json({ success: true, resultId: result._id });
     } catch (error) {
-        console.error(error);
+        console.error("Submit Test Error:", error);
         res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
@@ -548,11 +553,44 @@ const getResultDetail = async (req, res) => {
 // @route   GET /student/results
 const getResults = async (req, res) => {
     try {
-        const results = await Result.find({ user: req.user._id }).sort({ date: -1 });
-        res.render('student/history', { results });
+        const page = parseInt(req.query.page) || 1;
+        const limit = 20;
+        const skip = (page - 1) * limit;
+
+        const [results, stats] = await Promise.all([
+            Result.find({ user: req.user._id })
+                .sort({ date: -1, createdAt: -1 }) // createdAt fallback
+                .skip(skip)
+                .limit(limit)
+                .lean(), // Optimization
+            Result.aggregate([
+                { $match: { user: req.user._id } },
+                { $group: {
+                    _id: null,
+                    totalTests: { $sum: 1 },
+                    maxScore: { $max: "$score" },
+                    avgScore: { $avg: "$score" }
+                }}
+            ])
+        ]);
+
+        const totalTests = stats.length > 0 ? stats[0].totalTests : 0;
+        const totalPages = Math.ceil(totalTests / limit);
+        const highestScore = stats.length > 0 ? stats[0].maxScore : 0;
+        const avgScore = stats.length > 0 ? stats[0].avgScore.toFixed(1) : 0;
+
+        res.render('student/history', { 
+            results, 
+            user: req.user,
+            currentPage: page,
+            totalPages,
+            totalTests,
+            highestScore,
+            avgScore
+        });
     } catch (error) {
         console.error(error);
-        res.status(500).send('Server Error');
+        res.status(500).render('error', { user: req.user, code: 500, message: 'Server Error' });
     }
 };
 

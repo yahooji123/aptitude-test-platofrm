@@ -42,13 +42,13 @@ app.get('/register', (req, res) => res.render('register', { error: null }));
 
 // 404 Handler (Page Not Found)
 app.use((req, res, next) => {
-    res.status(404).send("<h1>404 - Page Not Found</h1><p>The page you are looking for does not exist.</p><p><a href='/'>Go Home</a></p>");
+    res.status(404).render('error', { code: 404, message: 'Page Not Found', user: req.user });
 });
 
 // Global Error Handler
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).send("<h1>500 - Server Error</h1><p>Something went wrong on the server.</p>");
+    res.status(500).render('error', { code: 500, message: 'Internal Server Error', user: req.user });
 });
 
 const PORT = process.env.PORT || 3000;

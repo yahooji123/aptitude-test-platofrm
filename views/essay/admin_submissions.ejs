@@ -52,6 +52,23 @@
             <% } %>
         </tbody>
     </table>
+
+    <!-- Pagination Controls -->
+    <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+    <div style="display: flex; justify-content: center; padding: 20px; gap: 10px; border-top: 1px solid #30363d; background: #0d1117;">
+        <% if (currentPage > 1) { %>
+            <a href="?page=<%= currentPage - 1 %>" style="background: transparent; border: 1px solid #30363d; color: #c9d1d9; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">&larr; Prev</a>
+        <% } %>
+        
+        <span style="background: #161b22; border: 1px solid #30363d; color: #58a6ff; padding: 6px 12px; border-radius: 6px; font-size: 0.9rem;">
+            Page <%= currentPage %> of <%= totalPages %>
+        </span>
+
+        <% if (currentPage < totalPages) { %>
+            <a href="?page=<%= currentPage + 1 %>" style="background: transparent; border: 1px solid #30363d; color: #c9d1d9; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">Next &rarr;</a>
+        <% } %>
+    </div>
+    <% } %>
 </div>
 
 <%- include('../partials/footer') %>

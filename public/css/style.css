@@ -652,3 +652,27 @@ body {
         font-size: 1.3rem;
     }
 }
+
+/* Fixed: Missing Essay Evaluation Styles */
+.glass-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.btn-primary {
+    background-color: var(--success-color);
+    color: white;
+    border: none;
+    transition: filter 0.2s;
+}
+
+.btn-primary:hover {
+    filter: brightness(1.1);
+}

@@ -48,7 +48,7 @@ Exp: The Sun is the star at the center...</pre>
 
     <!-- manage Panel -->
     <div class="quiz-card">
-        <h3 style="color:white; margin-top:0;">Existing Passages (<%= passages.length %>)</h3>
+        <h3 style="color:white; margin-top:0;">Existing Passages</h3>
         
         <div style="max-height: 500px; overflow-y: auto;">
             <% if(passages.length === 0) { %>
@@ -83,6 +83,23 @@ Exp: The Sun is the star at the center...</pre>
                 </div>
             <% }) %>
         </div>
+
+        <!-- Pagination -->
+        <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+        <div style="display: flex; justify-content: center; padding-top: 20px; gap: 10px; border-top: 1px solid #30363d; margin-top: 20px;">
+            <% if (currentPage > 1) { %>
+                <a href="?page=<%= currentPage - 1 %>" style="background: transparent; border: 1px solid #30363d; color: #c9d1d9; padding: 4px 10px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;">&larr; Prev</a>
+            <% } %>
+            
+            <span style="background: #161b22; border: 1px solid #30363d; color: #58a6ff; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem;">
+                <%= currentPage %> / <%= totalPages %>
+            </span>
+
+            <% if (currentPage < totalPages) { %>
+                <a href="?page=<%= currentPage + 1 %>" style="background: transparent; border: 1px solid #30363d; color: #c9d1d9; padding: 4px 10px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;">Next &rarr;</a>
+            <% } %>
+        </div>
+        <% } %>
     </div>
 
 </div>

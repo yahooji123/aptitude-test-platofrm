@@ -8,26 +8,35 @@ const SystemSetting = require('../models/SystemSetting'); // Import SystemSettin
 // @route   GET /admin/dashboard
 const getDashboard = async (req, res) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const skip = (page - 1) * limit;
+
         const topics = await Question.distinct('topic');
         const questionCount = await Question.countDocuments();
-        const tests = await TestConfig.find().sort({ createdAt: -1 });
         
-        // Fetch System Settings
-        let smartPracticeMode = await SystemSetting.findOne({ key: 'smartPracticeMode' });
-        // Default to false if not exists
-        if (!smartPracticeMode) {
-            smartPracticeMode = { value: false }; 
-        }
+        // Paginate Tests
+        const [tests, totalTests] = await Promise.all([
+            TestConfig.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+            TestConfig.countDocuments()
+        ]);
+        
+        const totalPages = Math.ceil(totalTests / limit);
 
+        // Fetch System Settings
+        let smartPracticeMode = await SystemSetting.findOne({ key: 'smartPracticeMode' }).lean();
+        
         res.render('admin/dashboard', { 
             topics, 
             questionCount, 
             tests,
-            smartPracticeMode: smartPracticeMode.value 
+            smartPracticeMode: smartPracticeMode ? smartPracticeMode.value : false,
+            currentPage: page,
+            totalPages
         });
     } catch (error) {
         console.error(error);
-        res.status(500).send('Server Error');
+        res.status(500).render('error', { user: req.user, code: 500, message: 'Server Error' });
     }
 };
 
@@ -169,18 +178,34 @@ const createTest = async (req, res) => {
 // @route   GET /admin/questions
 const getQuestions = async (req, res) => {
     const topic = req.query.topic || 'All';
+    const page = parseInt(req.query.page) || 1;
+    const limit = 20;
+    const skip = (page - 1) * limit;
+
     let query = {};
     if (topic !== 'All') {
         query.topic = topic;
     }
 
     try {
-        const questions = await Question.find(query).sort({createdAt: -1});
+        const [questions, total] = await Promise.all([
+            Question.find(query).sort({createdAt: -1}).skip(skip).limit(limit).lean(),
+            Question.countDocuments(query)
+        ]);
+
         const topics = await Question.distinct('topic');
-        res.render('admin/questions', { questions, topics, selectedTopic: topic });
+        const totalPages = Math.ceil(total / limit);
+
+        res.render('admin/questions', { 
+            questions, 
+            topics, 
+            selectedTopic: topic,
+            currentPage: page,
+            totalPages 
+        });
     } catch (error) {
         console.error(error);
-        res.status(500).send('Server Error');
+        res.status(500).render('error', { user: req.user, code: 500, message: 'Server Error' });
     }
 };
 
@@ -190,12 +215,18 @@ const addQuestion = async (req, res) => {
     const { questionText, option1, option2, option3, option4, correctOption, topic, difficulty } = req.body;
 
     try {
+        // Validate Inputs
+        if (!questionText || !option1 || !option2 || !option3 || !option4 || correctOption === undefined || !topic) {
+             // In a real app we'd flash an error, for now we redirect (could be improved)
+             return res.redirect('/admin/questions'); 
+        }
+
         await Question.create({
             questionText,
             options: [option1, option2, option3, option4],
             correctOption: parseInt(correctOption),
             topic,
-            difficulty
+            difficulty: difficulty || 'medium'
         });
         res.redirect('/admin/questions');
     } catch (error) {

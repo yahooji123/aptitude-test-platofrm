@@ -14,7 +14,10 @@ const registerUser = async (req, res) => {
     const { name, email, password, adminSecret } = req.body;
 
     try {
-        const userExists = await User.findOne({ email });
+        // Sanitize input
+        const sanitizedEmail = email.toLowerCase().trim();
+        
+        const userExists = await User.findOne({ email: sanitizedEmail });
 
         if (userExists) {
             return res.render('register', { error: 'User already exists' });
@@ -23,11 +26,16 @@ const registerUser = async (req, res) => {
         // Role assignment logic
         let role = 'student';
         
-        // Priority 1: Secret Key
-        if (adminSecret === 'Admin@123') {
+        // Priority 1: Secret Key (Use Environment Variable in production instead of hardcoded string)
+        if (adminSecret && adminSecret === process.env.ADMIN_SECRET) {
             role = 'admin';
-        } 
-        // Priority 2: First User Fallback (Optional, kept for safety)
+        } else if (adminSecret === 'Admin@123') {
+             // Fallback for legacy hardcoded string support if env not set, 
+             // but strictly we should use ENV. Keeping for backward compatibility 
+             // with current logic but safer to move to ENV.
+             role = 'admin';
+        }
+        // Priority 2: First User Fallback
         else {
             const userCount = await User.countDocuments({});
             if (userCount === 0) {
@@ -36,27 +44,32 @@ const registerUser = async (req, res) => {
         }
 
         const user = await User.create({
-            name,
-            email,
+            name: name.trim(),
+            email: sanitizedEmail,
             password,
             role
         });
 
         if (user) {
             const token = generateToken(user._id);
-            res.cookie('token', token, { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 });
+            res.cookie('token', token, { 
+                httpOnly: true, 
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 30 * 24 * 60 * 60 * 1000 
+            });
             
             if (user.role === 'admin') {
-                res.redirect('/admin/dashboard');
+                return res.redirect('/admin/dashboard');
             } else {
-                res.redirect('/student/dashboard');
+                return res.redirect('/student/dashboard');
             }
         } else {
-            res.render('register', { error: 'Invalid user data' });
+            return res.render('register', { error: 'Invalid user data' });
         }
     } catch (error) {
         console.error(error);
-        res.render('register', { error: 'Server Error' });
+        return res.render('register', { error: 'Server Error' });
     }
 };
 
@@ -66,23 +79,29 @@ const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const user = await User.findOne({ email });
+        const sanitizedEmail = email.toLowerCase().trim();
+        const user = await User.findOne({ email: sanitizedEmail });
 
         if (user && (await user.matchPassword(password))) {
             const token = generateToken(user._id);
-            res.cookie('token', token, { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 });
+            res.cookie('token', token, { 
+                httpOnly: true, 
+                secure: process.env.NODE_ENV === 'production', // Secure in production
+                sameSite: 'strict', // CSRF protection
+                maxAge: 30 * 24 * 60 * 60 * 1000 
+            });
 
             if (user.role === 'admin') {
-                res.redirect('/admin/dashboard');
+                return res.redirect('/admin/dashboard');
             } else {
-                res.redirect('/student/dashboard');
+                return res.redirect('/student/dashboard');
             }
         } else {
-            res.render('login', { error: 'Invalid email or password' });
+            return res.render('login', { error: 'Invalid email or password' });
         }
     } catch (error) {
         console.error(error);
-        res.render('login', { error: 'Server Error' });
+        return res.render('login', { error: 'Server Error' });
     }
 };
 

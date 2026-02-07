@@ -233,13 +233,22 @@ const submitAdaptiveAnswer = async (req, res) => {
         
         if (!session) return res.status(404).json({ error: 'Session not found' });
 
+        // Idempotency: Check if already answered to prevent double submission race conditions
+        const existingResponse = session.responses.find(r => r.question.toString() === questionId);
+        if (existingResponse) {
+             return res.json({ success: true, message: 'Already submitted' });
+        }
+
         const question = await Question.findById(questionId);
+        if (!question) return res.status(404).json({ error: 'Question not found' });
+
         const isCorrect = question.correctOption === parseInt(selectedOption);
 
         // Record response
         session.responses.push({
             question: questionId,
             selectedOption: parseInt(selectedOption),
+            correctOption: question.correctOption,
             isCorrect,
             timeTaken: timeTaken || 0
         });
@@ -263,37 +272,45 @@ const finishAdaptiveTest = async (session, req, res, reason) => {
     session.status = 'completed';
     await session.save();
 
-    const testConfig = session.testConfig;
+    // Ensure we have marking scheme
+    let testConfig = session.testConfig;
+    if (!testConfig.markingScheme) {
+         // If populated but missing scheme (unlikely) or not populated (id)
+         const tc = await TestConfig.findById(testConfig._id || testConfig);
+         testConfig = tc;
+    }
+
+    const markingScheme = testConfig.markingScheme || { correct: 4, incorrect: 1 }; 
+
     let score = 0;
     let correct = 0;
     let wrong = 0;
 
     session.responses.forEach(r => {
         if (r.isCorrect) {
-            score += testConfig.markingScheme.correct;
+            score += markingScheme.correct;
             correct++;
         } else {
-            score -= testConfig.markingScheme.incorrect;
+            score -= markingScheme.incorrect;
             wrong++;
         }
     });
 
     const result = await Result.create({
         user: session.user,
-        testConfig: session.testConfig._id,
+        testConfig: testConfig._id,
         score,
         totalQuestions: session.responses.length,
         correctAnswers: correct,
-        wrongAnswers: wrong, // Note: Schema uses incorrectAnswers, mapping check needed
-        incorrectAnswers: wrong, // Saving both/correct key if schema uses incorrectAnswers
-        attemptNumber: await Result.countDocuments({ user: session.user, testConfig: session.testConfig._id }) + 1,
-        timeTaken: Math.min((new Date() - session.startTime) / 1000, testConfig.duration * 60), // Fix Seconds
+        incorrectAnswers: wrong, 
+        attemptNumber: await Result.countDocuments({ user: session.user, testConfig: testConfig._id }) + 1,
+        timeTaken: Math.min((new Date() - session.startTime) / 1000, testConfig.duration * 60), 
         detailedResponses: session.responses.map(r => ({
             question: r.question,
             selectedOption: r.selectedOption,
-            correctOption: r.correctOption, // Wait, need to check if session saves correctOption
+            correctOption: r.correctOption, 
             isCorrect: r.isCorrect,
-            status: r.isCorrect ? 'correct' : 'wrong' // Adaptive logic usually forces answer so no skip?
+            status: r.isCorrect ? 'correct' : 'wrong'
         }))
     });
 

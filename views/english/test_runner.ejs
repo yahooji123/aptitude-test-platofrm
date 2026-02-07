@@ -755,13 +755,12 @@
     async function submitTest() {
         clearInterval(timerInterval);
         
-        
         // Populate review data
         const markedIds = questionIds.filter((_, index) => reviewStatus[index]);
         document.getElementById('reviewDataInput').value = JSON.stringify(markedIds);
-ce English implementation expects POST with answers
+
         // using the standard form submission logic
-        form.submit();
+        document.getElementById('testForm').submit();
     }
 
     // --- Timer Logic ---

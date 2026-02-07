@@ -385,6 +385,8 @@ exports.submitTest = async (req, res) => {
                     progress.status = 'mastered';
                 } else if(progress.correctCount > 5) { // Simple mastery logic
                      progress.status = 'mastered';
+                } else if (progress.status === 'new') {
+                     progress.status = 'learning';
                 }
             } else {
                 progress.incorrectCount++;
@@ -424,7 +426,7 @@ exports.getStats = async (req, res) => {
             topicStats[topicName].correct += p.correctCount;
             topicStats[topicName].totalAttempts += p.attempts;
             if(p.status === 'mastered') topicStats[topicName].mastered++;
-            if(p.status === 'learning') topicStats[topicName].learning++;
+            if(p.status === 'learning' || p.status === 'new') topicStats[topicName].learning++;
         });
 
         res.render('english/stats', { topicStats, user: req.user });

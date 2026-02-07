@@ -14,7 +14,7 @@ const protect = async (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = await User.findById(decoded.id).select('-password');
+        req.user = await User.findById(decoded.id).select('-password').lean();
         
         // Pass user to views
         res.locals.user = req.user;
