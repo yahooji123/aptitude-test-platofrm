@@ -147,6 +147,12 @@
         color: var(--exam-text-muted);
         border: 1px solid var(--exam-border);
     }
+    
+    .badge-unseen {
+        background: rgba(163, 113, 247, 0.1);
+        color: #a371f7;
+        border-color: rgba(163, 113, 247, 0.3);
+    }
 
     .q-text {
         font-size: 1.5rem;
@@ -483,6 +489,9 @@
                         <div class="q-header">
                             <span class="q-number">Question <%= index + 1 %></span>
                             <div class="q-badges">
+                                <% if(test.isSmartMode && !question.attempts) { %>
+                                    <span class="badge badge-unseen">✨ New Word</span>
+                                <% } %>
                                 <span class="badge">Vocabulary</span>
                                 <span class="badge">+1 / -0</span>
                             </div>

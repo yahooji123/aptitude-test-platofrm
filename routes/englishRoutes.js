@@ -16,6 +16,11 @@ router.get('/admin/create-test', protect, englishController.getCreateTest);
 router.post('/admin/create-test', protect, englishController.createTest);
 router.get('/admin/delete-test/:id', protect, englishController.deleteTest);
 
+// Custom Test Routes (Student)
+router.get('/custom-test', protect, englishController.getCreateCustomTest);
+router.post('/custom-test/create', protect, englishController.createCustomTest);
+router.get('/custom-test/delete/:id', protect, englishController.deleteCustomTest);
+
 // Student Routes
 router.get('/dashboard', protect, englishController.getStudentDashboard);
 router.post('/test/generate', protect, englishController.generateTest);

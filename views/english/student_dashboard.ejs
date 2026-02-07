@@ -1,113 +1,257 @@
 <%- include('../partials/header') %>
 
 <!-- Banner Section -->
-<div class="dashboard-banner" style="background: linear-gradient(135deg, #0f172a, #1e293b);">
-    <div class="banner-title" style="background: linear-gradient(90deg, #34d399, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">English Learning Hub</div>
+<div class="dashboard-banner">
+    <div class="banner-title">English Learning Hub</div>
     <div class="banner-subtitle">
         Master vocabulary and grammar with adaptive tests. Your progress is tracked for every word.
     </div>
 </div>
 
-<div class="stats-grid">
-    <div class="stat-card" style="border-top: 4px solid #34d399; background-color: #1e293b; border: 1px solid #334155;">
-        <h3 style="color: #cbd5e1;">Words Mastered</h3>
+<!-- Stats Overview -->
+<div class="stats-grid" style="margin-top: -30px; margin-bottom: 40px; position: relative; z-index: 2;">
+    <div class="stat-card" style="border-top: 4px solid #34d399;">
+        <h3>Words Mastered</h3>
         <p class="stat-value" style="color: #34d399;"><%= totalLearned %></p>
     </div>
-    <div class="stat-card" style="background-color: #1e293b; border: 1px solid #334155;">
-        <h3 style="color: #cbd5e1;">Explore Stats</h3>
-        <div style="margin-top: 10px;">
-            <a href="/english/stats" class="btn-small btn-secondary" style="background: rgba(56, 139, 253, 0.1); color: #58a6ff; border: 1px solid rgba(56, 139, 253, 0.3);">View Detailed Progress →</a>
-        </div>
+    <div class="stat-card">
+        <h3>Analytics</h3>
+        <p style="color: #8b949e; font-size: 0.9rem; margin-bottom: 10px;">Track your learning curve.</p>
+        <a href="/english/stats" class="btn-small btn-secondary" style="width: fit-content; font-size: 0.8rem;">View Full Stats &rarr;</a>
     </div>
 </div>
 
-<h2 style="margin-bottom: 25px; color: white;">Available English Tests</h2>
+<h2 style="margin-bottom: 25px; color: white;">Your English Tests</h2>
 
-<!-- Cards Grid -->
-<div class="row" style="display: flex; gap: 2rem; flex-wrap: wrap;">
-    <!-- Left Column: Assigned Tests -->
-    <div style="flex: 2; min-width: 300px;">
-        
-        <% if (availableTests.length > 0) { %>
-            <div class="cards-grid">
-                <% availableTests.forEach(test => { %>
-                    <div class="quiz-card">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <span style="margin-right: 8px;">📚</span>
-                                <%= test.title %>
-                            </div>
-                            <span class="status-badge" style="background: rgba(52, 211, 153, 0.1); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3);"><%= test.topic ? test.topic.name : 'Unknown' %></span>
-                        </div>
-                        
-                        <div class="card-meta">
-                            <div class="meta-item">
-                                <span>❓</span>
-                                <span><%= test.questionCount %> Qs</span>
-                            </div>
-                            <div class="meta-item">
-                                <span>⏱</span>
-                                <span><%= test.duration %> Mins</span>
-                            </div>
-                        </div>
+<!-- Actions Bar -->
+<div class="actions-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; margin-top: -15px;">
+    <span></span> 
+    <a href="/english/custom-test" class="btn-create-custom" style="background: linear-gradient(135deg, #238636, #2ea043); color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(46, 160, 67, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+        <span>⚡</span> Create Custom Test
+    </a>
+</div>
 
-                        <!-- Description if exists -->
-                        <% if(test.description) { %>
-                            <p style="color: #94a3b8; font-size: 0.9rem; margin: 10px 0;"><%= test.description %></p>
-                        <% } %>
+<!-- Combined Cards Grid -->
+<div class="cards-grid">
+    
+    <% if (availableTests.length === 0 && (!customTests || customTests.length === 0)) { %>
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #8b949e; border: 1px dashed #30363d; border-radius: 12px;">
+            <p>No tests available yet. Create a custom test to get started!</p>
+        </div>
+    <% } %>
 
-                        <div style="margin-top: 20px;">
-                            <form action="/english/test/generate" method="POST">
-                                <input type="hidden" name="testId" value="<%= test._id %>">
-                                <button type="submit" class="btn start-btn" style="width: 100%;">Start Test</button>
-                            </form>
-                        </div>
-                    </div>
-                <% }) %>
-            </div>
-        <% } else { %>
-            <div class="quiz-card" style="text-align: center; padding: 40px;">
-                <p style="color: #8b949e;">No assigned tests available at the moment.</p>
-            </div>
-        <% } %>
-    </div>
-
-    <!-- Right Column: Custom Practice (Sticky) -->
-    <div style="flex: 1; min-width: 300px;">
-        <div class="quiz-card" style="position: sticky; top: 20px; border: 1px solid #334155; background: #0f172a;">
-            <div class="card-header" style="margin-bottom: 15px;">
+    <!-- Assigned Tests -->
+    <% availableTests.forEach(test => { %>
+        <div class="quiz-card">
+            <div class="card-header">
                 <div class="card-title">
-                    <span style="margin-right: 8px;">⚡</span>Custom Practice
+                    <span style="margin-right: 8px;">📚</span>
+                    <%= test.title %>
+                </div>
+                <span class="status-badge" style="background: rgba(52, 211, 153, 0.1); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3);">
+                    <%= test.topic ? test.topic.name : 'Unknown' %>
+                </span>
+            </div>
+            
+            <div class="card-meta">
+                <div class="meta-item">
+                    <span>❓</span>
+                    <span><%= test.questionCount %> Qs</span>
+                </div>
+                <div class="meta-item">
+                    <span>⏱</span>
+                    <span><%= test.duration %> Mins</span>
                 </div>
             </div>
-            <p style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 20px;">Create your own practice session instantly on any topic.</p>
-            
-            <form action="/english/test/generate" method="POST" class="auth-form" style="max-width: 100%;">
-                <div class="form-group">
-                    <label style="color: #cbd5e1;">Select Topic</label>
-                    <select name="topicId" class="form-control" style="background: #1e293b; border: 1px solid #334155; color: white;" required>
-                        <% topics.forEach(topic => { %>
-                            <option value="<%= topic._id %>"><%= topic.name %> (<%= topic.category %>)</option>
-                        <% }) %>
-                    </select>
+
+            <div style="margin-top: 15px; min-height: 40px;">
+                <p style="color: #8b949e; font-size: 0.85rem; margin: 0; line-height: 1.4;">
+                    <%= test.description || 'Standard practice test.' %>
+                </p>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <form action="/english/test/generate" method="POST">
+                    <input type="hidden" name="testId" value="<%= test._id %>">
+                    <button type="button" class="btn-start" onclick="this.form.submit()">
+                        Start Practice &nbsp; &rsaquo;
+                    </button>
+                </form>
+            </div>
+        </div>
+    <% }) %>
+
+    <!-- Custom Tests -->
+    <% if (customTests && customTests.length > 0) { %>
+        <% customTests.forEach(test => { %>
+            <div class="quiz-card" style="border-color: #30363d;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span style="margin-right: 8px;">⚡</span>
+                        <%= test.title %>
+                    </div>
+                    <span class="status-badge" style="background: rgba(88, 166, 255, 0.1); color: #58a6ff; border: 1px solid rgba(88, 166, 255, 0.3);">
+                        Custom
+                    </span>
                 </div>
                 
-                <div class="form-group">
-                    <label style="color: #cbd5e1;">Number of Questions</label>
-                    <select name="questionCount" class="form-control" style="background: #1e293b; border: 1px solid #334155; color: white;">
-                        <option value="5">5 Questions (Quick)</option>
-                        <option value="10" selected>10 Questions</option>
-                        <option value="20">20 Questions</option>
-                        <option value="30">30 Questions (Intense)</option>
-                    </select>
+                <div class="card-meta">
+                    <div class="meta-item">
+                        <span>❓</span>
+                        <span><%= test.questionCount %> Qs</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>⏱</span>
+                        <span><%= test.duration %> Mins</span>
+                    </div>
                 </div>
 
-                <button type="submit" class="btn" style="width: 100%; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; font-weight: 600; padding: 12px; border-radius: 6px;">
-                    Start Custom Practice
-                </button>
-            </form>
-        </div>
-    </div>
+                <div style="margin-top: 15px; display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 0.8rem; color: #8b949e;">Created: <%= new Date(test.createdAt).toLocaleDateString() %></span>
+                    
+                    <a href="/english/test/delete/<%= test._id %>" 
+                       onclick="return confirm('Delete this test?')"
+                       style="color: #f85149; font-size: 0.85rem; text-decoration: none; display: flex; align-items: center; gap: 4px;">
+                       🗑️ Delete
+                    </a>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <form action="/english/test/generate" method="POST">
+                        <input type="hidden" name="testId" value="<%= test._id %>">
+                        <button type="submit" class="btn-start" style="background: rgba(33, 38, 45, 0.5); color: #c9d1d9; border: 1px solid #30363d;">
+                            Retake Test &nbsp; ↻
+                        </button>
+                    </form>
+                </div>
+            </div>
+        <% }) %>
+    <% } %>
+
 </div>
 
+<!-- Delete Route needs to be handled in backend if not present -->
+<style>
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-top: -30px;
+    margin-bottom: 40px;
+    position: relative;
+    z-index: 2;
+    padding: 0 10px;
+}
+
+.stat-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+}
+
+.stat-card h3 {
+    margin: 0 0 10px 0;
+    color: #e6edf3;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1;
+}
+
+/* Reusing styles from main dashboard */
+.dashboard-banner {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+    border-bottom: 1px solid #30363d;
+    padding: 40px 0 60px; /* Extra bottom padding for overlap */
+    text-align: center;
+    margin: -20px -20px 20px -20px;
+}
+.banner-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 10px;
+    letter-spacing: -1px;
+}
+.banner-subtitle {
+    color: #8b949e;
+    max-width: 600px;
+    margin: 0 auto;
+    font-size: 1.1rem;
+    line-height: 1.5;
+}
+
+.btn-start {
+    width: 100%;
+    padding: 12px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    background: #238636;
+    color: white;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+}
+.btn-start:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .dashboard-banner {
+        padding: 30px 20px 50px;
+        margin: -20px -20px 20px -20px;
+    }
+    
+    .banner-title {
+        font-size: 1.8rem;
+    }
+    
+    .banner-subtitle {
+        font-size: 0.95rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        margin-top: -40px;
+    }
+    
+    .stat-card {
+        padding: 15px;
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+    }
+
+    /* Actions Bar */
+    .actions-bar {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 15px;
+    }
+    
+    .btn-create-custom {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
 <%- include('../partials/footer') %>
+

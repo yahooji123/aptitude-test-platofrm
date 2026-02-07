@@ -2,6 +2,7 @@ const EnglishTopic = require('../models/EnglishTopic');
 const EnglishWord = require('../models/EnglishWord');
 const EnglishProgress = require('../models/EnglishProgress');
 const EnglishTestConfig = require('../models/EnglishTestConfig');
+const SystemSetting = require('../models/SystemSetting');
 
 // --- Admin Controllers ---
 
@@ -143,12 +144,68 @@ exports.deleteWord = async (req, res) => {
 exports.getStudentDashboard = async (req, res) => {
     try {
         const topics = await EnglishTopic.find({ isActive: true });
-        const availableTests = await EnglishTestConfig.find({ isActive: true }).populate('topic');
+        
+        // Fetch Admin Tests (createdBy is null or not exists)
+        const availableTests = await EnglishTestConfig.find({ 
+            isActive: true, 
+            $or: [{ createdBy: null }, { createdBy: { $exists: false } }] 
+        }).populate('topic');
+
+        // Fetch Custom Tests (createdBy is current user)
+        const customTests = await EnglishTestConfig.find({ 
+            createdBy: req.user._id 
+        }).populate('topic').sort({ createdAt: -1 });
         
         // Get generic progress stats
         const totalLearned = await EnglishProgress.countDocuments({ user: req.user._id, status: 'mastered' });
         
-        res.render('english/student_dashboard', { topics, availableTests, totalLearned, user: req.user });
+        res.render('english/student_dashboard', { topics, availableTests, customTests, totalLearned, user: req.user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+};
+
+exports.getCreateCustomTest = async (req, res) => {
+    try {
+        const topics = await EnglishTopic.find({ isActive: true });
+        res.render('english/create_custom', { topics, user: req.user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+};
+
+exports.createCustomTest = async (req, res) => {
+    try {
+        const { topicId, questionCount, duration } = req.body;
+        
+        const topic = await EnglishTopic.findById(topicId);
+        
+        await EnglishTestConfig.create({
+            title: `Custom: ${topic.name} (${new Date().toLocaleDateString()})`,
+            description: 'Custom practice session created by you.',
+            topic: topicId,
+            questionCount: parseInt(questionCount),
+            duration: parseInt(duration),
+            createdBy: req.user._id,
+            isActive: true
+        });
+
+        res.redirect('/english/dashboard');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+};
+
+exports.deleteCustomTest = async (req, res) => {
+    try {
+        const test = await EnglishTestConfig.findOne({ _id: req.params.id, createdBy: req.user._id });
+        if(test) {
+            await EnglishTestConfig.findByIdAndDelete(req.params.id);
+        }
+        res.redirect('/english/dashboard');
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
@@ -164,6 +221,9 @@ exports.generateTest = async (req, res) => {
         if (testId) {
             testConfig = await EnglishTestConfig.findById(testId).populate('topic');
             if(testConfig) {
+                if (!testConfig.topic) {
+                    return res.status(404).send('Error: The topic associated with this test has been deleted.');
+                }
                 topicId = testConfig.topic._id;
                 questionCount = testConfig.questionCount;
             }
@@ -171,6 +231,10 @@ exports.generateTest = async (req, res) => {
 
         const limit = parseInt(questionCount) || 10;
         
+        // --- Smart Practice Mode Logic ---
+        const smartMode = await SystemSetting.findOne({ key: 'smartPracticeMode' });
+        const prioritizeUnseen = smartMode && smartMode.value;
+
         const allWords = await EnglishWord.find({ topic: topicId, isActive: true });
         const userProgress = await EnglishProgress.find({ user: req.user._id, topic: topicId });
 
@@ -187,7 +251,12 @@ exports.generateTest = async (req, res) => {
             let weight = 1;
 
             if (!p) {
-                weight = 5; // New word, high priority
+                // UNSEEN WORD LOGIC
+                if (prioritizeUnseen) {
+                    weight = 1000; // Super high priority relative to others
+                } else {
+                    weight = 5; // Standard high priority
+                }
             } else if (p.status === 'mastered') {
                 weight = 0.5; // Already known, low priority
             } else if (p.incorrectCount > p.correctCount) {
@@ -201,7 +270,15 @@ exports.generateTest = async (req, res) => {
 
         // Weighted Random Selection
         // Sort by weight (descending) with random factor
-        weightedWords.sort((a, b) => (Math.random() * b.weight) - (Math.random() * a.weight));
+        // If Smart Mode is on, we want deterministic sort for the unseen ones (weight 1000)
+        weightedWords.sort((a, b) => {
+             // If weights are massive (Smart Mode Unseen), purely sort by weight first to ensure they are picked
+             if (prioritizeUnseen && (a.weight >= 1000 || b.weight >= 1000)) {
+                 return b.weight - a.weight; 
+             }
+             // Otherwise use randomized weight for variety
+             return (Math.random() * b.weight) - (Math.random() * a.weight);
+        });
         
         const finalSelection = weightedWords.slice(0, limit).map(w => w.word);
 
@@ -210,7 +287,8 @@ exports.generateTest = async (req, res) => {
             _id: testId || 'practice',
             title: testConfig ? testConfig.title : 'English Practice Session',
             duration: testConfig ? testConfig.duration : 15, // Default 15 mins
-            markingScheme: { correct: 1, incorrect: 0 }
+            markingScheme: { correct: 1, incorrect: 0 },
+            isSmartMode: prioritizeUnseen
         };
 
         res.render('english/test_runner', { 

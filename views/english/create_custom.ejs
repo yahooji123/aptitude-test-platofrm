@@ -1,0 +1,124 @@
+<%- include('../partials/header') %>
+
+<style>
+    .custom-container {
+        max-width: 800px;
+        margin: 40px auto;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    .form-card {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        color: white;
+        margin-bottom: 25px;
+        border-bottom: 1px solid #30363d;
+        padding-bottom: 15px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        color: #8b949e;
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+
+    .form-control {
+        background: #0d1117;
+        border: 1px solid #30363d;
+        color: #e6edf3;
+        padding: 12px;
+        border-radius: 8px;
+        width: 100%;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+        border-color: #58a6ff;
+        outline: none;
+    }
+
+    .btn-create {
+        background: #238636;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .btn-create:hover {
+        background: #2ea043;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="custom-container">
+    <div class="form-card">
+        <h2 class="section-title">Create Custom English Test</h2>
+        
+        <form action="/english/custom-test/create" method="POST">
+            <!-- Topic Selection -->
+            <div class="form-group">
+                <label class="form-label">Select Topic</label>
+                <select name="topicId" class="form-control" required>
+                    <option value="" disabled selected>Choose a topic...</option>
+                    <% topics.forEach(topic => { %>
+                        <option value="<%= topic._id %>"><%= topic.name %> (<%= topic.category %>)</option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <!-- Question Count -->
+            <div class="form-group">
+                <label class="form-label">Number of Questions</label>
+                <select name="questionCount" class="form-control">
+                    <option value="5">5 Questions</option>
+                    <option value="10" selected>10 Questions</option>
+                    <option value="15">15 Questions</option>
+                    <option value="20">20 Questions</option>
+                    <option value="25">25 Questions</option>
+                    <option value="30">30 Questions</option>
+                </select>
+            </div>
+
+            <!-- Duration -->
+            <div class="form-group">
+                <label class="form-label">Duration (Minutes)</label>
+                <select name="duration" class="form-control">
+                    <option value="5">5 Minutes</option>
+                    <option value="10">10 Minutes</option>
+                    <option value="15" selected>15 Minutes</option>
+                    <option value="20">20 Minutes</option>
+                    <option value="30">30 Minutes</option>
+                    <option value="45">45 Minutes</option>
+                    <option value="60">1 Hour</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-create">Create Test</button>
+        </form>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
