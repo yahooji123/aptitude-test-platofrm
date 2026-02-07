@@ -8,6 +8,8 @@ router.get('/admin/dashboard', protect, authorize('admin'), essayController.getA
 router.post('/admin/topics/add', protect, authorize('admin'), essayController.addBulkTopics);
 router.post('/admin/topics/toggle/:id', protect, authorize('admin'), essayController.toggleTopicStatus);
 router.post('/admin/topics/delete/:id', protect, authorize('admin'), essayController.deleteTopic);
+router.post('/admin/topics/delete-all', protect, authorize('admin'), essayController.deleteAllTopics); // Delete All
+router.post('/admin/topics/delete-selected', protect, authorize('admin'), essayController.deleteSelectedTopics); // Bulk Delete Selected
 
 router.get('/admin/submissions', protect, authorize('admin'), essayController.getAdminSubmissions);
 router.get('/admin/evaluate/:id', protect, authorize('admin'), essayController.getEvaluatePage);

@@ -67,6 +67,36 @@ exports.deleteTopic = async (req, res) => {
     }
 };
 
+// POST Delete All Topics
+exports.deleteAllTopics = async (req, res) => {
+    try {
+        await EssayTopic.deleteMany({});
+        await EssaySubmission.deleteMany({});
+        res.redirect('/essay/admin/dashboard');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// POST Delete Selected Topics (Bulk)
+exports.deleteSelectedTopics = async (req, res) => {
+    try {
+        const { topicIds } = req.body; // Expecting array of IDs
+        if (topicIds) {
+            // Determine if it's an array or single string (if only one checked)
+            const idsToDelete = Array.isArray(topicIds) ? topicIds : [topicIds];
+            
+            await EssayTopic.deleteMany({ _id: { $in: idsToDelete } });
+            await EssaySubmission.deleteMany({ topic: { $in: idsToDelete } });
+        }
+        res.redirect('/essay/admin/dashboard');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
 // GET Submissions List
 exports.getAdminSubmissions = async (req, res) => {
     try {

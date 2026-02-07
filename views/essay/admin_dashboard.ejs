@@ -26,36 +26,91 @@
 
     <!-- Topics List -->
     <div class="quiz-card">
-        <h3 style="color:white; margin-top:0;">Existing Topics (<%= topics.length %>)</h3>
-        <div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
-            <% if (topics.length === 0) { %>
-                <p style="color: #8b949e;">No topics found.</p>
-            <% } else { %>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <% topics.forEach(t => { %>
-                        <div style="background: #0d1117; padding: 10px; border-radius: 6px; border: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="color: #e6edf3; font-size: 0.9rem;"><%= t.topic.substring(0, 40) %>...</span>
-                            
-                            <div style="display: flex; gap: 10px;">
-                                <form action="/essay/admin/topics/toggle/<%= t._id %>" method="POST" style="margin:0;">
-                                    <button type="submit" 
-                                        style="padding: 4px 8px; border-radius: 4px; border: none; font-size:0.7rem; font-weight: bold; cursor: pointer; background: <%= t.isActive ? 'rgba(46, 160, 67, 0.2)' : 'rgba(218, 54, 51, 0.2)' %>; color: <%= t.isActive ? '#3fb950' : '#ff7b72' %>;">
-                                        <%= t.isActive ? 'ACTIVE' : 'INACTIVE' %>
-                                    </button>
-                                </form>
-                                <form action="/essay/admin/topics/delete/<%= t._id %>" method="POST" style="margin:0;" onsubmit="return confirm('Are you sure? This will delete the topic and ALL student submissions associated with it.');">
-                                    <button type="submit" 
-                                        style="padding: 4px 8px; border-radius: 4px; border: none; font-size:0.8rem; font-weight: bold; cursor: pointer; background: rgba(218, 54, 51, 0.2); color: #ff7b72;" title="Delete Topic">
-                                        🗑️
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    <% }) %>
-                </div>
-            <% } %>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="color:white; margin:0;">Existing Topics (<%= topics.length %>)</h3>
+            <form action="/essay/admin/topics/delete-all" method="POST" onsubmit="return confirm('⚠️ DANGER: This will delete ALL topics and ALL student submissions. Are you sure?');" style="margin:0;">
+                <button type="submit" class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem;">Delete ALL</button>
+            </form>
         </div>
+
+        <form action="/essay/admin/topics/delete-selected" method="POST" id="bulkDeleteForm">
+            <div style="margin-bottom: 10px;">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Delete selected topics?')" style="padding: 6px 12px; font-size: 0.8rem; background: #30363d; border-color: #f85149; color: #ff7b72;">Delete Selected</button>
+            </div>
+
+            <div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                <% if (topics.length === 0) { %>
+                    <p style="color: #8b949e;">No topics found.</p>
+                <% } else { %>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <% topics.forEach(t => { %>
+                            <div style="background: #0d1117; padding: 10px; border-radius: 6px; border: 1px solid #30363d; display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" name="topicIds" value="<%= t._id %>" style="width: 18px; height: 18px; cursor: pointer;">
+                                
+                                <div style="flex: 1; display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="color: #e6edf3; font-size: 0.9rem;"><%= t.topic.substring(0, 40) %>...</span>
+                                    
+                                    <div style="display: flex; gap: 10px;">
+                                        <!-- Keep individual toggle/delete buttons outside the main form context?  
+                                             HTML technically forbids nested forms. 
+                                             We can use fetch or just simple links, but for simplicity, we keep forms but need to be careful.
+                                             
+                                             Wait, wrapping the whole list in a form means I CANNOT have nested forms for Toggle/Individual Delete.
+                                             
+                                             SOLUTION: Use formaction on buttons inside the main form? No, different methods/actions.
+                                             Best way: Use JS for the bulk delete or use JS for the individual actions.
+                                             
+                                             Or, just don't wrap in form? No, checkboxes need a form.
+                                             
+                                             Alternative: Make individual buttons triggers for JS that submits a hidden form OR
+                                             Simply use <button form="secondaryForm"> attribute if supported (it is).
+                                             
+                                             Let's try a different layout. 
+                                             Checkbox | Topic Title | [Toggle Btn (Form)] | [Delete Btn (Form)]
+                                             This creates nested inputs but not nested forms if we aren't careful.
+                                             
+                                             Actually, if I wrap the whole div in a <form>, I can't put <form> inside it.
+                                             
+                                             Strategy:
+                                             The main list is the BULK DELETE form.
+                                             The Toggle and Delete buttons inside the row must NOT be forms.
+                                             They can be links or buttons with onclick JS to submit a hidden form.
+                                             
+                                             OR, cleaner:
+                                             Just have the Bulk Delete form wrap the CHECKBOXES only? No, structure is row based.
+                                             
+                                             Let's use JS for the Toggle and Individual Delete to keep the markup valid.
+                                        -->
+                                        
+                                        <button type="button" onclick="submitAction('/essay/admin/topics/toggle/<%= t._id %>')"
+                                            style="padding: 4px 8px; border-radius: 4px; border: none; font-size:0.7rem; font-weight: bold; cursor: pointer; background: <%= t.isActive ? 'rgba(46, 160, 67, 0.2)' : 'rgba(218, 54, 51, 0.2)' %>; color: <%= t.isActive ? '#3fb950' : '#ff7b72' %>;">
+                                            <%= t.isActive ? 'ACTIVE' : 'INACTIVE' %>
+                                        </button>
+                                        
+                                        <button type="button" onclick="if(confirm('Delete topic?')) submitAction('/essay/admin/topics/delete/<%= t._id %>')"
+                                            style="padding: 4px 8px; border-radius: 4px; border: none; font-size:0.8rem; font-weight: bold; cursor: pointer; background: rgba(218, 54, 51, 0.2); color: #ff7b72;" title="Delete Topic">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } %>
+            </div>
+        </form>
     </div>
 </div>
+
+<!-- Helper Form for individual actions -->
+<form id="actionForm" method="POST" style="display: none;"></form>
+
+<script>
+function submitAction(url) {
+    const form = document.getElementById('actionForm');
+    form.action = url;
+    form.submit();
+}
+</script>
 
 <%- include('../partials/footer') %>

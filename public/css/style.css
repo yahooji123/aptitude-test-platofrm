@@ -21,54 +21,138 @@ body {
 
 /* Navbar */
 .navbar {
-    background-color: #161b22;
-    border-bottom: 1px solid var(--border-color);
-    padding: 1rem 2rem;
+    background-color: rgba(22, 27, 34, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(48, 54, 61, 0.6);
+    padding: 0.8rem 2rem;
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.nav-brand {
+    display: flex;
     align-items: center;
 }
 
 .navbar .logo {
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight: 800;
     color: white;
     text-decoration: none;
     letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mobile-menu-btn {
+    display: none;
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.mobile-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .nav-links {
     display: flex;
-    gap: 15px;
+    gap: 8px;
     align-items: center;
 }
 
-.nav-links a {
+.nav-links .nav-item {
     color: var(--text-secondary);
     text-decoration: none;
     font-weight: 500;
-    transition: color 0.2s;
+    transition: all 0.2s ease;
+    padding: 8px 14px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    border: 1px solid transparent;
 }
 
-.nav-links a:hover {
+.nav-links .nav-item:hover {
     color: white;
+    background-color: rgba(240, 246, 252, 0.1);
+    border-color: rgba(240, 246, 252, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Specific styling for special links */
+.nav-links .adaptive-link {
+    background: rgba(88, 166, 255, 0.1);
+    color: #58a6ff !important;
+    border: 1px solid rgba(88, 166, 255, 0.2);
+}
+
+.nav-links .adaptive-link:hover {
+    background: rgba(88, 166, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 0 10px rgba(88, 166, 255, 0.2);
+}
+
+.nav-user-info {
+    margin-right: 15px;
+    font-size: 0.9rem;
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.nav-links a {
+    /* Fallback/Base styles */
+    color: var(--text-secondary);
+    text-decoration: none;
 }
 
 .btn-nav-login {
     color: white !important;
-    border: 1px solid var(--border-color);
-    padding: 8px 16px;
-    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    padding: 8px 18px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    background: transparent;
+    font-weight: 500;
+}
+
+.btn-nav-login:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: white !important;
+    transform: translateY(-1px);
 }
 
 .btn-nav-signup {
     background-color: var(--accent-color); /* Fallback */
     background: linear-gradient(90deg, #7928ca, #ff0080);
     color: white !important;
-    padding: 8px 16px;
-    border-radius: 6px;
+    padding: 8px 18px;
+    border-radius: 8px;
     border: none;
     font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(255, 0, 128, 0.3);
+}
+
+.btn-nav-signup:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(255, 0, 128, 0.5);
+    filter: brightness(1.1);
 }
 
 /* Container */
@@ -422,16 +506,43 @@ body {
 @media screen and (max-width: 768px) {
     /* Navbar Responsiveness */
     .navbar {
-        flex-direction: column;
-        padding: 1rem;
-        gap: 15px;
+        flex-wrap: wrap; /* Allow wrapping for menu */
+        padding: 0.8rem 1.2rem;
+    }
+
+    .nav-brand {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .mobile-menu-btn {
+        display: block; /* Show hamburger on mobile */
     }
 
     .nav-links {
         width: 100%;
+        display: none; /* Hide links by default */
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
         text-align: center;
+        padding-top: 20px;
+        margin-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-links.active {
+        display: flex; /* Show when toggled */
+        animation: slideInMenu 0.3s ease forwards;
+    }
+
+    @keyframes slideInMenu {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .nav-user-info {
+        margin: 0 0 10px 0;
+        display: inline-block;
     }
 
     .nav-links a {
