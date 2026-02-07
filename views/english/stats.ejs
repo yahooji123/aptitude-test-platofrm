@@ -1,0 +1,56 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #1e293b, #0f172a); margin-bottom: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <div class="banner-title" style="background: linear-gradient(90deg, #60a5fa, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Your Progress Report</div>
+            <div class="banner-subtitle">Detailed analytics of your vocabulary mastery.</div>
+        </div>
+        <a href="/english/dashboard" style="color: #cbd5e1; text-decoration: none; background: rgba(255, 255, 255, 0.1); padding: 8px 16px; border-radius: 6px; font-weight: 500; border: 1px solid rgba(255, 255, 255, 0.1);">← Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="dashboard-container" style="max-width: 1200px; padding: 0 20px;">
+
+    <% if (Object.keys(topicStats).length === 0) { %>
+        <div style="text-align: center; padding: 50px; background: #1e293b; border-radius: 12px; border: 1px dashed #334155;">
+            <p style="color: #cbd5e1; font-size: 1.2rem;">No data available yet.</p>
+            <p style="color: #94a3b8;">Take a test to see your analytics here!</p>
+            <a href="/english/dashboard" class="btn" style="background: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 15px;">Start Practicing</a>
+        </div>
+    <% } else { %>
+        <div class="cards-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px;">
+            <% for (const [topicName, data] of Object.entries(topicStats)) { %>
+                <div class="quiz-card" style="background: #1e293b; border: 1px solid #334155; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #334155;">
+                        <h3 style="color: #e2e8f0; margin: 0; font-size: 1.2rem;"><%= topicName %></h3>
+                        <span style="background: #0f172a; color: #94a3b8; font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; border: 1px solid #334155;">Topic</span>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #94a3b8; font-size: 0.9rem;">Accuracy</span>
+                            <strong style="color: #34d399;"><%= data.totalAttempts > 0 ? Math.round((data.correct / data.totalAttempts) * 100) : 0 %>%</strong>
+                        </div>
+                        <div style="height: 8px; background: #334155; border-radius: 4px; overflow: hidden;">
+                            <div style="width: <%= data.totalAttempts > 0 ? (data.correct / data.totalAttempts) * 100 : 0 %>%; height: 100%; background: linear-gradient(90deg, #34d399, #10b981); border-radius: 4px;"></div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div style="background: rgba(16, 185, 129, 0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
+                            <div style="color: #34d399; font-size: 1.4rem; font-weight: 700; line-height: 1;"><%= data.mastered %></div>
+                            <div style="color: #a7f3d0; font-size: 0.85rem; margin-top: 5px;">Mastered</div>
+                        </div>
+                        <div style="background: rgba(59, 130, 246, 0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                            <div style="color: #60a5fa; font-size: 1.4rem; font-weight: 700; line-height: 1;"><%= data.learning %></div>
+                            <div style="color: #bfdbfe; font-size: 0.85rem; margin-top: 5px;">Learning</div>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    <% } %>
+</div>
+
+<%- include('../partials/footer') %>

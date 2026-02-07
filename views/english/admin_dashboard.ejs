@@ -1,0 +1,157 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #1e293b, #0f172a);">
+    <div class="banner-title" style="background: linear-gradient(90deg, #34d399, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">English Admin Console</div>
+    <div class="banner-subtitle">Manage vocabulary topics, words, and test configurations.</div>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;">
+    <div class="stat-card" style="background: #1e293b; border: 1px solid #334155;">
+        <h3 style="color: #94a3b8;">Total Topics</h3>
+        <p class="stat-value" style="color: #cbd5e1;"><%= topics.length %></p>
+    </div>
+    <div class="stat-card" style="background: #1e293b; border: 1px solid #334155;">
+        <h3 style="color: #94a3b8;">Total Words</h3>
+        <p class="stat-value" style="color: #34d399;"><%= wordsCount %></p>
+    </div>
+    <div class="stat-card" style="background: #1e293b; border: 1px solid #334155;">
+        <h3 style="color: #94a3b8;">Active Tests</h3>
+        <p class="stat-value" style="color: #3b82f6;"><%= tests.length %></p>
+    </div>
+</div>
+
+<div class="tabs-container" style="margin-bottom: 20px; border-bottom: 1px solid #334155;">
+    <button class="tab-btn active" onclick="showTab('topics')" style="background: transparent; color: #cbd5e1; border: none; border-bottom: 2px solid #34d399; padding: 10px 20px; font-weight: 600;">Manage Topics</button>
+    <button class="tab-btn" onclick="showTab('tests')" style="background: transparent; color: #64748b; border: none; padding: 10px 20px; font-weight: 600;">Manage Tests</button>
+</div>
+
+<!-- Topics Section -->
+<div id="topics" class="tab-content active">
+    <div class="cards-grid" style="grid-template-columns: 1fr 2fr; gap: 20px;">
+        <!-- Create New Topic Card -->
+        <div class="quiz-card" style="height: fit-content;">
+            <h3 style="color: #cbd5e1; margin-top: 0; margin-bottom: 15px;">Create New Topic</h3>
+            <form action="/english/admin/create-topic" method="POST" style="display: flex; flex-direction: column; gap: 15px;">
+                <div>
+                    <label style="color: #94a3b8; font-size: 0.9rem; display: block; margin-bottom: 5px;">Topic Name</label>
+                    <input type="text" name="name" required placeholder="e.g. Conjunctions" 
+                        style="width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 10px; border-radius: 6px;">
+                </div>
+                <div>
+                    <label style="color: #94a3b8; font-size: 0.9rem; display: block; margin-bottom: 5px;">Category</label>
+                    <select name="category" style="width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 10px; border-radius: 6px;">
+                        <option value="Vocabulary">Vocabulary</option>
+                        <option value="Grammar">Grammar</option>
+                        <option value="Tenses">Tenses</option>
+                        <option value="Verbs">Verbs</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="color: #94a3b8; font-size: 0.9rem; display: block; margin-bottom: 5px;">Description</label>
+                    <input type="text" name="description" placeholder="Optional description" 
+                        style="width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 10px; border-radius: 6px;">
+                </div>
+                <button type="submit" class="btn" style="background: #34d399; color: #022c22; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer;">+ Create Topic</button>
+            </form>
+        </div>
+
+        <!-- Topics List -->
+        <div class="quiz-card">
+            <h3 style="color: #cbd5e1; margin-top: 0; margin-bottom: 15px;">Existing Topics</h3>
+            <% if (topics.length > 0) { %>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <% topics.forEach(topic => { %>
+                        <div style="background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="color: #e2e8f0; font-weight: 600; font-size: 1.1rem;"><%= topic.name %></div>
+                                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                                    <span class="difficulty-tag" style="background: rgba(52, 211, 153, 0.1); color: #34d399; font-size: 0.75rem;"><%= topic.category %></span>
+                                    <span style="color: #64748b; font-size: 0.85rem;"><%= topic.description || '' %></span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <a href="/english/admin/manage-words/<%= topic._id %>" 
+                                   style="text-decoration: none; background: rgba(59, 130, 246, 0.1); color: #60a5fa; padding: 6px 12px; border-radius: 4px; font-size: 0.9rem; border: 1px solid rgba(59, 130, 246, 0.2);">
+                                    Manage Words
+                                </a>
+                                <a href="/english/admin/delete-topic/<%= topic._id %>" onclick="return confirm('Delete topic and all its words?')"
+                                   style="text-decoration: none; background: rgba(239, 68, 68, 0.1); color: #f87171; padding: 6px 12px; border-radius: 4px; font-size: 0.9rem; border: 1px solid rgba(239, 68, 68, 0.2);">
+                                    Delete
+                                </a>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <p style="color: #64748b; text-align: center; padding: 20px;">No topics created yet.</p>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Tests Section -->
+<div id="tests" class="tab-content" style="display: none;">
+    <div class="cards-grid" style="grid-template-columns: 1fr;">
+        <div class="quiz-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: #cbd5e1; margin: 0;">English Test Configurations</h3>
+                <a href="/english/admin/create-test" class="btn" style="background: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600;">+ Create New Config</a>
+            </div>
+            
+            <% if (tests.length > 0) { %>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
+                    <% tests.forEach(test => { %>
+                        <div style="background: #0f172a; padding: 20px; border-radius: 8px; border: 1px solid #334155;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <h4 style="color: #e2e8f0; margin: 0; font-size: 1.1rem;"><%= test.title %></h4>
+                                <a href="/english/admin/delete-test/<%= test._id %>" onclick="return confirm('Delete this test configuration?')" 
+                                   style="color: #f87171; text-decoration: none; font-size: 1.2rem;">×</a>
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 5px;">
+                                    Topic: <strong style="color: #cbd5e1;"><%= test.topic ? test.topic.name : 'Deleted Topic' %></strong>
+                                </div>
+                                <div style="color: #94a3b8; font-size: 0.9rem;">
+                                    Questions: <strong style="color: #cbd5e1;"><%= test.questionCount %></strong> • Time: <strong style="color: #cbd5e1;"><%= test.duration %> mins</strong>
+                                </div>
+                            </div>
+
+                            <div style="padding-top: 15px; border-top: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.8rem; color: #64748b;">Created: <%= new Date(test.createdAt).toLocaleDateString() %></span>
+                                <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; font-size: 0.75rem; padding: 2px 8px; border-radius: 4px;">Active</span>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div style="text-align: center; padding: 40px; border: 2px dashed #334155; border-radius: 8px;">
+                    <p style="color: #64748b; margin-bottom: 10px;">No tests created yet.</p>
+                    <p style="color: #94a3b8; font-size: 0.9rem;">Create a specific test configuration to assign it to students.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<script>
+function showTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(el => {
+        el.classList.remove('active');
+        el.style.color = '#64748b';
+        el.style.borderBottom = 'none';
+    });
+    
+    document.getElementById(tabId).style.display = 'block';
+    
+    const activeBtn = event.target;
+    activeBtn.classList.add('active');
+    activeBtn.style.color = '#cbd5e1';
+    activeBtn.style.borderBottom = '2px solid #34d399';
+}
+</script>
+
+<%- include('../partials/footer') %>

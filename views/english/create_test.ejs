@@ -1,0 +1,66 @@
+<%- include('../partials/header') %>
+
+<div style="background: linear-gradient(135deg, #1e293b, #0f172a); border-bottom: 1px solid #334155; padding: 20px 0;">
+    <div style="max-width: 800px; margin: 0 auto; padding: 0 20px;">
+        <h1 style="color: #e2e8f0; margin: 0 0 5px 0; font-size: 1.8rem;">Create New Test Configuration</h1>
+        <p style="color: #94a3b8; margin: 0;">Configure tests for students to take.</p>
+    </div>
+</div>
+
+<div class="test-container" style="max-width: 600px; margin: 40px auto; padding: 0 20px;">
+    <div class="quiz-card" style="background: #1e293b; border: 1px solid #334155; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+        <form action="/english/admin/create-test" method="POST" class="auth-form" style="display: flex; flex-direction: column; gap: 20px;">
+            
+            <div>
+                <label style="display: block; color: #cbd5e1; margin-bottom: 8px; font-weight: 500;">Test Title</label>
+                <input type="text" name="title" required placeholder="e.g. Weekly Vocab Quiz 1"
+                    style="width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 12px; border-radius: 6px;">
+            </div>
+
+            <div>
+                <label style="display: block; color: #cbd5e1; margin-bottom: 8px; font-weight: 500;">Target Topic</label>
+                <select name="topicId" required
+                    style="width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 12px; border-radius: 6px;">
+                    <% topics.forEach(topic => { %>
+                        <option value="<%= topic._id %>"><%= topic.name %> (<%= topic.category %>)</option>
+                    <% }) %>
+                </select>
+                <small style="color: #64748b; display: block; margin-top: 5px;">The test will randomly pick words from this topic.</small>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label style="display: block; color: #cbd5e1; margin-bottom: 8px; font-weight: 500;">Questions</label>
+                    <select name="questionCount" 
+                        style="width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 12px; border-radius: 6px;">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                        <option value="25">25</option>
+                        <option value="30">30</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label style="display: block; color: #cbd5e1; margin-bottom: 8px; font-weight: 500;">Duration (Mins)</label>
+                    <input type="number" name="duration" value="15" min="1" max="180"
+                        style="width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 12px; border-radius: 6px;">
+                </div>
+            </div>
+
+            <div>
+                <label style="display: block; color: #cbd5e1; margin-bottom: 8px; font-weight: 500;">Description (Optional)</label>
+                <textarea name="description" rows="3" placeholder="Instructions only for this test..."
+                    style="width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 12px; border-radius: 6px; resize: vertical;"></textarea>
+            </div>
+
+            <div style="margin-top: 10px; display: flex; gap: 15px; align-items: center;">
+                <button type="submit" class="btn" style="flex: 1; background: #3b82f6; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer;">Create Test</button>
+                <a href="/english/admin/dashboard" style="color: #94a3b8; text-decoration: none;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

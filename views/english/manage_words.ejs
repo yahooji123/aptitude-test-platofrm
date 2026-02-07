@@ -1,0 +1,92 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #1e293b, #0f172a); margin-bottom: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <div class="banner-title" style="background: linear-gradient(90deg, #34d399, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                Manager: <%= topic.name %>
+            </div>
+            <div class="banner-subtitle">Add or remove vocabulary words for this topic.</div>
+        </div>
+        <a href="/english/admin/dashboard" style="background: rgba(255, 255, 255, 0.1); color: #cbd5e1; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 500; border: 1px solid rgba(255, 255, 255, 0.1);">
+            ← Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="dashboard-container" style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px; max-width: 1400px;">
+    
+    <!-- Bulk Upload Card -->
+    <div class="upload-section">
+        <div class="quiz-card" style="position: sticky; top: 100px;">
+            <h3 style="color: #e2e8f0; margin-top: 0; margin-bottom: 20px;">Add Words (Bulk)</h3>
+            
+            <div class="info-box" style="background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+                <strong style="color: #34d399; display: block; margin-bottom: 5px;">Format Instructions</strong>
+                <span style="color: #cbd5e1; font-size: 0.9rem;">Paste words line by line:</span>
+                <div style="background: #0d1117; color: #94a3b8; padding: 8px; border-radius: 4px; border: 1px solid #334155; margin-top: 8px; font-family: monospace; font-size: 0.85rem;">
+                    Apple = Seb<br>
+                    Benevolent = Dayalu
+                </div>
+            </div>
+
+            <form action="/english/admin/bulk-add" method="POST">
+                <input type="hidden" name="topicId" value="<%= topic._id %>">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <textarea name="wordsData" rows="12" 
+                        placeholder="Word = Meaning" 
+                        required
+                        style="width: 100%; background: #0f172a; border: 1px solid #334155; color: #cbd5e1; padding: 15px; border-radius: 8px; font-family: monospace; resize: vertical;"></textarea>
+                </div>
+                <button type="submit" class="btn" style="width: 100%; background: #34d399; color: #022c22; border: none; padding: 12px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s;">
+                    + Add Words
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Existing Words List -->
+    <div class="words-list-section">
+        <div class="card" style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden;">
+            <div style="padding: 20px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: #e2e8f0; margin: 0;">Existing Words</h3>
+                <span style="background: #334155; color: #94a3b8; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem;"><%= words.length %> words</span>
+            </div>
+
+            <% if (words.length > 0) { %>
+                <div class="table-responsive">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #0f172a; text-align: left;">
+                                <th style="padding: 15px 20px; color: #94a3b8; font-weight: 500; font-size: 0.9rem;">Word (English)</th>
+                                <th style="padding: 15px 20px; color: #94a3b8; font-weight: 500; font-size: 0.9rem;">Meaning (Hindi)</th>
+                                <th style="padding: 15px 20px; color: #94a3b8; font-weight: 500; font-size: 0.9rem; text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% words.forEach(word => { %>
+                                <tr style="border-bottom: 1px solid #334155;">
+                                    <td style="padding: 15px 20px; color: #e2e8f0; font-weight: 600;"><%= word.word %></td>
+                                    <td style="padding: 15px 20px; color: #cbd5e1;"><%= word.hindiMeaning %></td>
+                                    <td style="padding: 15px 20px; text-align: right;">
+                                        <a href="/english/admin/delete-word/<%= topic._id %>/<%= word._id %>" 
+                                           style="color: #ef4444; text-decoration: none; font-size: 1.2rem; padding: 5px 10px; border-radius: 4px; transition: background 0.2s;"
+                                           onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'"
+                                           onmouseout="this.style.background='transparent'"
+                                        >×</a>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div style="padding: 40px; text-align: center; color: #64748b;">
+                    No words available in this topic yet. Use the form to add some.
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

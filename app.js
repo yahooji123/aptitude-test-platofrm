@@ -33,6 +33,7 @@ app.use('/admin', require('./routes/adminRoutes'));
 app.use('/adaptive', require('./routes/adaptiveRoutes'));
 app.use('/essay', require('./routes/essayRoutes')); // New Essay Feature
 app.use('/reading', require('./routes/readingRoutes')); // New Reading Feature
+app.use('/english', require('./routes/englishRoutes')); // New English Learning Feature
 
 // Public Routes (Login/Register Pages)
 app.get('/', (req, res) => res.redirect('/student/dashboard'));
