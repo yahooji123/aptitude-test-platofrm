@@ -26,6 +26,11 @@ const examSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
+    duration: {
+        type: Number, // Exam duration in minutes
+        required: true,
+        default: 60
+    },
     instructions: {
         type: String,
         required: true

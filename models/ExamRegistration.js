@@ -28,6 +28,7 @@ const examRegistrationSchema = new mongoose.Schema({
     },
     submission: { type: String, default: '' },
     submittedAt: { type: Date },
+    startedAt: { type: Date }, // When the student started the exam
     suspiciousActivityCount: { type: Number, default: 0 },
     registeredAt: {
         type: Date,

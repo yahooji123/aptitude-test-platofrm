@@ -27,9 +27,18 @@
                     <input type="time" id="startTime" name="startTime" required>
                 </div>
                 <div class="form-group">
-                    <label for="endTime">End Time</label>
+                    <label for="endTime">End Time (Validity Ends)</label>
                     <input type="time" id="endTime" name="endTime" required>
                 </div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 15px;">
+                <label for="duration">Exam Duration (minutes)</label>
+                <input type="number" id="duration" name="duration" placeholder="e.g. 60" min="1" max="1440" required>
+                <small style="color: #6c757d;">
+                    The student can start anytime between Start Time and End Time, but will only get this many minutes. 
+                    The exam will auto-submit if the End Time is reached first.
+                </small>
             </div>
 
             <div class="form-group">

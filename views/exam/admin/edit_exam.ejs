@@ -27,9 +27,14 @@
                     <input type="time" name="startTime" class="form-control" value="<%= new Date(exam.startTime).toTimeString().slice(0,5) %>" required>
                 </div>
                 <div class="col-md-6 form-group">
-                    <label>End Time</label>
+                    <label>End Time (Validity Ends)</label>
                     <input type="time" name="endTime" class="form-control" value="<%= new Date(exam.endTime).toTimeString().slice(0,5) %>" required>
                 </div>
+            </div>
+
+            <div class="form-group">
+                <label>Duration (minutes)</label>
+                <input type="number" name="duration" class="form-control" value="<%= exam.duration || 60 %>" required min="1">
             </div>
 
             <div class="form-group">

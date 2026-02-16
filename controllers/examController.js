@@ -12,14 +12,9 @@ exports.getCreateExam = (req, res) => {
 
 exports.createExam = async (req, res) => {
     try {
-        const { title, date, startTime, endTime, instructions, questionPaperContent } = req.body;
-
-        // Parse date and times
-        // Assuming date is in YYYY-MM-DD format
-        // times are in HH:MM format
+        const { title, date, startTime, endTime, duration, instructions, questionPaperContent } = req.body;
         
         const examDate = new Date(date);
-        
         const startDateTime = new Date(`${date}T${startTime}`);
         const endDateTime = new Date(`${date}T${endTime}`);
 
@@ -28,6 +23,7 @@ exports.createExam = async (req, res) => {
             date: examDate,
             startTime: startDateTime,
             endTime: endDateTime,
+            duration: duration || 60, // Default to 60 minutes if not provided
             instructions,
             questionPaperContent
         });
@@ -115,7 +111,7 @@ exports.getEditExam = async (req, res) => {
 
 exports.postEditExam = async (req, res) => {
     try {
-        const { title, date, startTime, endTime, instructions, questionPaperContent } = req.body;
+        const { title, date, startTime, endTime, duration, instructions, questionPaperContent } = req.body;
         
         const examDate = new Date(date);
         
@@ -127,6 +123,7 @@ exports.postEditExam = async (req, res) => {
             date: examDate,
             startTime: startDateTime,
             endTime: endDateTime,
+            duration: duration || 60,
             instructions,
             questionPaperContent
         });
@@ -213,7 +210,7 @@ exports.getAttemptExam = async (req, res) => {
         const { regId } = req.query;
         const examId = req.params.id;
         
-        const registration = await ExamRegistration.findById(regId).populate('examId');
+        let registration = await ExamRegistration.findById(regId).populate('examId');
         
         if (!registration || registration.examId._id.toString() !== examId) {
              return res.redirect(`/exams/${examId}/login`);
@@ -230,8 +227,33 @@ exports.getAttemptExam = async (req, res) => {
             status = 'waiting';
             timeLeft = (exam.startTime - now) / 1000;
         } else if (now >= exam.startTime && now <= exam.endTime) {
-            status = 'live';
-            timeLeft = (exam.endTime - now) / 1000;
+            // Exam is live. Check if student has already submitted or started.
+            if (registration.submittedAt) {
+                status = 'ended';
+                timeLeft = 0;
+            } else {
+                status = 'live';
+
+                // Initialize start time if not set
+                if (!registration.startedAt) {
+                    registration.startedAt = now;
+                    await registration.save();
+                }
+
+                // Calculate time left based on (Exam End Time) vs (Student Start + Duration)
+                const examDurationMs = (exam.duration || 60) * 60 * 1000;
+                const studentEndTime = new Date(registration.startedAt.getTime() + examDurationMs);
+                
+                // The effective deadline is the earlier of the two
+                const deadline = new Date(Math.min(exam.endTime.getTime(), studentEndTime.getTime()));
+                
+                timeLeft = (deadline - now) / 1000;
+                
+                if (timeLeft <= 0) {
+                    status = 'ended';
+                    timeLeft = 0;
+                }
+            }
         } else {
             status = 'ended';
             timeLeft = 0;
