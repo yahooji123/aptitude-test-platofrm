@@ -538,8 +538,10 @@
                         <div style="margin-bottom: 20px; padding: 20px; border: 2px dashed #ccc; border-radius: 8px; text-align: center; background: #f9f9f9;">
                             <label for="answerFiles" style="font-weight: 600; cursor: pointer; display: block; font-size: 1.1rem; color: #2c3e50;">
                                 📸 Add Answer Photos (Select Multiple)
-                                <input type="file" name="answerFiles" id="answerFiles" accept="image/*" multiple style="margin-top: 15px; display: block; margin: 10px auto;">
+                                <input type="file" name="answerFiles" id="answerFiles" accept="image/*" multiple style="margin-top: 15px; display: block; margin: 10px auto; opacity: 0; width: 0.1px; height: 0.1px; position: absolute;">
                             </label>
+                            
+                            <button type="button" onclick="document.getElementById('answerFiles').click()" class="btn-secondary-custom" style="display: inline-block; margin-bottom: 15px;">➕ Select Images</button>
                             <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">(Supported: JPG, PNG. Max 20 images)</p>
                             
                             <!-- Image Preview Grid -->
@@ -553,36 +555,75 @@
                 </div>
                 
                 <script>
-                    document.getElementById('answerFiles').addEventListener('change', function(e) {
-                        const files = Array.from(e.target.files);
-                        const count = files.length;
-                        const previewGrid = document.getElementById('imagePreviewGrid');
+                    const fileInput = document.getElementById('answerFiles');
+                    const previewGrid = document.getElementById('imagePreviewGrid');
+                    const fileListDisplay = document.getElementById('fileList');
+                    let selectedFiles = []; // Master list of file objects
+
+                    fileInput.addEventListener('change', function(e) {
+                        const newFiles = Array.from(e.target.files);
                         
-                        document.getElementById('fileList').innerText = count > 0 ? `✅ ${count} file(s) selected` : '';
+                        // Add new files to our master list
+                        newFiles.forEach(file => {
+                            // Check for duplicates based on name/size/lastModified
+                            const isDuplicate = selectedFiles.some(f => 
+                                f.name === file.name && 
+                                f.size === file.size && 
+                                f.lastModified === file.lastModified
+                            );
+                            if (!isDuplicate) {
+                                selectedFiles.push(file);
+                            }
+                        });
                         
-                        // Clear previous previews
+                        updateFileUI();
+                    });
+
+                    function updateFileUI() {
+                        // Update text
+                        const count = selectedFiles.length;
+                        fileListDisplay.innerText = count > 0 ? `✅ ${count} file(s) ready for upload` : '';
+                        
+                        // Clear grid
                         previewGrid.innerHTML = '';
 
-                        if(count > 0) {
-                            files.forEach((file, index) => {
-                                const reader = new FileReader();
-                                reader.onload = function(e) {
-                                    const div = document.createElement('div');
-                                    div.style.position = 'relative';
-                                    div.style.border = '1px solid #ddd';
-                                    div.style.borderRadius = '4px';
-                                    div.style.overflow = 'hidden';
-                                    
-                                    div.innerHTML = `
-                                        <img src="${e.target.result}" style="width: 100%; height: 80px; object-fit: cover; display: block;">
-                                        <div style="font-size: 0.7rem; padding: 2px; text-align: center; background: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
-                                    `;
-                                    previewGrid.appendChild(div);
-                                }
-                                reader.readAsDataURL(file);
-                            });
-                        }
-                    });
+                        // Rebuild Grid
+                        selectedFiles.forEach((file, index) => {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                const div = document.createElement('div');
+                                div.style.position = 'relative';
+                                div.style.border = '1px solid #ddd';
+                                div.style.borderRadius = '4px';
+                                div.style.overflow = 'hidden';
+                                div.className = 'preview-item';
+                                
+                                div.innerHTML = `
+                                    <img src="${e.target.result}" style="width: 100%; height: 80px; object-fit: cover; display: block;">
+                                    <div style="font-size: 0.7rem; padding: 2px; text-align: center; background: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
+                                    <button type="button" onclick="removeFile(${index})" style="position: absolute; top: 0; right: 0; background: red; color: white; border: none; cursor: pointer; font-size: 0.8rem; padding: 0 5px;">&times;</button>
+                                `;
+                                previewGrid.appendChild(div);
+                            }
+                            reader.readAsDataURL(file);
+                        });
+
+                        // Sync native input
+                        updateInputFiles();
+                    }
+
+                    function removeFile(index) {
+                        selectedFiles.splice(index, 1);
+                        updateFileUI();
+                    }
+
+                    function updateInputFiles() {
+                        const dataTransfer = new DataTransfer();
+                        selectedFiles.forEach(file => {
+                            dataTransfer.items.add(file);
+                        });
+                        fileInput.files = dataTransfer.files;
+                    }
                 </script>
 
                 <div style="margin-top: 50px; text-align: center; font-size: 0.9rem; font-style: italic;">
@@ -602,6 +643,7 @@
         const startBtn = document.getElementById("startExamBtn");
         const waitingRoom = document.getElementById("waitingRoom");
         const examPaper = document.getElementById("examPaper");
+        let gracePeriodActive = false;
 
         function formatTime(seconds) {
             if(seconds < 0) return "00:00:00";
@@ -619,7 +661,14 @@
                 if (status === "waiting") {
                     if (countdownDisplay) countdownDisplay.innerText = formatted;
                 } else if (status === "live") {
-                    if (timerDisplay) timerDisplay.innerText = " " + formatted;
+                    if (!gracePeriodActive) {
+                        if (timerDisplay) timerDisplay.innerText = " " + formatted;
+                    } else {
+                        // Grace Period Display
+                         if (timerDisplay) {
+                             timerDisplay.innerHTML = `<span style="color: yellow;">UPLOAD TIME: ${formatted}</span>`;
+                         }
+                    }
                 }
             } else {
                 if (status === "waiting") {
@@ -629,9 +678,35 @@
                         startBtn.innerText = "START EXAM";
                     }
                 } else if (status === "live") {
-                    if (timerDisplay) timerDisplay.innerText = "TIME UP";
-                    alert("Time is Up! Submitting automatically...");
-                    document.getElementById('examForm').submit();
+                    if (!gracePeriodActive) {
+                        // START GRACE PERIOD
+                        gracePeriodActive = true;
+                        timeLeft = 300; // 5 Minutes
+                        
+                        alert("Time is Up! You have 5 minutes to UPLOAD your answer sheets. You cannot see questions anymore.");
+                        
+                        // Blur Question Paper
+                        document.querySelector('.questions-content').style.filter = "blur(15px)";
+                        document.querySelector('.questions-content').style.pointerEvents = "none";
+                        document.querySelector('.questions-content').style.opacity = "0.3";
+                        
+                        // Blur Instructions & Header
+                        document.querySelector('.paper-header').style.filter = "blur(5px)";
+                        document.querySelector('.paper-instructions').style.filter = "blur(5px)";
+                        
+                        // Change Timer Style
+                        timerDisplay.style.background = "#b71c1c";
+                        timerDisplay.style.color = "yellow";
+                        
+                        // Scroll to upload section
+                        document.querySelector('.answer-sheet-container').scrollIntoView({behavior: "smooth"});
+
+                    } else {
+                        // GRACE PERIOD ENDED - FORCE SUBMIT
+                        if (timerDisplay) timerDisplay.innerText = "SUBMITTING...";
+                        alert("Upload Time Over! Submitting automatically...");
+                        confirmSubmit(); // Use the confirming function logic to show overlay
+                    }
                 }
             }
         }
@@ -679,11 +754,49 @@
             }
         }
 
-        // Proctoring: Detect Tab Switch
+        // Proctoring: Detect Tab Switch & Blur
+        const proctorToast = document.createElement('div');
+        proctorToast.style.cssText = `
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #d32f2f; color: white; padding: 12px 24px; border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 3000; font-weight: bold;
+            display: none; transition: opacity 0.3s ease; text-align: center;
+        `;
+        document.body.appendChild(proctorToast);
+
+        function showProctorToast(message) {
+            proctorToast.innerText = message;
+            proctorToast.style.display = 'block';
+            setTimeout(() => { proctorToast.style.opacity = '1'; }, 10);
+            setTimeout(() => { 
+                proctorToast.style.opacity = '0'; 
+                setTimeout(() => { proctorToast.style.display = 'none'; }, 300);
+            }, 5000);
+        }
+
         document.addEventListener("visibilitychange", () => {
              if (document.hidden && status === "live") {
-                 alert("WARNING: You switched tabs! This activity has been logged.");
-                 // In a real app, send an AJAX request to increment suspicious count
+                 // 1. Show Toast
+                 showProctorToast("⚠️ Warning: Tab switch recorded! This incident has been logged.");
+                 
+                 // 2. Blur Content
+                 document.querySelector('.paper-canvas').style.filter = 'blur(10px)';
+                 document.body.style.overflow = 'hidden'; // Stop scrolling
+
+                 // 3. Log Incident
+                 const payload = {
+                     examId: "<%= exam._id %>",
+                     regId: "<%= registration._id %>",
+                     timestamp: new Date().toISOString(),
+                     type: 'tab_switch'
+                 };
+                 // Send as JSON Blob
+                 const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+                 navigator.sendBeacon('/exams/log-incident', blob);
+             } else {
+                 // Remove Blur when back
+                 document.querySelector('.paper-canvas').style.filter = 'none';
+                 document.body.style.overflow = 'auto';
              }
         });
 

@@ -398,6 +398,30 @@ exports.updateMarks = async (req, res) => {
     }
 };
 
+exports.logIncident = async (req, res) => {
+    try {
+        const { regId, type } = req.body;
+        
+        if (!regId) return res.status(400).send('No Registration ID');
+
+        // Increment suspicious count
+        const result = await ExamRegistration.findByIdAndUpdate(regId, {
+            $inc: { suspiciousActivityCount: 1 }
+        });
+
+        console.log(`[INCIDENT LOG] RegID: ${regId}, Type: ${type}, Time: ${new Date().toISOString()}`);
+
+        if (result) {
+            res.status(200).send('Logged');
+        } else {
+            res.status(404).send('Not found');
+        }
+    } catch (err) {
+        console.error('Error logging incident:', err);
+        res.status(500).send('Server Error');
+    }
+};
+
 exports.deleteSubmissionImage = async (req, res) => {
     try {
         const { regId } = req.params;

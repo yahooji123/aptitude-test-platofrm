@@ -29,4 +29,8 @@ router.post('/:id/login', checkUser, examController.postExamLogin);
 router.get('/:id/attempt', checkUser, examController.getAttemptExam);
 router.post('/submit', checkUser, upload.array('answerFiles', 20), examController.postSubmitExam);
 
+// Proctoring
+router.post('/log-incident', checkUser, express.json(), examController.logIncident);
+
+module.exports = router;
 module.exports = router;
