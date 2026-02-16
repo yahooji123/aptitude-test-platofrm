@@ -15,6 +15,10 @@
             --accent-ui: #2c3e50;
         }
 
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             background-color: var(--bg-body);
             margin: 0;
@@ -196,6 +200,146 @@
             .paper-canvas { margin: 0; padding: 0; }
             .exam-sheet { box-shadow: none; width: 100%; max-width: none; }
             body { background: white; }
+        }
+
+        /* Responsive Design Overlay */
+        @media screen and (max-width: 768px) {
+            :root {
+                --paper-width: 100%;
+            }
+
+            .exam-status-bar {
+                height: auto;
+                padding: 8px; /* Reduced padding */
+                flex-wrap: wrap;
+                gap: 8px;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                justify-content: space-between; /* Better alignment */
+                z-index: 1000;
+                box-sizing: border-box; /* Ensure padding includes in width */
+            }
+
+            .student-identity {
+                width: 100%;
+                justify-content: space-between;
+                font-size: 0.8rem;
+                order: 1;
+                margin-bottom: 2px;
+                display: flex;
+            }
+            
+            .student-identity div {
+                 white-space: nowrap;
+                 overflow: hidden;
+                 text-overflow: ellipsis;
+                 max-width: 48%;
+            }
+
+            /* Force the next two items to share the next row properly */
+            .time-monitor {
+                order: 2;
+                flex: 1 1 auto; /* Grow and shrink */
+                min-width: 120px; /* Minimum width for timer */
+                justify-content: center;
+                background: #333; 
+                font-size: 1rem; /* Slightly smaller */
+                padding: 4px 8px;
+                margin: 0;
+            }
+
+            .finish-btn {
+                order: 3;
+                flex: 0 0 auto; /* Do not grow, do not shrink */
+                padding: 6px 12px;
+                font-size: 0.85rem;
+                white-space: nowrap;
+                margin: 0;
+            }
+
+            .questions-content {
+                word-wrap: break-word;
+                font-size: 1rem;
+            }
+
+            .questions-content img {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+
+            .paper-canvas {
+                margin-top: 130px; /* Adjusted top margin for taller header */
+                padding: 10px;
+            }
+
+            .exam-sheet {
+                padding: 20px;
+                min-height: auto;
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .paper-h1 {
+                font-size: 1.5rem;
+            }
+
+            .paper-meta {
+                flex-direction: column;
+                gap: 5px;
+                font-size: 0.9rem;
+            }
+
+            .answer-textarea {
+                padding: 10px;
+                font-size: 1rem;
+                min-height: 250px;
+            }
+
+            /* Waiting Room Responsive */
+            .countdown-timer {
+                font-size: 3rem;
+            }
+            
+            .start-btn-big {
+                padding: 12px 30px;
+                font-size: 1.2rem;
+            }
+
+            /* Modal Responsive */
+            .modal-content {
+                width: 95%;
+                margin: 0 auto;
+            }
+            
+            .modal-footer {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .modal-footer button {
+                width: 100%;
+                margin: 0 !important;
+            }
+            
+            .completion-message {
+                padding: 20px !important;
+            }
+
+            .completion-message h1 {
+                font-size: 1.5rem;
+            }
+
+            .print-only-content hr {
+                margin: 20px 0 !important;
+            }
+            
+            /* Responsive Grid for Images */
+            #imagePreviewGrid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
+            }
         }
     </style>
 </head>
