@@ -23,6 +23,7 @@
                         <th style="padding: 12px 20px; color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--border-color);">Roll No</th>
                         <th style="padding: 12px 20px; color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--border-color);">Name</th>
                         <th style="padding: 12px 20px; color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--border-color);">Reg. Number</th>
+                        <th style="padding: 12px 20px; color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--border-color);">Marks</th>
                         <th style="padding: 12px 20px; color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--border-color);">Status</th>
                         <th style="padding: 12px 20px; color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--border-color); text-align: right;">Action</th>
                     </tr>
@@ -35,6 +36,13 @@
                                 <td style="padding: 12px 20px; color: var(--text-primary); font-weight: 500;"><%= reg.studentName %></td>
                                 <td style="padding: 12px 20px; color: var(--text-secondary); font-size: 0.9rem;"><%= reg.registrationNumber %></td>
                                 <td style="padding: 12px 20px;">
+                                    <% if (reg.graded) { %>
+                                        <span style="font-weight: bold; color: #3fb950;"><%= reg.marks %></span>
+                                    <% } else { %>
+                                        <span style="color: #8b949e; font-style: italic;">-</span>
+                                    <% } %>
+                                </td>
+                                <td style="padding: 12px 20px;">
                                     <% if (reg.submittedAt) { %>
                                         <span style="background: rgba(35, 134, 54, 0.15); color: #3fb950; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; border: 1px solid rgba(56, 139, 253, 0.1);">Submitted</span>
                                         <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">
@@ -46,13 +54,12 @@
                                 </td>
                                 <td style="padding: 12px 20px; text-align: right; display: flex; justify-content: flex-end; align-items: center; gap: 8px;">
                                     <% if (reg.submission) { %>
-                                        <button onclick="viewAnswer('<%= reg._id %>')" class="btn" style="background: rgba(31, 111, 235, 0.1); color: #58a6ff; border: 1px solid rgba(56, 139, 253, 0.4); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
-                                            View Answer
+                                        <button onclick="viewAnswer('<%= reg._id %>', '<%= reg.marks || '' %>', <%= reg.graded %>)" class="btn" style="background: rgba(31, 111, 235, 0.1); color: #58a6ff; border: 1px solid rgba(56, 139, 253, 0.4); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+                                            <%= reg.graded ? 'Review Marks' : 'Evaluate' %>
                                         </button>
                                         <!-- Hidden Answer content for Modal -->
-                                        <div id="ans-<%= reg._id %>" style="display: none;">
-                                            <%= reg.submission %>
-                                        </div>
+                                        <div id="ans-<%= reg._id %>" style="display: none;"><%= reg.submission %></div>
+                                        <div id="rem-<%= reg._id %>" style="display: none;"><%= reg.remarks || '' %></div>
                                     <% } else { %>
                                         <span style="color: var(--text-secondary); font-size: 0.9rem;">-</span>
                                     <% } %>
@@ -80,19 +87,40 @@
 
 </div>
 
-<!-- Answer Modal -->
-<div id="answerModal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
+<!-- Evaluation Modal -->
+<div id="evaluationModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 1000px; width: 95%;">
         <div class="modal-header">
-            <h3>Student Answer Sheet</h3>
-            <button onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);">&times;</button>
+            <h3>Student Evaluation</h3>
+            <button onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
         </div>
-        <div class="modal-body">
-            <pre id="modalAnswerText" style="white-space: pre-wrap; font-family: 'Courier New', monospace; background: #f6f8fa; padding: 15px; border-radius: 6px; border: 1px solid #d0d7de; max-height: 60vh; overflow-y: auto;"></pre>
-        </div>
-        <div class="modal-footer">
-            <button onclick="closeModal()" class="btn" style="padding: 8px 16px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer;">Close</button>
-            <button onclick="printAnswer()" class="btn-primary-custom" style="padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer;">Print Answer</button>
+        <div class="modal-body" style="display: flex; gap: 20px; min-height: 400px; max-height: 80vh;">
+            <!-- Left Side: Answer -->
+            <div style="flex: 2; display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="margin: 0;">Student Answer</h4>
+                    <button onclick="printAnswer()" class="btn" style="padding: 4px 8px; font-size: 0.8rem; border: 1px solid #ccc;">🖨️ Print</button>
+                </div>
+                <div id="modalAnswerText" style="flex: 1; overflow-y: auto; background: #f6f8fa; padding: 15px; border: 1px solid #d0d7de; border-radius: 6px; font-family: 'Courier New', monospace; white-space: pre-wrap;"></div>
+            </div>
+            
+            <!-- Right Side: Marking Form -->
+            <div style="flex: 1; display: flex; flex-direction: column; border-left: 1px solid #eee; padding-left: 20px;">
+                <h4 style="margin-bottom: 15px;">Grading</h4>
+                <form id="evaluationForm" method="POST" action="" style="display: flex; flex-direction: column; gap: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Marks</label>
+                        <input type="number" name="marks" id="marksInput" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter marks..." required>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Remarks</label>
+                        <textarea name="remarks" id="remarksInput" rows="6" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;" placeholder="Enter feedback for student..."></textarea>
+                    </div>
+                    <div style="margin-top: auto;">
+                        <button type="submit" class="btn-primary-custom" style="width: 100%; padding: 12px; font-size: 1rem; cursor: pointer;">Save Evaluation</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -104,7 +132,7 @@
         display: flex; justify-content: center; align-items: center;
     }
     .modal-content {
-        background: white; width: 90%; max-width: 800px;
+        background: white; 
         border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         display: flex; flex-direction: column;
     }
@@ -113,28 +141,35 @@
         display: flex; justify-content: space-between; align-items: center;
     }
     .modal-body { padding: 20px; }
-    .modal-footer {
-        padding: 15px 20px; border-top: 1px solid #eee;
-        display: flex; justify-content: flex-end; gap: 10px;
-    }
-    .btn-primary-custom { background: #1f6feb; color: white; }
     
-    @media (prefers-color-scheme: dark) {
-        .modal-content { background: #161b22; color: #e6edf3; }
-        .modal-header, .modal-footer { border-color: #30363d; }
-        #modalAnswerText { background: #0d1117; border-color: #30363d; color: #e6edf3; }
+    .btn-primary-custom {
+        background: #1f6feb; color: white; border: none; border-radius: 6px;
+    }
+    .btn-primary-custom:hover { background: #1182fb; }
+
+    @media (max-width: 768px) {
+        .modal-body { flex-direction: column; }
+        .modal-body > div { border-left: none !important; border-top: 1px solid #eee; padding-left: 0 !important; padding-top: 20px; }
     }
 </style>
 
 <script>
-    function viewAnswer(regId) {
+    function viewAnswer(regId, marks, graded) {
         const content = document.getElementById('ans-' + regId).innerText;
+        const remarks = document.getElementById('rem-' + regId).innerText;
+        
         document.getElementById('modalAnswerText').innerText = content;
-        document.getElementById('answerModal').style.display = 'flex';
+        document.getElementById('marksInput').value = (marks && marks !== 'null') ? marks : '';
+        document.getElementById('remarksInput').value = remarks;
+        
+        // Set form action
+        document.getElementById('evaluationForm').action = '/exams/admin/registrations/mark/' + regId;
+        
+        document.getElementById('evaluationModal').style.display = 'flex';
     }
 
     function closeModal() {
-        document.getElementById('answerModal').style.display = 'none';
+        document.getElementById('evaluationModal').style.display = 'none';
     }
 
     function printAnswer() {
@@ -147,6 +182,7 @@
         printWindow.document.close();
         printWindow.print();
     }
+
     
     // Close on click outside
     document.getElementById('answerModal').addEventListener('click', function(e) {

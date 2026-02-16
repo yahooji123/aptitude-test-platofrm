@@ -6,6 +6,11 @@ const examRegistrationSchema = new mongoose.Schema({
         ref: 'Exam',
         required: true
     },
+    studentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false // Optional for now to support legacy or guest registrations if needed
+    },
     studentName: {
         type: String,
         required: true,
@@ -30,6 +35,9 @@ const examRegistrationSchema = new mongoose.Schema({
     submittedAt: { type: Date },
     startedAt: { type: Date }, // When the student started the exam
     suspiciousActivityCount: { type: Number, default: 0 },
+    marks: { type: Number, default: null },
+    remarks: { type: String, default: '' },
+    graded: { type: Boolean, default: false },
     registeredAt: {
         type: Date,
         default: Date.now

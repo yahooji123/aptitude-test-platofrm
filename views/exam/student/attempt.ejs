@@ -277,9 +277,16 @@
         <div class="exam-sheet" id="examPaper" style="<%= status === "waiting" ? "display:none;" : "" %>">
             <% if (status === "ended") { %>
                 <div class="completion-message" style="text-align: center; padding: 50px;">
-                    <h1>Examination Ended</h1>
-                    <p>Thank you for participating.</p>
-                    <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: center;">
+                    <% if (registration.submittedAt) { %>
+                        <h1 style="color: #238636;">Test Submitted Successfully!</h1>
+                        <p>You have already completed this exam.</p>
+                        <p style="color: #666; font-size: 0.9rem;">Submitted on: <%= new Date(registration.submittedAt).toLocaleString() %></p>
+                    <% } else { %>
+                        <h1>Examination Ended</h1>
+                        <p>The exam time is over.</p>
+                    <% } %>
+                    
+                    <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: center;">
                         <a href="/exams" class="btn-primary-custom" style="text-decoration: none;">Exit to Dashboard</a>
                     </div>
                 </div>

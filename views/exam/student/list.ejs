@@ -11,17 +11,35 @@
         <div class="exam-list-grid">
             <% exams.forEach(function(exam) { %>
                 <div class="exam-card-student">
-                    <div class="card-status-bar">
-                        <% 
-                            const now = new Date();
-                            const isLive = now >= new Date(exam.startTime) && now <= new Date(exam.endTime);
-                            const isEnded = now > new Date(exam.endTime);
-                            let statusText = "Upcoming";
-                            let statusColor = "#58a6ff"; 
-                            
-                            if (isLive) { statusText = " Live Now"; statusColor = "#f85149"; }
-                            if (isEnded) { statusText = "Ended"; statusColor = "#8b949e"; }
-                        %>
+                    <% 
+                        const now = new Date();
+                        const isLive = now >= new Date(exam.startTime) && now <= new Date(exam.endTime);
+                        const isEnded = now > new Date(exam.endTime);
+                        let statusText = "Upcoming";
+                        let statusColor = "#58a6ff"; 
+                        
+                        if (isLive) { statusText = "Live Now"; statusColor = "#f85149"; }
+                        if (isEnded) { statusText = "Ended"; statusColor = "#8b949e"; }
+
+                        // Check registration status for this user
+                        let myReg = locals.myRegistrations ? locals.myRegistrations[exam._id.toString()] : null;
+                        let userStatus = "Not Registered";
+                        if (myReg) {
+                            if (myReg.graded) userStatus = "Evaluated";
+                            else if (myReg.submission) userStatus = "Submitted";
+                            else userStatus = "Registered";
+                        }
+                    %>
+                    <div class="card-status-bar" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <% if (userStatus === 'Registered') { %>
+                                <span class="badge" style="background: rgba(210, 153, 34, 0.2); color: #d29922; border: 1px solid rgba(210, 153, 34, 0.4);">REGISTERED</span>
+                            <% } else if (userStatus === 'Submitted') { %>
+                                <span class="badge" style="background: rgba(31, 111, 235, 0.2); color: #58a6ff; border: 1px solid rgba(31, 111, 235, 0.4);">SUBMITTED</span>
+                            <% } else if (userStatus === 'Evaluated') { %>
+                                <span class="badge" style="background: rgba(35, 134, 54, 0.2); color: #3fb950; border: 1px solid rgba(35, 134, 54, 0.4);">GRADED: <%= myReg.marks %></span>
+                            <% } %>
+                        </div>
                         <span style="color: <%= statusColor %>; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;"><%= statusText %></span>
                     </div>
 
@@ -29,10 +47,10 @@
                     
                     <div class="student-exam-info">
                         <div class="info-row">
-                            <span class="icon"></span> <%= exam.date ? new Date(exam.date).toLocaleDateString() : 'Date TBD' %>
+                            <span class="symbol">📅</span> <%= exam.date ? new Date(exam.date).toLocaleDateString() : 'Date TBD' %>
                         </div>
                         <div class="info-row">
-                            <span class="icon"></span> 
+                            <span class="symbol">⏰</span> 
                             <%= exam.startTime ? new Date(exam.startTime).toLocaleTimeString([], {hour: "2-digit", minute:"2-digit"}) : '--:--' %> - 
                             <%= exam.endTime ? new Date(exam.endTime).toLocaleTimeString([], {hour: "2-digit", minute:"2-digit"}) : '--:--' %>
                         </div>
@@ -41,16 +59,27 @@
                     <p class="student-exam-desc"><%= (exam.instructions || '').substring(0, 80) %>...</p>
 
                     <div class="card-action-area">
-                        <% if (isLive) { %>
-                            <a href="/exams/<%= exam._id %>/login" class="btn-action btn-live">Enter Exam Hall</a>
-                        <% } else if (isEnded) { %>
-                            <a href="#" class="btn-action btn-disabled">Exam Ended</a>
+                        <% if (userStatus === 'Not Registered') { %>
+                            <% if (isEnded) { %>
+                                <a href="#" class="btn-action btn-disabled">Exam Ended</a>
+                            <% } else { %>
+                                <a href="/exams/<%= exam._id %>/register" class="btn-action btn-register">Register Now</a>
+                            <% } %>
                         <% } else { %>
-                            <a href="/exams/<%= exam._id %>/register" class="btn-action btn-register">Register Now</a>
+                            <!-- If Registered -->
+                            <a href="/exams/card/<%= myReg._id %>" class="btn-secondary" style="display: block; text-align: center; margin-bottom: 10px; padding: 10px; border-radius: 6px; text-decoration: none; border: 1px solid #30363d; color: #c9d1d9;">View Admit Card</a>
+                            
+                            <% if (isLive && !myReg.submission) { %>
+                                <a href="/exams/<%= exam._id %>/attempt?regId=<%= myReg._id %>" class="btn-action btn-live">Launch Exam</a>
+                            <% } else if (myReg.submission) { %>
+                                <div style="text-align: center; color: #8b949e; font-size: 0.9rem; margin-top: 10px;">Response Submitted</div>
+                            <% } else if (isEnded && !myReg.submission) { %>
+                                <div style="text-align: center; color: #f85149; font-size: 0.9rem; margin-top: 10px;">Absent / Missed</div>
+                            <% } else { %>
+                                <div style="text-align: center; color: #8b949e; font-size: 0.9rem; margin-top: 10px;">Waiting for Start Time...</div>
+                            <% } %>
                         <% } %>
-                        <div style="margin-top: 15px; text-align: center;">
-                            <a href="/exams/<%= exam._id %>/login" class="login-link">Already Registered? Login</a>
-                        </div>
+                        
                     </div>
                 </div>
             <% }); %>

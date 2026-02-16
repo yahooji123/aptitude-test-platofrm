@@ -9,6 +9,7 @@ router.post('/admin/create', protect, authorize('admin'), examController.createE
 router.get('/admin/dashboard', protect, authorize('admin'), examController.getAdminDashboard);
 router.get('/admin/registrations/:examId', protect, authorize('admin'), examController.getExamRegistrations);
 router.post('/admin/registrations/delete/:regId', protect, authorize('admin'), examController.deleteExamRegistration);
+router.post('/admin/registrations/mark/:regId', protect, authorize('admin'), examController.updateMarks);
 
 // Edit/Delete Exam
 router.get('/admin/edit/:id', protect, authorize('admin'), examController.getEditExam);

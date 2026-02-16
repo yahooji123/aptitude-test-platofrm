@@ -52,7 +52,17 @@ exports.getExamList = async (req, res) => {
     try {
         // Show all exams, sorted by date (newest first)
         const exams = await Exam.find({}).sort({ date: -1 });
-        res.render('exam/student/list', { exams });
+        
+        let myRegistrations = {};
+        // If user is logged in, find their registrations
+        if (req.user) {
+            const regs = await ExamRegistration.find({ studentId: req.user._id });
+            regs.forEach(reg => {
+                myRegistrations[reg.examId.toString()] = reg;
+            });
+        }
+        
+        res.render('exam/student/list', { exams, myRegistrations });
     } catch (err) {
         console.error(err);
         res.status(500).render('error', { message: 'Server Error' });
@@ -76,6 +86,14 @@ exports.postRegister = async (req, res) => {
         const { studentName, rollNumber, dob } = req.body;
         const examId = req.params.id;
 
+        // Check if student is already registered with this Roll Number for this Exam
+        const existingReg = await ExamRegistration.findOne({ examId, rollNumber });
+        if (existingReg) {
+            // Can render error or redirect to existing card
+            // For now, let's redirect to card to be user friendly
+            return res.redirect(`/exams/card/${existingReg._id}`);
+        }
+
         // generated registration number
         const registrationNumber = `REG-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -84,7 +102,8 @@ exports.postRegister = async (req, res) => {
             studentName,
             rollNumber,
             dob: new Date(dob),
-            registrationNumber
+            registrationNumber,
+            studentId: req.user ? req.user._id : null
         });
 
         await newRegistration.save();
@@ -217,6 +236,17 @@ exports.getAttemptExam = async (req, res) => {
         }
 
         const exam = registration.examId;
+
+        if (registration.submittedAt) {
+             // If already submitted, force status to ended immediately
+             return res.render('exam/student/attempt', { 
+                exam, 
+                registration, 
+                status: 'ended', 
+                timeLeft: 0
+            });
+        }
+
         const now = new Date();
         
         // Check timing
@@ -314,5 +344,27 @@ exports.deleteExamRegistration = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).render('error', { message: 'Error deleting registration' });
+    }
+};
+
+exports.updateMarks = async (req, res) => {
+    try {
+        const regId = req.params.regId;
+        const { marks, remarks } = req.body;
+
+        const registration = await ExamRegistration.findByIdAndUpdate(regId, {
+            marks: marks,
+            remarks: remarks,
+            graded: true
+        });
+
+        if (registration) {
+            res.redirect('/exams/admin/registrations/' + registration.examId);
+        } else {
+            res.status(404).render('error', { message: 'Registration not found' });
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).render('error', { message: 'Error updating marks' });
     }
 };
