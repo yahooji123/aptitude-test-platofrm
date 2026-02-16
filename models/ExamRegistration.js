@@ -32,6 +32,8 @@ const examRegistrationSchema = new mongoose.Schema({
         unique: true
     },
     submission: { type: String, default: '' },
+    submissionFiles: [{ type: String }], // Array of URLs for multiple image uploads
+    submissionFile: { type: String, default: null }, // Legacy field (optional)
     submittedAt: { type: Date },
     startedAt: { type: Date }, // When the student started the exam
     suspiciousActivityCount: { type: Number, default: 0 },

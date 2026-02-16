@@ -53,13 +53,15 @@
                                     <% } %>
                                 </td>
                                 <td style="padding: 12px 20px; text-align: right; display: flex; justify-content: flex-end; align-items: center; gap: 8px;">
-                                    <% if (reg.submission) { %>
+                                    <% if (reg.submission || reg.submissionFile || (reg.submissionFiles && reg.submissionFiles.length > 0)) { %>
                                         <button onclick="viewAnswer('<%= reg._id %>', '<%= reg.marks || '' %>', <%= reg.graded %>)" class="btn" style="background: rgba(31, 111, 235, 0.1); color: #58a6ff; border: 1px solid rgba(56, 139, 253, 0.4); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
                                             <%= reg.graded ? 'Review Marks' : 'Evaluate' %>
                                         </button>
                                         <!-- Hidden Answer content for Modal -->
                                         <div id="ans-<%= reg._id %>" style="display: none;"><%= reg.submission %></div>
                                         <div id="rem-<%= reg._id %>" style="display: none;"><%= reg.remarks || '' %></div>
+                                        <div id="file-legacy-<%= reg._id %>" style="display: none;"><%= reg.submissionFile || '' %></div>
+                                        <div id="files-<%= reg._id %>" style="display: none;"><%= JSON.stringify(reg.submissionFiles || []) %></div>
                                     <% } else { %>
                                         <span style="color: var(--text-secondary); font-size: 0.9rem;">-</span>
                                     <% } %>
@@ -99,9 +101,21 @@
             <div style="flex: 2; display: flex; flex-direction: column;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h4 style="margin: 0;">Student Answer</h4>
-                    <button onclick="printAnswer()" class="btn" style="padding: 4px 8px; font-size: 0.8rem; border: 1px solid #ccc;">🖨️ Print</button>
+                    <div>
+                        <button onclick="printAnswer()" class="btn" style="padding: 4px 8px; font-size: 0.8rem; border: 1px solid #ccc;">🖨️ Print Text</button>
+                    </div>
                 </div>
-                <div id="modalAnswerText" style="flex: 1; overflow-y: auto; background: #f6f8fa; padding: 15px; border: 1px solid #d0d7de; border-radius: 6px; font-family: 'Courier New', monospace; white-space: pre-wrap;"></div>
+                
+                <!-- Text Answer Support -->
+                <div id="modalAnswerText" style="flex: 1; overflow-y: auto; background: #f6f8fa; padding: 15px; border: 1px solid #d0d7de; border-radius: 6px; font-family: 'Courier New', monospace; white-space: pre-wrap; margin-bottom: 15px; min-height: 100px;"></div>
+                
+                <!-- Image Gallery -->
+                <div id="imageGalleryContainer" style="display: none; margin-top: 15px;">
+                    <h5 style="margin: 0 0 10px 0; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 5px;">📸 Attached Answer Sheets</h5>
+                    <div id="imageGalleryGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px;">
+                        <!-- Images will be injected here -->
+                    </div>
+                </div>
             </div>
             
             <!-- Right Side: Marking Form -->
@@ -158,7 +172,64 @@
         const content = document.getElementById('ans-' + regId).innerText;
         const remarks = document.getElementById('rem-' + regId).innerText;
         
-        document.getElementById('modalAnswerText').innerText = content;
+        // Handle Files
+        let files = [];
+        // Try getting array
+        if(document.getElementById('files-' + regId)) {
+            try {
+                const raw = document.getElementById('files-' + regId).innerText;
+                if(raw) files = JSON.parse(raw);
+            } catch(e) { console.error(e); }
+        }
+        // Try legacy single file
+        if(document.getElementById('file-legacy-' + regId)) {
+            const legacy = document.getElementById('file-legacy-' + regId).innerText.trim();
+            if(legacy && legacy.length > 5 && !files.includes(legacy)) {
+                files.push(legacy);
+            }
+        }
+
+        // Text Display Logic
+        const textElement = document.getElementById('modalAnswerText');
+        textElement.innerText = content || "(No typed answer provided)";
+        
+        // Image Gallery Logic
+        const galleryContainer = document.getElementById('imageGalleryContainer');
+        const grid = document.getElementById('imageGalleryGrid');
+        grid.innerHTML = ''; // Clear previous
+
+        if (files.length > 0) {
+            galleryContainer.style.display = 'block';
+            
+            // If only files and no text, hide the big empty text box to save space
+            if(!content) {
+                textElement.style.display = 'none';
+            } else {
+                textElement.style.display = 'block';
+            }
+
+            files.forEach((url, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = `
+                    <div style="position: relative; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        <button onclick="deleteImage('${regId}', '${url}', this)" style="position: absolute; top: 5px; right: 5px; background: rgba(220, 53, 69, 0.9); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; z-index: 10;" title="Delete Image">&times;</button>
+                        <a href="${url}" target="_blank">
+                            <img src="${url}" style="width: 100%; height: 120px; object-fit: cover; display: block;" title="Click to View Full Size">
+                        </a>
+                        <div style="padding: 5px; font-size: 0.8rem; text-align: center; background: #fff; border-top: 1px solid #eee;">
+                            Image ${index + 1}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(wrapper);
+            });
+
+        } else {
+            galleryContainer.style.display = 'none';
+            textElement.style.display = 'block';
+        }
+
+        // Form Population
         document.getElementById('marksInput').value = (marks && marks !== 'null') ? marks : '';
         document.getElementById('remarksInput').value = remarks;
         
@@ -188,6 +259,41 @@
     document.getElementById('answerModal').addEventListener('click', function(e) {
         if (e.target === this) closeModal();
     });
+
+    async function deleteImage(regId, url, btn) {
+        if(!confirm('Are you sure you want to delete this image permanently?')) return;
+        
+        // Find the wrapper element to remove from DOM
+        // Structure: wrapper > div(relative) > button
+        const relativeDiv = btn.closest('div');
+        const wrapper = relativeDiv ? relativeDiv.parentElement : null;
+        
+        try {
+            const res = await fetch('/exams/admin/registrations/delete-image/' + regId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imageUrl: url })
+            });
+
+            const data = await res.json();
+            
+            if (data.success) {
+                 if(wrapper) wrapper.remove();
+                 else if(relativeDiv) relativeDiv.remove(); // Fallback
+                 
+                 // If no images left, hide gallery
+                 const grid = document.getElementById('imageGalleryGrid');
+                 if(grid && grid.children.length === 0) {
+                     document.getElementById('imageGalleryContainer').style.display = 'none';
+                 }
+            } else {
+                alert('Failed to delete image: ' + (data.message || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error deleting image');
+        }
+    }
 </script>
 
 <%- include("../../partials/footer") %>

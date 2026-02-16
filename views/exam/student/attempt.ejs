@@ -306,10 +306,31 @@
                         <%= exam.questionPaperContent %>
                     </div>
                     
-                    <% if (registration && registration.submission) { %>
+                    <% if (registration) { %>
                     <div class="answer-sheet-container" style="margin-top: 50px; border-top: 2px dashed #000; padding-top: 20px;">
                         <h3>YOUR ANSWERS</h3>
-                        <div style="white-space: pre-wrap; font-family: 'Crimson Text', serif; font-size: 1.2rem;"><%= registration.submission %></div>
+                        <div style="white-space: pre-wrap; font-family: 'Crimson Text', serif; font-size: 1.2rem;"><%= registration.submission || "No text answer provided." %></div>
+                        
+                        <% if (registration.submissionFiles && registration.submissionFiles.length > 0) { %>
+                            <div style="margin-top: 20px; border-top: 1px dotted #ccc; padding-top: 20px;">
+                                <h4>Attached Images:</h4>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
+                                    <% registration.submissionFiles.forEach(function(url, index) { %>
+                                        <div style="border: 1px solid #ddd; padding: 5px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                            <a href="<%= url %>" target="_blank">
+                                                <img src="<%= url %>" style="width: 100%; height: 150px; object-fit: cover;" alt="Answer Image <%= index + 1 %>">
+                                            </a>
+                                            <div style="text-align: center; font-size: 0.8rem; margin-top: 5px; color: #666;">Page <%= index + 1 %></div>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            </div>
+                        <% } else if (registration.submissionFile) { %>
+                            <!-- Legacy Single File -->
+                             <div style="margin-top: 20px;">
+                                <a href="<%= registration.submissionFile %>" target="_blank" class="btn-secondary-custom">View Attached File</a>
+                            </div>
+                        <% } %>
                     </div>
                     <% } %>
                 </div>
@@ -365,12 +386,30 @@
                  
                 <div class="answer-sheet-container">
                     <h3>ANSWER SHEET</h3>
-                    <p style="font-style:italic; font-size:0.9rem;">Type your answers below. You can resize this box.</p>
-                    <form id="examForm" action="/exams/submit" method="POST">
+                    <p style="font-style:italic; font-size:0.9rem;">Type your answers below OR upload photos of your handwritten sheets.</p>
+                    
+                    <form id="examForm" action="/exams/submit" method="POST" enctype="multipart/form-data">
                         <input type="hidden" name="regId" value="<%= registration._id %>">
+                        
+                        <div style="margin-bottom: 20px; padding: 20px; border: 2px dashed #ccc; border-radius: 8px; text-align: center; background: #f9f9f9;">
+                            <label for="answerFiles" style="font-weight: 600; cursor: pointer; display: block; font-size: 1.1rem; color: #2c3e50;">
+                                📸 Add Answer Photos (Select Multiple)
+                                <input type="file" name="answerFiles" id="answerFiles" accept="image/*" multiple style="margin-top: 15px; display: block; margin: 10px auto;">
+                            </label>
+                            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">(Supported: JPG, PNG. Max 20 images)</p>
+                            <div id="fileList" style="margin-top: 10px; font-size: 0.9rem; color: #2ea44f;"></div>
+                        </div>
+
                         <textarea class="answer-textarea" name="submission" placeholder="Q1. Answer..."></textarea>
                     </form>
                 </div>
+                
+                <script>
+                    document.getElementById('answerFiles').addEventListener('change', function(e) {
+                        const count = e.target.files.length;
+                        document.getElementById('fileList').innerText = count > 0 ? `✅ ${count} file(s) selected` : '';
+                    });
+                </script>
 
                 <div style="margin-top: 50px; text-align: center; font-size: 0.9rem; font-style: italic;">
                     *** END OF PAPER ***

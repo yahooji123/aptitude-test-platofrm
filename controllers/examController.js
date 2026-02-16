@@ -306,15 +306,38 @@ exports.postSubmitExam = async (req, res) => {
     try {
         const { regId, submission } = req.body;
         
-        await ExamRegistration.findByIdAndUpdate(regId, {
-            submission,
-            submittedAt: new Date()
-        });
+        // Find existing registration
+        const registration = await ExamRegistration.findById(regId);
+        if (!registration) {
+             return res.status(404).render('error', { message: 'Registration not found' });
+        }
+
+        let updateData = {
+            submission: submission || '',
+            submittedAt: new Date(),
+            status: 'completed' 
+        };
+
+        // Handle File Array (Multiple Image Uploads)
+        if (req.files && req.files.length > 0) {
+            console.log('Images uploaded:', req.files.length);
+            // Get array of URLs
+            const fileUrls = req.files.map(file => file.path || file.secure_url);
+            updateData.submissionFiles = fileUrls;
+            
+            // For backward compatibility or if just 1 file
+            updateData.submissionFile = fileUrls[0];
+        } else {
+             console.log('No image files uploaded with submission');
+        }
         
+        await ExamRegistration.findByIdAndUpdate(regId, updateData);
+        
+        // Redirect to dashboard with success message (implied by status change)
         res.redirect('/exams');
     } catch (err) {
-        console.error(err);
-        res.status(500).render('error', { message: 'Submission failed' });
+        console.error('Submission Error:', err);
+        res.status(500).render('error', { message: 'Submission failed. Please try again or contact support.' });
     }
 };
 
@@ -366,5 +389,34 @@ exports.updateMarks = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).render('error', { message: 'Error updating marks' });
+    }
+};
+
+exports.deleteSubmissionImage = async (req, res) => {
+    try {
+        const { regId } = req.params;
+        const { imageUrl } = req.body;
+
+        const registration = await ExamRegistration.findById(regId);
+        if (!registration) {
+             return res.status(404).json({ success: false, message: 'Registration not found' });
+        }
+
+        // Remove from array
+        if (registration.submissionFiles && registration.submissionFiles.length > 0) {
+            registration.submissionFiles = registration.submissionFiles.filter(url => url !== imageUrl);
+        }
+        
+        // Also clean legacy field if it matches
+        if (registration.submissionFile === imageUrl) {
+            registration.submissionFile = null;
+        }
+
+        await registration.save();
+        
+        res.json({ success: true, message: 'Image deleted successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Error deleting image' });
     }
 };

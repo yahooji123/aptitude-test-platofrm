@@ -26,7 +26,7 @@
                         let userStatus = "Not Registered";
                         if (myReg) {
                             if (myReg.graded) userStatus = "Evaluated";
-                            else if (myReg.submission) userStatus = "Submitted";
+                            else if (myReg.submittedAt || myReg.status === 'completed') userStatus = "Submitted";
                             else userStatus = "Registered";
                         }
                     %>
@@ -69,11 +69,12 @@
                             <!-- If Registered -->
                             <a href="/exams/card/<%= myReg._id %>" class="btn-secondary" style="display: block; text-align: center; margin-bottom: 10px; padding: 10px; border-radius: 6px; text-decoration: none; border: 1px solid #30363d; color: #c9d1d9;">View Admit Card</a>
                             
-                            <% if (isLive && !myReg.submission) { %>
+                            <% if (isLive && !myReg.submittedAt) { %>
                                 <a href="/exams/<%= exam._id %>/attempt?regId=<%= myReg._id %>" class="btn-action btn-live">Launch Exam</a>
-                            <% } else if (myReg.submission) { %>
-                                <div style="text-align: center; color: #8b949e; font-size: 0.9rem; margin-top: 10px;">Response Submitted</div>
-                            <% } else if (isEnded && !myReg.submission) { %>
+                            <% } else if (myReg.submittedAt) { %>
+                                <!-- Already Submitted - Show View Button -->
+                                <a href="/exams/<%= exam._id %>/attempt?regId=<%= myReg._id %>" class="btn-action" style="background: rgba(35, 134, 54, 0.1); color: #3fb950; border: 1px solid rgba(35, 134, 54, 0.4); text-align: center; display: block; padding: 10px; border-radius: 6px; text-decoration: none;">View Your Submission</a>
+                            <% } else if (isEnded && !myReg.submittedAt) { %>
                                 <div style="text-align: center; color: #f85149; font-size: 0.9rem; margin-top: 10px;">Absent / Missed</div>
                             <% } else { %>
                                 <div style="text-align: center; color: #8b949e; font-size: 0.9rem; margin-top: 10px;">Waiting for Start Time...</div>
