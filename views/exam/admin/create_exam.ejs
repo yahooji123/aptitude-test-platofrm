@@ -1,0 +1,179 @@
+<%- include("../../partials/header") %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #1f6feb 0%, #238636 100%); padding: 50px 20px; text-align: center; color: white;">
+    <div class="banner-title" style="font-size: 2.2rem; font-weight: 800; margin-bottom: 10px;">Design Your Exam</div>
+    <div class="banner-subtitle" style="font-size: 1.1rem; opacity: 0.9;">Configure details and paste your paper content.</div>
+</div>
+
+<div class="creation-container">
+    <form action="/exams/admin/create" method="POST" class="exam-form">
+        
+        <!-- Section: Basic Details -->
+        <div class="form-section">
+            <h3 class="section-title">1. Exam Configuration</h3>
+            
+            <div class="form-group">
+                <label for="title">Exam Name</label>
+                <input type="text" id="title" name="title" placeholder="e.g. Final Semester: Advanced Physics" required>
+            </div>
+
+            <div class="grid-3">
+                <div class="form-group">
+                    <label for="date">Date</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+                <div class="form-group">
+                    <label for="startTime">Start Time</label>
+                    <input type="time" id="startTime" name="startTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="endTime">End Time</label>
+                    <input type="time" id="endTime" name="endTime" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="instructions">Instructions for Students</label>
+                <textarea id="instructions" name="instructions" rows="3" placeholder="e.g. No calculators allowed. All questions are compulsory."></textarea>
+            </div>
+        </div>
+
+        <!-- Section: Question Paper -->
+        <div class="form-section">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;">
+                <h3 class="section-title" style="margin-bottom: 0;">2. Question Paper Content</h3>
+                <span style="font-size: 0.85rem; color: #8b949e;">Paste your Word/PDF text below</span>
+            </div>
+            
+            <div class="paper-editor">
+                <textarea class="paper-input" id="questionPaperContent" name="questionPaperContent" placeholder="Paste your full question paper here...
+
+SECTION A
+1. What is the value of pi?
+...
+" required></textarea>
+            </div>
+            <p style="font-size: 0.8rem; color: #8b949e; margin-top: 8px;">
+                * The text will be preserved exactly as you paste it (spacing, new lines).
+            </p>
+        </div>
+
+        <div style="text-align: right; margin-top: 30px;">
+            <a href="/exams/admin/dashboard" class="cancel-btn">Cancel</a>
+            <button type="submit" class="submit-btn">Publish Exam</button>
+        </div>
+
+    </form>
+</div>
+
+<style>
+    .creation-container {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .form-section {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+
+    .section-title {
+        color: #e6edf3;
+        margin-top: 0;
+        margin-bottom: 25px;
+        border-bottom: 1px solid #30363d;
+        padding-bottom: 10px;
+        font-size: 1.2rem;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        color: #8b949e;
+        margin-bottom: 8px;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .form-group input, 
+    .form-group textarea,
+    .paper-input {
+        width: 100%;
+        padding: 12px;
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        color: #e6edf3;
+        font-size: 1rem;
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .paper-input:focus {
+        outline: none;
+        border-color: #58a6ff;
+        box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+    }
+
+    .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+
+    .paper-editor {
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .paper-input {
+        width: 100%;
+        min-height: 400px;
+        background: #0d1117;
+        border: none;
+        color: #e6edf3;
+        font-family: "Space Mono", "Consolas", monospace;
+        line-height: 1.6;
+        padding: 20px;
+        resize: vertical;
+    }
+    .paper-input::placeholder {
+        color: #484f58;
+    }
+
+    .submit-btn {
+        background: #238636;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .submit-btn:hover {
+        background: #2ea043;
+    }
+
+    .cancel-btn {
+        color: #c9d1d9;
+        text-decoration: none;
+        margin-right: 20px;
+    }
+    .cancel-btn:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<%- include("../../partials/footer") %>

@@ -1,0 +1,115 @@
+<%- include("../../partials/header") %>
+
+<div class="auth-wrapper">
+    <div style="width: 100%; max-width: 450px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="font-size: 3rem; margin-bottom: 10px;"></div>
+            <h2 style="color: white; margin: 0 0 10px 0;">Student Registration</h2>
+            <p style="color: #58a6ff; font-weight: 500; font-size: 1.1rem;"><%= exam.title %></p>
+        </div>
+
+        <div class="auth-card">
+            <form action="/exams/<%= exam._id %>/register" method="POST" class="auth-form">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="studentName" required placeholder="Enter your full name">
+                </div>
+                
+                <div class="form-group">
+                    <label>Roll Number / ID</label>
+                    <input type="text" name="rollNumber" required placeholder="University Roll No.">
+                </div>
+
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <input type="date" name="dob" required>
+                </div>
+
+                <button type="submit" class="submit-btn full-width">Generate Admit Card</button>
+            </form>
+        </div>
+        
+        <div class="auth-footer">
+            <p style="font-size: 0.85rem; color: #8b949e;">
+                This will generate a one-time Admit Card for this exam.
+            </p>
+            <a href="/exams" class="back-link"> Back to Exams</a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .auth-wrapper {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: #0d1117;
+    }
+
+    .auth-card {
+        background: #161b22;
+        padding: 40px;
+        border-radius: 12px;
+        border: 1px solid #30363d;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+    .form-group label {
+        display: block;
+        color: #8b949e;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+    .form-group input {
+        width: 100%;
+        padding: 14px;
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        color: white;
+        font-size: 1rem;
+        box-sizing: border-box; 
+        transition: border-color 0.2s;
+    }
+    .form-group input:focus {
+        border-color: #58a6ff;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+    }
+
+    .submit-btn {
+        background: #238636;
+        color: white;
+        border: none;
+        padding: 14px;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s;
+        width: 100%;
+    }
+    .submit-btn:hover { background: #2ea043; }
+
+    .auth-footer {
+        margin-top: 25px;
+        text-align: center;
+    }
+
+    .back-link {
+        color: #58a6ff;
+        text-decoration: none;
+        font-size: 0.9rem;
+        display: inline-block;
+        margin-top: 10px;
+    }
+    .back-link:hover { text-decoration: underline; }
+</style>
+
+<%- include("../../partials/footer") %>

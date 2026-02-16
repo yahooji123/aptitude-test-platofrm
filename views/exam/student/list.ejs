@@ -1,0 +1,190 @@
+<%- include("../../partials/header") %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 60px 20px; text-align: center; color: white;">
+    <div class="banner-title" style="font-size: 2.5rem; font-weight: 800; margin-bottom: 10px;">Exam Portal</div>
+    <div class="banner-subtitle" style="font-size: 1.2rem; opacity: 0.9;">Register and appear for your university examinations.</div>
+</div>
+
+<div class="container" style="max-width: 1200px; margin: 40px auto; padding: 0 20px;">
+    
+    <% if (exams && exams.length > 0) { %>
+        <div class="exam-list-grid">
+            <% exams.forEach(function(exam) { %>
+                <div class="exam-card-student">
+                    <div class="card-status-bar">
+                        <% 
+                            const now = new Date();
+                            const isLive = now >= new Date(exam.startTime) && now <= new Date(exam.endTime);
+                            const isEnded = now > new Date(exam.endTime);
+                            let statusText = "Upcoming";
+                            let statusColor = "#58a6ff"; 
+                            
+                            if (isLive) { statusText = " Live Now"; statusColor = "#f85149"; }
+                            if (isEnded) { statusText = "Ended"; statusColor = "#8b949e"; }
+                        %>
+                        <span style="color: <%= statusColor %>; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;"><%= statusText %></span>
+                    </div>
+
+                    <h2 class="student-exam-title"><%= exam.title || 'Untitled Exam' %></h2>
+                    
+                    <div class="student-exam-info">
+                        <div class="info-row">
+                            <span class="icon"></span> <%= exam.date ? new Date(exam.date).toLocaleDateString() : 'Date TBD' %>
+                        </div>
+                        <div class="info-row">
+                            <span class="icon"></span> 
+                            <%= exam.startTime ? new Date(exam.startTime).toLocaleTimeString([], {hour: "2-digit", minute:"2-digit"}) : '--:--' %> - 
+                            <%= exam.endTime ? new Date(exam.endTime).toLocaleTimeString([], {hour: "2-digit", minute:"2-digit"}) : '--:--' %>
+                        </div>
+                    </div>
+
+                    <p class="student-exam-desc"><%= (exam.instructions || '').substring(0, 80) %>...</p>
+
+                    <div class="card-action-area">
+                        <% if (isLive) { %>
+                            <a href="/exams/<%= exam._id %>/login" class="btn-action btn-live">Enter Exam Hall</a>
+                        <% } else if (isEnded) { %>
+                            <a href="#" class="btn-action btn-disabled">Exam Ended</a>
+                        <% } else { %>
+                            <a href="/exams/<%= exam._id %>/register" class="btn-action btn-register">Register Now</a>
+                        <% } %>
+                        <div style="margin-top: 15px; text-align: center;">
+                            <a href="/exams/<%= exam._id %>/login" class="login-link">Already Registered? Login</a>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    <% } else { %>
+        <div class="empty-state">
+            <div class="empty-icon"></div>
+            <h3>No Exams Scheduled</h3>
+            <p>Check back later for upcoming test schedules.</p>
+        </div>
+    <% } %>
+</div>
+
+<style>
+    .exam-list-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 30px;
+    }
+
+    .exam-card-student {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 12px;
+        padding: 25px;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.3s, box-shadow 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .exam-card-student:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+        border-color: #58a6ff;
+    }
+
+    .card-status-bar {
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .student-exam-title {
+        color: #e6edf3;
+        margin: 0 0 15px 0;
+        font-size: 1.4rem;
+        line-height: 1.3;
+        font-weight: 700;
+    }
+
+    .student-exam-info {
+        background: #0d1117;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #30363d;
+        margin-bottom: 20px;
+    }
+
+    .info-row {
+        color: #8b949e;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+    }
+    .info-row:last-child { margin-bottom: 0; }
+    .icon { font-size: 1.1rem; }
+
+    .student-exam-desc {
+        color: #8b949e;
+        font-size: 0.9rem;
+        margin-bottom: 25px;
+        flex-grow: 1;
+        line-height: 1.6;
+    }
+
+    .card-action-area {
+        margin-top: auto;
+    }
+
+    .btn-action {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        text-align: center;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: 0.2s;
+    }
+
+    .btn-live {
+        background: #238636;
+        color: white;
+        animation: pulse-btn 1.5s infinite;
+    }
+    .btn-live:hover { background: #2ea043; text-decoration: none; color: white;}
+
+    .btn-register {
+        background: #1f6feb;
+        color: white;
+    }
+    .btn-register:hover { background: #388bfd; text-decoration: none; color: white;}
+
+    .btn-disabled {
+        background: #30363d;
+        color: #8b949e;
+        cursor: not-allowed;
+    }
+    .btn-disabled:hover { text-decoration: none; color: #8b949e; }
+
+    .login-link {
+        color: #8b949e;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .login-link:hover { color: #58a6ff; text-decoration: underline; }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px;
+        color: #8b949e;
+    }
+    .empty-icon { font-size: 4rem; margin-bottom: 20px; opacity: 0.5; }
+
+    @keyframes pulse-btn {
+        0% { box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(46, 160, 67, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(46, 160, 67, 0); }
+    }
+</style>
+
+<%- include("../../partials/footer") %>

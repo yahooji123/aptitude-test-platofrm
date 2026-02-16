@@ -26,8 +26,10 @@ mongoose.connect(process.env.MONGO_URI, {
 .then(() => console.log('MongoDB Connected to apptitude-db'))
 .catch(err => console.log(err));
 
+
 // Routes
 app.use('/auth', require('./routes/authRoutes'));
+app.use('/exams', require('./routes/examRoutes'));
 app.use('/student', require('./routes/studentRoutes'));
 app.use('/admin', require('./routes/adminRoutes'));
 app.use('/adaptive', require('./routes/adaptiveRoutes'));

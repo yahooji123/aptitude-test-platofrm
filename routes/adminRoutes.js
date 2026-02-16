@@ -5,7 +5,7 @@ const {
     getCreateTest, createTest, getBulkAdd, postBulkAdd,
     getEditTest, postEditTest, deleteTest,
     getProfile, updateProfile, deleteAccount,
-    getStudents, deleteStudent
+    getStudents, getEditStudent, postEditStudent, deleteStudent
 } = require('../controllers/adminController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -17,6 +17,8 @@ router.post('/settings/toggle', require('../controllers/adminController').toggle
 
 // Student Management
 router.get('/students', getStudents);
+router.get('/student/edit/:id', getEditStudent);
+router.post('/student/edit/:id', postEditStudent);
 router.post('/students/delete/:id', deleteStudent);
 
 // Profile Management

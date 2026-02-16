@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= exam.title %> - Exam Session</title>
+    <!-- Importing fonts for real paper feel -->
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #f5f5f5;
+            --paper-width: 210mm; /* A4 width */
+            --paper-color: #ffffff;
+            --text-main: #111;
+            --accent-ui: #2c3e50;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            margin: 0;
+            padding: 0;
+            font-family: "Inter", sans-serif;
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* Top Bar UI */
+        .exam-status-bar {
+            background: #1a1a1a;
+            color: white;
+            padding: 0 20px;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .student-identity {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            display: flex;
+            gap: 15px;
+        }
+        .student-identity strong { color: #58a6ff; }
+
+        .time-monitor {
+            background: #231f20;
+            border: 1px solid #444;
+            padding: 5px 15px;
+            border-radius: 4px;
+            font-family: "Courier New", monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #f85149; /* Red for urgency */
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .finish-btn {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .finish-btn:hover { background: #b71c1c; }
+
+        .answer-sheet-container {
+            margin-top: 30px;
+            border-top: 2px dashed #000;
+            padding-top: 20px;
+        }
+        
+        .answer-textarea {
+            width: 100%;
+            min-height: 400px;
+            padding: 20px;
+            font-family: "Crimson Text", serif;
+            font-size: 1.2rem;
+            line-height: 1.6;
+            border: 1px solid #ccc;
+            background: #fff;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+            resize: vertical;
+            background-image: linear-gradient(#f1f1f1 1px, transparent 1px);
+            background-size: 100% 2rem;
+            margin-bottom: 20px;
+        }
+        .answer-textarea:focus { outline: 2px solid #2c3e50; }
+
+        /* Paper Container */
+        .paper-canvas {
+            margin-top: 80px; /* Offset for fixed header */
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .exam-sheet {
+            background: var(--paper-color);
+            width: 100%;
+            max-width: var(--paper-width);
+            min-height: 297mm; /* A4 height */
+            padding: 25mm; /* Standard print margin */
+            box-sizing: border-box;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1), 0 0 5px rgba(0,0,0,0.05);
+            font-family: "Crimson Text", serif; /* Serif for paper read */
+            font-size: 1.25rem; /* Readable text */
+            line-height: 1.6;
+            color: #000;
+        }
+
+        /* Paper Typography */
+        .paper-header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+        }
+        .paper-h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin: 0;
+            line-height: 1.2;
+        }
+        .paper-meta {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .paper-instructions {
+            margin: 20px 0;
+            font-style: italic;
+            font-size: 1rem;
+            text-align: left;
+        }
+
+        .questions-content {
+            white-space: pre-wrap; /* Preserve pasting format */
+            text-align: justify;
+        }
+
+        /* Waiting Room UI */
+        .waiting-room-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0d1117;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        
+        .countdown-timer {
+            font-size: 6rem;
+            font-weight: bold;
+            font-family: "Courier New", monospace;
+            color: #58a6ff;
+            margin: 20px 0;
+        }
+
+        .start-btn-big {
+            font-size: 1.5rem;
+            padding: 15px 50px;
+            background: #238636;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: none;
+        }
+        .start-btn-big:hover { background: #2ea043; }
+
+        @media print {
+            .exam-status-bar { display: none; }
+            .paper-canvas { margin: 0; padding: 0; }
+            .exam-sheet { box-shadow: none; width: 100%; max-width: none; }
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <!-- Fixed Header for Student Info & Timer -->
+    <div class="exam-status-bar">
+        <div class="student-identity">
+            <div>
+                User: <strong><%= registration.studentName %></strong>
+            </div>
+            <div>
+                Roll No: <strong><%= registration.rollNumber %></strong>
+            </div>
+        </div>
+        <div class="time-monitor" id="timerDisplay">
+             --:--:--
+        </div>
+        <button class="finish-btn" onclick="submitExam()">SUBMIT TEST</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="paper-canvas">
+        
+        <% if (status === "waiting") { %>
+            <div class="waiting-room-overlay" id="waitingRoom">
+                <div style="text-align: center;">
+                    <h1>Exam begins in</h1>
+                    <div class="countdown-timer" id="countdownDisplay">00:00:00</div>
+                    <p style="color: #8b949e;">Please keep this window open.</p>
+                    <button class="start-btn-big" id="startExamBtn" onclick="startTest()">START EXAM</button>
+                </div>
+            </div>
+        <% } %>
+
+        <!-- The Physics Paper Look -->
+        <div class="exam-sheet" id="examPaper" style="<%= status === "waiting" ? "display:none;" : "" %>">
+            <% if (status === "ended") { %>
+                <div style="text-align: center; padding: 50px;">
+                    <h1>Examination Ended</h1>
+                    <p>Thank you for participating.</p>
+                    <a href="/exams" style="color: blue;">Exit to Dashboard</a>
+                </div>
+            <% } else { %>
+                <div class="paper-header">
+                    <h1 class="paper-h1"><%= exam.title %></h1>
+                    <div class="paper-meta">
+                        <span>Max Time: <%= (new Date(exam.endTime) - new Date(exam.startTime)) / 60000 %> Minutes</span>
+                        <span>Date: <%= new Date(exam.date).toLocaleDateString() %></span>
+                    </div>
+                </div>
+
+                <div class="paper-instructions">
+                    <strong>Instructions:</strong> <%= exam.instructions %>
+                </div>
+                <hr style="border-top: 2px solid #000; margin-bottom: 30px;">
+                
+                <div class="questions-content">
+                    <%= exam.questionPaperContent %>
+                </div>
+                 
+                <div class="answer-sheet-container">
+                    <h3>ANSWER SHEET</h3>
+                    <p style="font-style:italic; font-size:0.9rem;">Type your answers below. You can resize this box.</p>
+                    <form id="examForm" action="/exams/submit" method="POST">
+                        <input type="hidden" name="regId" value="<%= registration._id %>">
+                        <textarea class="answer-textarea" name="submission" placeholder="Q1. Answer..."></textarea>
+                    </form>
+                </div>
+
+                <div style="margin-top: 50px; text-align: center; font-size: 0.9rem; font-style: italic;">
+                    *** END OF PAPER ***
+                </div>
+            <% } %>
+        </div>
+
+    </div>
+
+    <script>
+        const status = "<%= status %>";
+        let timeLeft = <%= timeLeft %>; // seconds
+        
+        const timerDisplay = document.getElementById("timerDisplay");
+        const countdownDisplay = document.getElementById("countdownDisplay");
+        const startBtn = document.getElementById("startExamBtn");
+        const waitingRoom = document.getElementById("waitingRoom");
+        const examPaper = document.getElementById("examPaper");
+
+        function formatTime(seconds) {
+            if(seconds < 0) return "00:00:00";
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+        }
+
+        function updateTimer() {
+            if (timeLeft > 0) {
+                timeLeft--;
+                const formatted = formatTime(timeLeft);
+                
+                if (status === "waiting") {
+                    if (countdownDisplay) countdownDisplay.innerText = formatted;
+                } else if (status === "live") {
+                    if (timerDisplay) timerDisplay.innerText = " " + formatted;
+                }
+            } else {
+                if (status === "waiting") {
+                    if (countdownDisplay) countdownDisplay.innerText = "00:00:00";
+                    if (startBtn) {
+                        startBtn.style.display = "inline-block";
+                        startBtn.innerText = "START EXAM";
+                    }
+                } else if (status === "live") {
+                    if (timerDisplay) timerDisplay.innerText = "TIME UP";
+                    alert("Time is Up! Submitting automatically...");
+                    document.getElementById('examForm').submit();
+                }
+            }
+        }
+
+        setInterval(updateTimer, 1000);
+
+        function startTest() {
+            location.reload(); 
+        }
+
+        function submitExam() {
+            if (confirm("Are you sure you want to finish and submit?")) {
+                document.getElementById('examForm').submit();
+            }
+        }
+        
+        // Full Screen Mode
+        function openFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(err => {
+                    console.log("Full screen denied");
+                });
+            }
+        }
+
+        // Proctoring: Detect Tab Switch
+        document.addEventListener("visibilitychange", () => {
+             if (document.hidden && status === "live") {
+                 alert("WARNING: You switched tabs! This activity has been logged.");
+                 // In a real app, send an AJAX request to increment suspicious count
+             }
+        });
+
+        // Initialize display immediately
+        if (status === "live") {
+             timerDisplay.innerText = " " + formatTime(timeLeft);
+             // Try to force full screen on first interaction
+             document.body.addEventListener('click', openFullscreen, { once: true });
+        }
+
+        // Anti-Cheat (Simple)
+        document.addEventListener("copy", e => e.preventDefault());
+        document.addEventListener("paste", e => e.preventDefault());
+    </script>
+</body>
+</html>

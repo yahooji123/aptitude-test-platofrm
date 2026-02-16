@@ -1,0 +1,269 @@
+<%- include("../../partials/header") %>
+
+<div style="min-height: 85vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: #0d1117;">
+
+    <div class="admit-card-container" id="admitCard">
+        <div class="card-header-visual">
+            <div class="university-title">UNIVERSITY EXAMINATION PORTAL</div>
+            <div class="card-type">STUDENT ADMIT CARD</div>
+        </div>
+        
+        <div class="card-body-visual">
+            <div class="student-profile-section">
+                <div class="photo-placeholder">PHOTO</div>
+                <div class="details-text">
+                    <h2 class="student-name"><%= registration.studentName %></h2>
+                    <div class="detail-row">
+                        <span class="label">Roll No:</span>
+                        <span class="value"><%= registration.rollNumber %></span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">DOB:</span>
+                        <span class="value"><%= new Date(registration.dob).toLocaleDateString() %></span>
+                    </div>
+                    <div class="detail-row highlight-box">
+                        <span class="label">Reg ID:</span>
+                        <span class="value mono"><%= registration.registrationNumber %></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="exam-info-table">
+                <div class="table-header">Examination Details</div>
+                <div class="table-row">
+                    <div class="col-head">Exam Name</div>
+                    <div class="col-val"><%= registration.examId.title %></div>
+                </div>
+                <div class="table-row">
+                    <div class="col-head">Date</div>
+                    <div class="col-val"><%= new Date(registration.examId.date).toLocaleDateString() %></div>
+                </div>
+                <div class="table-row" style="border-bottom: none;">
+                    <div class="col-head">Time</div>
+                    <div class="col-val">
+                        <%= new Date(registration.examId.startTime).toLocaleTimeString() %> 
+                        to 
+                        <%= new Date(registration.examId.endTime).toLocaleTimeString() %>
+                    </div>
+                </div>
+            </div>
+
+            <div class="instructions-footer">
+                <strong>Instructions:</strong> Use your Registration ID and DOB to login.
+            </div>
+        </div>
+        
+        <div class="watermark">OFFICIAL</div>
+    </div>
+
+    <div class="action-buttons-container">
+        <button onclick="window.print()" class="btn-print"> Print Card</button>
+        <a href="/exams" class="btn-back">Go to Dashboard</a>
+    </div>
+
+</div>
+
+<style>
+    /* Visual Design for Admit Card */
+    .admit-card-container {
+        background: white; /* Print friendly */
+        color: #1a1a1a;
+        width: 100%;
+        max-width: 650px;
+        border-radius: 4px;
+        overflow: hidden;
+        box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        position: relative;
+        font-family: "Times New Roman", Times, serif;
+    }
+
+    .card-header-visual {
+        background: #1f2937;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        border-bottom: 4px solid #ccaa00; /* Gold accent */
+    }
+
+    .university-title {
+        font-size: 1.2rem;
+        letter-spacing: 2px;
+        font-weight: bold;
+        font-family: "Arial", sans-serif;
+    }
+
+    .card-type {
+        margin-top: 5px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: #fbbf24;
+    }
+
+    .card-body-visual {
+        padding: 30px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .student-profile-section {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 30px;
+        align-items: flex-start;
+    }
+
+    .photo-placeholder {
+        width: 120px;
+        height: 140px;
+        background: #f3f4f6;
+        border: 2px dashed #9ca3af;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9ca3af;
+        font-weight: bold;
+        font-family: sans-serif;
+    }
+
+    .details-text {
+        flex: 1;
+    }
+
+    .student-name {
+        margin: 0 0 15px 0;
+        font-size: 1.8rem;
+        text-transform: uppercase;
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 10px;
+    }
+
+    .detail-row {
+        margin-bottom: 8px;
+        font-size: 1.1rem;
+        display: flex;
+    }
+
+    .detail-row .label {
+        width: 100px;
+        font-weight: bold;
+        color: #4b5563;
+    }
+
+    .highlight-box {
+        background: #fffbeb;
+        border: 1px solid #fcd34d;
+        padding: 8px;
+        margin-top: 10px;
+        border-radius: 4px;
+    }
+
+    .mono {
+        font-family: "Courier New", monospace;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+
+    .exam-info-table {
+        border: 2px solid #1f2937;
+        margin-top: 20px;
+    }
+
+    .table-header {
+        background: #1f2937;
+        color: white;
+        padding: 8px;
+        text-align: center;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-family: sans-serif;
+    }
+
+    .table-row {
+        display: flex;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .col-head {
+        background: #f9fafb;
+        width: 30%;
+        padding: 10px;
+        font-weight: bold;
+        border-right: 1px solid #e5e7eb;
+    }
+
+    .col-val {
+        padding: 10px;
+        flex: 1;
+        font-weight: 500;
+    }
+
+    .instructions-footer {
+        margin-top: 25px;
+        text-align: center;
+        font-style: italic;
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-30deg);
+        font-size: 5rem;
+        color: rgba(0,0,0,0.03);
+        font-weight: bold;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    .action-buttons-container {
+        margin-top: 30px;
+        display: flex;
+        gap: 15px;
+    }
+
+    .btn-print {
+        padding: 12px 25px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    
+    .btn-back {
+        padding: 12px 25px;
+        background: transparent;
+        color: #9ca3af;
+        border: 1px solid #4b5563;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        #admitCard, #admitCard * {
+            visibility: visible;
+        }
+        #admitCard {
+            position: absolute;
+            left: 0;
+            top: 0;
+            margin: 0;
+            box-shadow: none;
+            width: 100%;
+        }
+        .action-buttons-container {
+            display: none;
+        }
+    }
+</style>
+
+<%- include("../../partials/footer") %>

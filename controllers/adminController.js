@@ -462,6 +462,43 @@ const getStudents = async (req, res) => {
     }
 };
 
+// @desc    Get Edit Student Page
+// @route   GET /admin/student/edit/:id
+const getEditStudent = async (req, res) => {
+    try {
+        const student = await User.findById(req.params.id);
+        if (!student) return res.status(404).render('error', { message: 'Student not found' });
+        res.render('admin/edit_student', { student });
+    } catch (error) {
+        console.error(error);
+        res.status(500).render('error', { message: 'Server Error' });
+    }
+};
+
+// @desc    Update Student
+// @route   POST /admin/student/edit/:id
+const postEditStudent = async (req, res) => {
+    try {
+        const { name, email, newPassword } = req.body;
+        const student = await User.findById(req.params.id);
+        
+        if (!student) return res.status(404).render('error', { message: 'Student not found' });
+
+        student.name = name;
+        student.email = email;
+
+        if (newPassword && newPassword.trim() !== "") {
+            student.password = newPassword; 
+        }
+
+        await student.save();
+        res.redirect('/admin/students');
+    } catch (error) {
+        console.error(error);
+        res.status(500).render('error', { message: 'Error updating student' });
+    }
+};
+
 // @desc    Delete Student
 // @route   POST /admin/students/delete/:id
 const deleteStudent = async (req, res) => {
@@ -539,6 +576,10 @@ module.exports = {
     updateProfile,
     deleteAccount,
     getStudents,
-    deleteStudent
+    getEditStudent,
+    postEditStudent,
+    deleteStudent,
+    deleteQuestionsBulk,
+    deleteQuestionsByTopic
 };
 
