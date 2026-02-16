@@ -397,17 +397,47 @@
                                 <input type="file" name="answerFiles" id="answerFiles" accept="image/*" multiple style="margin-top: 15px; display: block; margin: 10px auto;">
                             </label>
                             <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">(Supported: JPG, PNG. Max 20 images)</p>
-                            <div id="fileList" style="margin-top: 10px; font-size: 0.9rem; color: #2ea44f;"></div>
+                            
+                            <!-- Image Preview Grid -->
+                            <div id="imagePreviewGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 15px;"></div>
+                            
+                            <div id="fileList" style="margin-top: 10px; font-size: 0.9rem; color: #2ea44f; font-weight: bold;"></div>
                         </div>
 
-                        <textarea class="answer-textarea" name="submission" placeholder="Q1. Answer..."></textarea>
+                        <textarea class="answer-textarea" name="submission" placeholder="Type your answers here (optional if you are uploading images)..."></textarea>
                     </form>
                 </div>
                 
                 <script>
                     document.getElementById('answerFiles').addEventListener('change', function(e) {
-                        const count = e.target.files.length;
+                        const files = Array.from(e.target.files);
+                        const count = files.length;
+                        const previewGrid = document.getElementById('imagePreviewGrid');
+                        
                         document.getElementById('fileList').innerText = count > 0 ? `✅ ${count} file(s) selected` : '';
+                        
+                        // Clear previous previews
+                        previewGrid.innerHTML = '';
+
+                        if(count > 0) {
+                            files.forEach((file, index) => {
+                                const reader = new FileReader();
+                                reader.onload = function(e) {
+                                    const div = document.createElement('div');
+                                    div.style.position = 'relative';
+                                    div.style.border = '1px solid #ddd';
+                                    div.style.borderRadius = '4px';
+                                    div.style.overflow = 'hidden';
+                                    
+                                    div.innerHTML = `
+                                        <img src="${e.target.result}" style="width: 100%; height: 80px; object-fit: cover; display: block;">
+                                        <div style="font-size: 0.7rem; padding: 2px; text-align: center; background: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
+                                    `;
+                                    previewGrid.appendChild(div);
+                                }
+                                reader.readAsDataURL(file);
+                            });
+                        }
                     });
                 </script>
 
@@ -478,6 +508,20 @@
         }
 
         function confirmSubmit() {
+             const btn = document.querySelector("#submitModal .btn-primary-custom");
+             if(btn) {
+                 btn.disabled = true;
+                 btn.innerText = "Submitting... Please Wait ⏳";
+                 btn.style.opacity = "0.7";
+                 btn.style.cursor = "not-allowed";
+             }
+             
+             // Show full screen loader
+             const overlay = document.createElement('div');
+             overlay.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:3000; font-family:sans-serif;";
+             overlay.innerHTML = '<div style="font-size:3rem; margin-bottom:20px;">📤</div><h2 style="margin:0;">Submitting Exam...</h2><p>Please do not close this window or refresh.</p>';
+             document.body.appendChild(overlay);
+
              document.getElementById('examForm').submit();
         }
         

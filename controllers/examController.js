@@ -312,6 +312,11 @@ exports.postSubmitExam = async (req, res) => {
              return res.status(404).render('error', { message: 'Registration not found' });
         }
 
+        // Prevent multiple submissions
+        if (registration.submittedAt) {
+            return res.status(400).render('error', { message: 'You have already submitted this exam.' });
+        }
+
         let updateData = {
             submission: submission || '',
             submittedAt: new Date(),
@@ -322,19 +327,20 @@ exports.postSubmitExam = async (req, res) => {
         if (req.files && req.files.length > 0) {
             console.log('Images uploaded:', req.files.length);
             // Get array of URLs
-            const fileUrls = req.files.map(file => file.path || file.secure_url);
+            const fileUrls = req.files.map(file => file.path || file.path); // Cloudinary uses .path usually or .secure_url
+            
             updateData.submissionFiles = fileUrls;
             
             // For backward compatibility or if just 1 file
-            updateData.submissionFile = fileUrls[0];
+            updateData.submissionFile = fileUrls.length > 0 ? fileUrls[0] : null;
         } else {
              console.log('No image files uploaded with submission');
         }
-        
+
         await ExamRegistration.findByIdAndUpdate(regId, updateData);
         
-        // Redirect to dashboard with success message (implied by status change)
-        res.redirect('/exams');
+        // Redirect back to attempt page to show success message and submission details
+        res.redirect(`/exams/${registration.examId}/attempt?regId=${regId}`);
     } catch (err) {
         console.error('Submission Error:', err);
         res.status(500).render('error', { message: 'Submission failed. Please try again or contact support.' });
