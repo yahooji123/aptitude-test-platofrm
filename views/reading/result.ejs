@@ -37,9 +37,11 @@
 <!-- Detailed Analysis -->
 <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #30363d; padding-bottom: 10px; margin-bottom: 20px;">
     <h3 style="color: #e6edf3; margin: 0;">Passage Breakdown</h3>
+    <% if (typeof systemSettings !== 'undefined' && systemSettings.AI_READING_FEATURES_ENABLED) { %>
     <span style="font-size: 0.9rem; color: #8b949e; background: #161b22; padding: 4px 10px; border-radius: 20px; border: 1px solid #30363d;">
         ✨ AI Credits Left: <strong style="color: #4ade80;" class="ai-credits-span"><%= user && user.readingAiCredits !== undefined ? user.readingAiCredits : '?' %></strong>
     </span>
+    <% } %>
 </div>
 
 <% result.passages.forEach((pRef, pIdx) => { %>
@@ -53,6 +55,7 @@
             </span>
         </div>
 
+        <% if (typeof systemSettings !== 'undefined' && systemSettings.AI_READING_FEATURES_ENABLED) { %>
         <!-- AI Actions Toolbar -->
         <div style="padding: 10px 20px; background: #0d1117; border-bottom: 1px solid #30363d; display: flex; gap: 10px; flex-wrap: wrap;">
             <button class="ai-action-btn" onclick="performAIAction(this, 'translate', <%= pIdx %>, `<%= pRef.passageId.content.replace(/`/g, '\\`').replace(/\n/g, '\\n') %>`)">
@@ -70,6 +73,7 @@
         </div>
 
         <div id="ai-result-<%= pIdx %>" class="ai-result-box" style="margin: 0 20px 15px 20px; display: none;"></div>
+        <% } %>
 
         <!-- Content Preview -->
         <div style="padding: 15px 20px; font-size: 0.95rem; color: #c9d1d9; border-bottom: 1px solid #30363d; background: #0d1117; line-height: 1.6;">
@@ -124,6 +128,7 @@
                                 <strong>Explanation:</strong> <%= q.explanation %>
                             </div>
 
+                            <% if (typeof systemSettings !== 'undefined' && systemSettings.AI_READING_FEATURES_ENABLED) { %>
                             <!-- AI Explain Answer Button -->
                             <% 
                                 const qDataStr = `Question: ${q.questionText} | Options: ${q.options.join(', ')} | Correct Option Index: ${q.correctOption}`;
@@ -135,6 +140,7 @@
                                 </button>
                                 <div id="ai-result-<%= pIdx %>_<%= qIdx %>" class="ai-result-box" style="display: none; margin-top: 10px;"></div>
                             </div>
+                            <% } %>
                         </div>
                     </div>
                 </div>

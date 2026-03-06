@@ -68,6 +68,46 @@
         </div>
     </div>
 
+    <!-- AI Reading Features Toggle Card -->
+    <div class="admin-stat-card" style="border: 1px solid <%= typeof aiReadingFeatures !== 'undefined' && aiReadingFeatures ? '#a371f7' : '#30363d' %>; transition: all 0.3s;" id="aiReadingFeaturesCard">
+        <div>
+            <div class="admin-stat-label">AI Reading Features</div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                <div class="admin-stat-value" id="aiReadingFeaturesStatus" style="font-size: 1.2rem; color: <%= typeof aiReadingFeatures !== 'undefined' && aiReadingFeatures ? '#a371f7' : '#8b949e' %>;">
+                    <%= typeof aiReadingFeatures !== 'undefined' && aiReadingFeatures ? 'Enabled' : 'Disabled' %>
+                </div>
+                <!-- Toggle Switch -->
+                <label class="switch">
+                    <input type="checkbox" id="aiReadingFeaturesToggle" <%= typeof aiReadingFeatures !== 'undefined' && aiReadingFeatures ? 'checked' : '' %> onchange="toggleSetting('AI_READING_FEATURES_ENABLED', this)">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+        <div style="margin-top: 10px; font-size: 0.8rem; color: #8b949e;">
+            Student translation, highlight & explain tools.
+        </div>
+    </div>
+
+    <!-- AI Chat Toggle Card -->
+    <div class="admin-stat-card" style="border: 1px solid <%= typeof aiChat !== 'undefined' && aiChat ? '#a371f7' : '#30363d' %>; transition: all 0.3s;" id="aiChatCard">
+        <div>
+            <div class="admin-stat-label">✨ AI Chat</div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                <div class="admin-stat-value" id="aiChatStatus" style="font-size: 1.2rem; color: <%= typeof aiChat !== 'undefined' && aiChat ? '#a371f7' : '#8b949e' %>;">
+                    <%= typeof aiChat !== 'undefined' && aiChat ? 'Enabled' : 'Disabled' %>
+                </div>
+                <!-- Toggle Switch -->
+                <label class="switch">
+                    <input type="checkbox" id="aiChatToggle" <%= typeof aiChat !== 'undefined' && aiChat ? 'checked' : '' %> onchange="toggleSetting('AI_CHAT_ENABLED', this)">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+        <div style="margin-top: 10px; font-size: 0.8rem; color: #8b949e;">
+            Global student AI tutor queries.
+        </div>
+    </div>
+
     <!-- AI Live Essay Check Toggle Card -->
     <div class="admin-stat-card" style="border: 1px solid <%= typeof aiLiveEssayCheck !== 'undefined' && aiLiveEssayCheck ? '#a371f7' : '#30363d' %>; transition: all 0.3s;" id="aiLiveCheckCard">
         <div>
@@ -231,6 +271,14 @@
         } else if (key === 'AI_LIVE_ESSAY_CHECK_ENABLED') {
             statusLabel = document.getElementById('aiLiveCheckStatus');
             card = document.getElementById('aiLiveCheckCard');
+            activeColor = '#a371f7';
+        } else if (key === 'AI_READING_FEATURES_ENABLED') {
+            statusLabel = document.getElementById('aiReadingFeaturesStatus');
+            card = document.getElementById('aiReadingFeaturesCard');
+            activeColor = '#a371f7';
+        } else if (key === 'AI_CHAT_ENABLED') {
+            statusLabel = document.getElementById('aiChatStatus');
+            card = document.getElementById('aiChatCard');
             activeColor = '#a371f7';
         }
         

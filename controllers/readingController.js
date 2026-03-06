@@ -402,6 +402,12 @@ exports.viewResult = async (req, res) => {
 
 exports.performAIAction = async (req, res) => {
     try {
+        const SystemSetting = require('../models/SystemSetting');
+        const setting = await SystemSetting.findOne({ key: 'AI_READING_FEATURES_ENABLED' });
+        if (setting && !setting.value) {
+            return res.json({ error: 'AI Reading features are currently disabled by the Admin.' });
+        }
+
         const { action, passageText, questionId } = req.body;
         const User = require('../models/User');
         let user = await User.findById(req.user._id);

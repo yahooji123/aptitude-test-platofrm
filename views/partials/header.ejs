@@ -51,7 +51,9 @@
                     </a>
                 <% } else { %>
                     <a href="/student/dashboard" class="nav-item">Dashboard</a>
-                    <a href="/student/chat" class="nav-item" style="color: #4ade80;">✨ AI Chat</a>
+                    <% if (typeof systemSettings !== 'undefined' && systemSettings.AI_CHAT_ENABLED) { %>
+                        <a href="/student/chat" class="nav-item" style="color: #4ade80;">✨ AI Chat</a>
+                    <% } %>
                     <a href="/adaptive/student/dashboard" class="nav-item adaptive-link">Adaptive®</a>
                     <a href="/essay/student/dashboard" class="nav-item" style="color: #f472b6;">Essay Test</a>
                     <a href="/reading/student/dashboard" class="nav-item" style="color: #60a5fa;">Reading Practice</a>

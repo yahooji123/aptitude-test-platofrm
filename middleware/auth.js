@@ -1,5 +1,24 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const SystemSetting = require('../models/SystemSetting');
+
+const fetchGlobalSettings = async (res) => {
+    try {
+        const settings = await SystemSetting.find({}).lean();
+        res.locals.systemSettings = {
+            AI_CHAT_ENABLED: true, // Default true
+            AI_READING_FEATURES_ENABLED: true // Default true
+        };
+        settings.forEach(s => {
+            res.locals.systemSettings[s.key] = s.value;
+        });
+    } catch (err) {
+        res.locals.systemSettings = {
+            AI_CHAT_ENABLED: true,
+            AI_READING_FEATURES_ENABLED: true
+        };
+    }
+};
 
 const protect = async (req, res, next) => {
     let token;
@@ -18,6 +37,7 @@ const protect = async (req, res, next) => {
         
         // Pass user to views
         res.locals.user = req.user;
+        await fetchGlobalSettings(res);
         
         next();
     } catch (error) {
@@ -34,6 +54,7 @@ const checkUser = async (req, res, next) => {
         token = req.cookies.token;
     }
 
+    res.locals.user = null;
     if (token) {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -42,11 +63,10 @@ const checkUser = async (req, res, next) => {
         } catch (error) {
             console.error('Token verification failed:', error.message);
             res.clearCookie('token');
-            res.locals.user = null;
         }
-    } else {
-        res.locals.user = null;
     }
+    
+    await fetchGlobalSettings(res);
     next();
 };
 

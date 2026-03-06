@@ -13,7 +13,8 @@ router.use(protect);
 router.use(authorize('admin'));
 
 router.get('/dashboard', getDashboard);
-router.post('/settings/toggle', require('../controllers/adminController').toggleSetting); // New Route for Toggle
+// Settings & API Keys
+router.post('/settings/toggle', require('../controllers/adminController').toggleSetting);
 
 // Student Management
 router.get('/students', getStudents);

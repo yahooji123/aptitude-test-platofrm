@@ -682,6 +682,12 @@ const deleteAccount = async (req, res) => {
 // @route   GET /student/chat
 const getAIChat = async (req, res) => {
     try {
+        const SystemSetting = require('../models/SystemSetting');
+        const setting = await SystemSetting.findOne({ key: 'AI_CHAT_ENABLED' });
+        if (setting && !setting.value) {
+            return res.status(403).send('AI Chat is currently disabled by the Admin.');
+        }
+
         // Refresh credits if day passed
         let user = await User.findById(req.user._id);
         const today = new Date().toDateString();
@@ -704,6 +710,12 @@ const getAIChat = async (req, res) => {
 // @route   POST /student/chat/ask
 const askAIChat = async (req, res) => {
     try {
+        const SystemSetting = require('../models/SystemSetting');
+        const setting = await SystemSetting.findOne({ key: 'AI_CHAT_ENABLED' });
+        if (setting && !setting.value) {
+            return res.json({ error: 'AI Chat is currently disabled by the Admin.' });
+        }
+
         const { message } = req.body;
         let user = await User.findById(req.user._id);
         

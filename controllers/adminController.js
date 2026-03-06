@@ -28,6 +28,8 @@ const getDashboard = async (req, res) => {
         let aiEssayGrading = await SystemSetting.findOne({ key: 'AI_ESSAY_GRADING_ENABLED' }).lean();
         let aiReadingGen = await SystemSetting.findOne({ key: 'AI_READING_GEN_ENABLED' }).lean();
         let aiLiveEssayCheck = await SystemSetting.findOne({ key: 'AI_LIVE_ESSAY_CHECK_ENABLED' }).lean();
+        let aiChat = await SystemSetting.findOne({ key: 'AI_CHAT_ENABLED' }).lean();
+        let aiReadingFeatures = await SystemSetting.findOne({ key: 'AI_READING_FEATURES_ENABLED' }).lean();
 
         res.render('admin/dashboard', { 
             topics, 
@@ -37,6 +39,8 @@ const getDashboard = async (req, res) => {
             aiEssayGrading: aiEssayGrading ? aiEssayGrading.value : false,
             aiReadingGen: aiReadingGen ? aiReadingGen.value : false,
             aiLiveEssayCheck: aiLiveEssayCheck ? aiLiveEssayCheck.value : false,
+            aiChat: aiChat ? aiChat.value : true,
+            aiReadingFeatures: aiReadingFeatures ? aiReadingFeatures.value : true,
             currentPage: page,
             totalPages
         });
@@ -53,7 +57,10 @@ const toggleSetting = async (req, res) => {
     try {
         let setting = await SystemSetting.findOne({ key });
         if (!setting) {
-            setting = new SystemSetting({ key, value: true }); // Default create as true if toggled first time
+            // For settings that default to true, the first click (turning off) should set it to false
+            const defaultsTrue = ['AI_CHAT_ENABLED', 'AI_READING_FEATURES_ENABLED'];
+            const initialValue = defaultsTrue.includes(key) ? false : true;
+            setting = new SystemSetting({ key, value: initialValue });
         } else {
             setting.value = !setting.value;
         }
