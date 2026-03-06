@@ -11,15 +11,10 @@ const readingPassageSchema = new mongoose.Schema({
     title: { type: String, required: true },
     content: { type: String, required: true },
     questions: { 
-        type: [questionSchema], 
-        validate: [arrayLimit, '{PATH} exceeds the limit of 5'] 
+        type: [questionSchema]
     },
     isActive: { type: Boolean, default: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
-
-function arrayLimit(val) {
-    return val.length <= 5;
-}
 
 module.exports = mongoose.model('ReadingPassage', readingPassageSchema);

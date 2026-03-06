@@ -35,7 +35,12 @@
 </div>
 
 <!-- Detailed Analysis -->
-<h3 style="color: #e6edf3; border-bottom: 1px solid #30363d; padding-bottom: 10px;">Passage Breakdown</h3>
+<div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #30363d; padding-bottom: 10px; margin-bottom: 20px;">
+    <h3 style="color: #e6edf3; margin: 0;">Passage Breakdown</h3>
+    <span style="font-size: 0.9rem; color: #8b949e; background: #161b22; padding: 4px 10px; border-radius: 20px; border: 1px solid #30363d;">
+        ✨ AI Credits Left: <strong style="color: #4ade80;" class="ai-credits-span"><%= user && user.readingAiCredits !== undefined ? user.readingAiCredits : '?' %></strong>
+    </span>
+</div>
 
 <% result.passages.forEach((pRef, pIdx) => { %>
     <div style="background: #0d1117; border: 1px solid #30363d; border-radius: 8px; margin-bottom: 30px; overflow: hidden;">
@@ -44,13 +49,36 @@
         <div style="padding: 15px 20px; background: #161b22; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center;">
             <h4 style="margin: 0; color: #e6edf3;">Passage <%= pIdx + 1 %>: <%= pRef.passageId.title %></h4>
             <span style="background: #21262d; padding: 4px 10px; border-radius: 20px; color: #e6edf3; font-weight: 600;">
-                Score: <%= pRef.passageScore %>/5
+                Score: <%= pRef.passageScore %>/<%= pRef.passageId.questions.length %>
             </span>
         </div>
 
-        <!-- Content Preview (Folded) -->
-        <div style="padding: 15px 20px; font-size: 0.9rem; color: #8b949e; border-bottom: 1px solid #30363d; background: #0d1117;">
-            <em>"<%= pRef.passageId.content.substring(0, 100) %>..."</em>
+        <!-- AI Actions Toolbar -->
+        <div style="padding: 10px 20px; background: #0d1117; border-bottom: 1px solid #30363d; display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="ai-action-btn" onclick="performAIAction(this, 'translate', <%= pIdx %>, `<%= pRef.passageId.content.replace(/`/g, '\\`').replace(/\n/g, '\\n') %>`)">
+                🌐 Translate (Hindi)
+            </button>
+            <button class="ai-action-btn" onclick="performAIAction(this, 'summarize', <%= pIdx %>, `<%= pRef.passageId.content.replace(/`/g, '\\`').replace(/\n/g, '\\n') %>`)">
+                📝 Summarize
+            </button>
+            <button class="ai-action-btn" onclick="performAIAction(this, 'highlight_answers', <%= pIdx %>, `<%= pRef.passageId.content.replace(/`/g, '\\`').replace(/\n/g, '\\n') %>`)">
+                🖍️ Highlight Key Info
+            </button>
+            <button class="ai-action-btn" onclick="performAIAction(this, 'difficult_words', <%= pIdx %>, `<%= pRef.passageId.content.replace(/`/g, '\\`').replace(/\n/g, '\\n') %>`)">
+                📚 Hard Words & Meanings
+            </button>
+        </div>
+
+        <div id="ai-result-<%= pIdx %>" class="ai-result-box" style="margin: 0 20px 15px 20px; display: none;"></div>
+
+        <!-- Content Preview -->
+        <div style="padding: 15px 20px; font-size: 0.95rem; color: #c9d1d9; border-bottom: 1px solid #30363d; background: #0d1117; line-height: 1.6;">
+            <div id="content-<%= pIdx %>" data-original="<%= pRef.passageId.content %>" style="max-height: 60px; overflow: hidden; transition: max-height 0.3s;">
+                <%= pRef.passageId.content %>
+            </div>
+            <button onclick="togglePassageContent(<%= pIdx %>)" style="background: none; border: none; color: #58a6ff; cursor: pointer; padding: 0; margin-top: 5px; font-size: 0.85rem;">
+                Toggle Full Passage ▼
+            </button>
         </div>
 
         <!-- Questions Review -->
@@ -95,6 +123,18 @@
                             <div style="margin-top: 10px; background: #161b22; padding: 10px; border-left: 3px solid #3b82f6; font-size: 0.9rem; color: #c9d1d9;">
                                 <strong>Explanation:</strong> <%= q.explanation %>
                             </div>
+
+                            <!-- AI Explain Answer Button -->
+                            <% 
+                                const qDataStr = `Question: ${q.questionText} | Options: ${q.options.join(', ')} | Correct Option Index: ${q.correctOption}`;
+                            %>
+                            <div style="margin-top: 10px;">
+                                <button class="ai-action-btn" style="border-color: #8957e5; color: #a371f7;" 
+                                    onclick="performAIAction(this, 'explain_answer', '<%= pIdx %>_<%= qIdx %>', `<%= pRef.passageId.content.replace(/`/g, '\\`').replace(/\n/g, '\\n') %>`, `<%= qDataStr.replace(/`/g, '\\`') %>`)">
+                                    ✨ AI Detail Explanation
+                                </button>
+                                <div id="ai-result-<%= pIdx %>_<%= qIdx %>" class="ai-result-box" style="display: none; margin-top: 10px;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -104,5 +144,95 @@
 
     </div>
 <% }) %>
+
+<!-- AI Feature Scripts -->
+<style>
+    .ai-action-btn {
+        background: #1f2937;
+        color: #e6edf3;
+        border: 1px solid #30363d;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .ai-action-btn:hover:not(:disabled) {
+        border-color: #8b949e;
+        background: #21262d;
+    }
+    .ai-action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .ai-result-box {
+        margin-top: 15px;
+        padding: 15px;
+        background: rgba(137, 87, 229, 0.1);
+        border: 1px solid #8957e5;
+        border-radius: 8px;
+        color: #e6edf3;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        display: none;
+    }
+    .ai-highlight {
+        background-color: rgba(163, 113, 247, 0.3) !important;
+        border-bottom: 2px solid #8957e5;
+    }
+</style>
+
+<script>
+    async function performAIAction(btn, action, pIdx, passageText, questionData = null) {
+        const resultBox = document.getElementById(`ai-result-${pIdx}`);
+        const contentBox = document.getElementById(`content-${pIdx}`);
+        const originalContent = contentBox.dataset.original;
+
+        btn.disabled = true;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '⏳ Thinking...';
+
+        try {
+            const response = await fetch('/reading/student/ai-action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, passageText, questionId: questionData })
+            });
+
+            const data = await response.json();
+            
+            if (data.error) {
+                alert(`❌ ${data.error}`);
+            } else {
+                // Update specific credit spans if they exist on the page
+                document.querySelectorAll('.ai-credits-span').forEach(el => el.textContent = data.creditsLeft);
+
+                if (action === 'highlight_answers') {
+                    contentBox.innerHTML = data.reply;
+                } else {
+                    resultBox.style.display = 'block';
+                    resultBox.innerHTML = `<strong>✨ AI Result:</strong><br><br>${data.reply.replace(/\\n/g, '<br>')}`;
+                }
+            }
+        } catch (error) {
+            alert('❌ Network error. Please try again.');
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+
+    function togglePassageContent(pIdx) {
+        const el = document.getElementById(`content-${pIdx}`);
+        if (el.style.maxHeight === '60px') {
+            el.style.maxHeight = 'none';
+        } else {
+            el.style.maxHeight = '60px';
+        }
+    }
+</script>
 
 <%- include('../partials/footer') %>

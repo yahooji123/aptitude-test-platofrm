@@ -40,9 +40,9 @@ function parseReadingContent(rawText) {
         
         const questionBlocks = text.split(/Q\d+\./).slice(1); // Remove pre-Q1
         
-        if (questionBlocks.length < 5) throw new Error(`Found ${questionBlocks.length} questions. Need exactly 5.`);
+        if (questionBlocks.length < 1) throw new Error(`Found 0 questions. Need at least 1.`);
 
-        questionBlocks.slice(0, 5).forEach(block => {
+        questionBlocks.forEach(block => {
             const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
             
             // First line is Question Text
@@ -380,10 +380,57 @@ exports.viewResult = async (req, res) => {
             
         if (!result) return res.send("Result not found");
 
-        res.render('reading/result', { result });
+        // Credit refresh logic for Reading AI
+        const User = require('../models/User');
+        let sessionUser = await User.findById(req.user._id);
+
+        const today = new Date().toDateString();
+        const lastRefresh = sessionUser.lastReadingCreditRefreshDate ? sessionUser.lastReadingCreditRefreshDate.toDateString() : '';
+        if (today !== lastRefresh) {
+            sessionUser.readingAiCredits = 5;
+            sessionUser.lastReadingCreditRefreshDate = new Date();
+            await sessionUser.save();
+        }
+
+        res.render('reading/result', { result, user: sessionUser });
 
     } catch (err) {
         console.error(err);
         res.status(500).send("Server Error");
+    }
+};
+
+exports.performAIAction = async (req, res) => {
+    try {
+        const { action, passageText, questionId } = req.body;
+        const User = require('../models/User');
+        let user = await User.findById(req.user._id);
+
+        const today = new Date().toDateString();
+        const lastRefresh = user.lastReadingCreditRefreshDate ? user.lastReadingCreditRefreshDate.toDateString() : '';
+        if (today !== lastRefresh) {
+            user.readingAiCredits = 5;
+            user.lastReadingCreditRefreshDate = new Date();
+        }
+
+        if (user.readingAiCredits <= 0) {
+            await user.save();
+            return res.json({ error: 'Reading AI limit reached. Please come back tomorrow.' });
+        }
+
+        const { processReadingAIAction } = require('../utils/aiService');
+        const reply = await processReadingAIAction(action, passageText, questionId);
+        
+        if (!reply) {
+            return res.json({ error: 'AI failed to process the request.' });
+        }
+
+        user.readingAiCredits -= 1;
+        await user.save();
+
+        res.json({ reply, creditsLeft: user.readingAiCredits });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server Error' });
     }
 };

@@ -17,5 +17,6 @@ router.get('/student/start', protect, authorize('student'), readingController.st
 router.post('/student/submit', protect, authorize('student'), readingController.submitTest);
 router.get('/student/result/:id', protect, authorize('student'), readingController.viewResult);
 router.post('/student/result/delete/:id', protect, authorize('student'), readingController.deleteStudentResult); // Student Delete
+router.post('/student/ai-action', protect, authorize('student'), readingController.performAIAction); // AI Actions
 
 module.exports = router;

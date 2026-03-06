@@ -150,3 +150,33 @@ exports.chatWithAI = async (message) => {
         return null;
     }
 };
+
+// Flexible Action for Reading Passages Analysis
+exports.processReadingAIAction = async (action, passageText, questionData = null) => {
+    if (!genAI) return null;
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        let prompt = "";
+        
+        if (action === 'translate') {
+            prompt = `Translate the following English passage into simple, readable Hindi.\n\nPassage:\n"${passageText}"\n\nReturn ONLY the Hindi translation.`;
+        } else if (action === 'summarize') {
+            prompt = `Summarize the following passage in 3-4 bullet points emphasizing the core message.\n\nPassage:\n"${passageText}"`;
+        } else if (action === 'explain_answer') {
+            // questionData includes the question and correct answer
+            prompt = `Given this passage:\n"${passageText}"\n\nAnd this question with its options:\n${questionData}\n\nExplain in detail why the correct answer is right and why the other options are wrong based on the passage text. Also quote exactly where the answer is found in the passage.`;
+        } else if (action === 'highlight_answers') {
+            prompt = `Given the following passage, extract 3-5 key sentences that contain the most important facts generally asked in questions, and return the passage text but wrap those highly important sentences in <span class='ai-highlight' style='background-color: rgba(255, 215, 0, 0.3); border-radius: 3px;'>...</span>. Return ONLY the HTML formatted passage back.\n\nPassage:\n"${passageText}"`;
+        } else if (action === 'difficult_words') {
+            prompt = `Extract the 5 most difficult words from the following passage. For each word, provide: 1) Its English meaning, 2) Its Hindi meaning, 3) An example sentence. Format strictly as a clear list.\n\nPassage:\n"${passageText}"`;
+        } else {
+            return null;
+        }
+        
+        const result = await model.generateContent(prompt);
+        return result.response.text().trim();
+    } catch (error) {
+        console.error("Reading AI Action Error:", error);
+        return null;
+    }
+};

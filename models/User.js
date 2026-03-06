@@ -34,6 +34,14 @@ const userSchema = new mongoose.Schema({
     lastCreditRefreshDate: {
         type: Date,
         default: Date.now
+    },
+    readingAiCredits: {
+        type: Number,
+        default: 5
+    },
+    lastReadingCreditRefreshDate: {
+        type: Date,
+        default: Date.now
     }
 }, { timestamps: true });
 
