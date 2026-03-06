@@ -44,4 +44,10 @@ router.get('/tests/edit/:id', getEditTest);
 router.post('/tests/edit/:id', postEditTest);
 router.post('/tests/delete/:id', deleteTest);
 
+// Admin Faculty Management
+const facultyAdminController = require('../controllers/facultyAdminController');
+router.get('/faculty/pending', facultyAdminController.getPending);
+router.post('/faculty/approve/:id', facultyAdminController.approveFaculty);
+router.post('/faculty/reject/:id', facultyAdminController.rejectFaculty);
+
 module.exports = router;

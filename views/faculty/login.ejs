@@ -1,0 +1,28 @@
+<%- include('../partials/header') %>
+<div class='auth-form' style='max-width: 400px; margin: 40px auto; padding: 30px; background: var(--card-bg); border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+    <h2 style='text-align: center; color: var(--text-primary); margin-bottom: 20px;'>Faculty Login</h2>
+    
+    <% if (msg === 'success') { %>
+        <p style='color: #00e676; text-align: center;'>Password set! Please login.</p>
+    <% } %>
+    <% if (error) { %>
+        <p style='color: #ff4d4d; text-align: center;'><%= error %></p>
+    <% } %>
+
+    <form action='/faculty/login' method='POST'>
+        <div class='form-group' style='margin-bottom: 15px;'>
+            <label style='display: block; margin-bottom: 5px; color: var(--text-secondary);'>Email</label>
+            <input type='email' name='email' required placeholder='faculty@university.edu' style='width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-primary);'>
+        </div>
+        <div class='form-group' style='margin-bottom: 20px;'>
+            <label style='display: block; margin-bottom: 5px; color: var(--text-secondary);'>Password</label>
+            <input type='password' name='password' required placeholder='********' style='width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-primary);'>
+        </div>
+        <button type='submit' class='btn' style='width: 100%; padding: 10px; background: #58a6ff; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;'>Login</button>
+        
+        <p style='text-align: center; margin-top: 15px;'>
+            <span style='color: var(--text-secondary);'>Not a faculty? <a href='/faculty/register' style='color: #58a6ff; text-decoration: none;'>Apply Here</a></span>
+        </p>
+    </form>
+</div>
+<%- include('../partials/footer') %>

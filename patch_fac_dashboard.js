@@ -1,0 +1,141 @@
+const fs = require('fs');
+
+const dashboardHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Dashboard | AptitudePro</title>
+    <!-- Add Bootstrap for dashboard styling so it's beautiful and responsive -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        #sidebar-wrapper { min-height: 100vh; width: 250px; }
+        .sidebar-heading { padding: 1.5rem; font-size: 1.25rem; }
+    </style>
+</head>
+<body>
+<div class="d-flex" id="wrapper">
+    <!-- Sidebar -->
+    <div class="bg-dark text-white" id="sidebar-wrapper">
+        <div class="sidebar-heading text-center fw-bold border-bottom border-secondary mb-3">
+            <span style="color: #58a6ff;">Aptitude</span>Pro<br><small class="text-white-50" style="font-size: 0.8rem;">Faculty Panel</small>
+        </div>
+        <div class="list-group list-group-flush my-3">
+            <a href="/faculty/dashboard" class="list-group-item list-group-item-action bg-transparent text-white fw-bold">
+                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+            </a>
+            <a href="#evaluations-queue" class="list-group-item list-group-item-action bg-transparent text-white">
+                <i class="bi bi-card-checklist me-2"></i>Evaluations Queue
+            </a>
+            <a href="/" class="list-group-item list-group-item-action bg-transparent text-white mt-5">
+                <i class="bi bi-box-arrow-left me-2"></i>Return to Home
+            </a>
+        </div>
+    </div>
+    
+    <!-- Page Content -->
+    <div id="page-content-wrapper" class="w-100">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 px-4 shadow-sm">
+            <div class="d-flex align-items-center">
+                <h4 class="m-0 fw-bold">Welcome, Prof. <%= faculty.name %></h4>
+            </div>
+            <div class="ms-auto d-flex align-items-center">
+                <span class="me-3 fw-medium text-secondary"><%= faculty.email %></span>
+                <a href="/faculty/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+            </div>
+        </nav>
+
+        <div class="container-fluid px-4 py-5">
+            <!-- Stats -->
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card shadow-sm border-0 h-100 bg-primary text-white border-start border-5 border-dark">
+                        <div class="card-body py-4">
+                            <h5 class="card-title text-uppercase text-white-50 fw-bold mb-3">Pending Checks</h5>
+                            <h2 class="display-5 fw-bold mb-0"><%= pendingCount %></h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card shadow-sm border-0 h-100 bg-success text-white border-start border-5 border-dark">
+                        <div class="card-body py-4">
+                            <h5 class="card-title text-uppercase text-white-50 fw-bold mb-3">Community Reviews Done</h5>
+                            <h2 class="display-5 fw-bold mb-0"><%= completedCount %></h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Queue -->
+            <div class="row mt-5" id="evaluations-queue">
+                <!-- Exam Evaluations -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold"><i class="bi bi-journal-text me-2 text-primary"></i> University Exams</h5>
+                            <span class="badge bg-primary rounded-pill"><%= pendingExams.length %></span>
+                        </div>
+                        <div class="card-body p-0">
+                            <% if(pendingExams.length === 0) { %>
+                                <div class="text-center py-5">
+                                    <p class="text-muted mb-0">No pending exam evaluations.</p>
+                                </div>
+                            <% } else { %>
+                                <ul class="list-group list-group-flush">
+                                    <% pendingExams.forEach(exam => { %>
+                                        <li class="list-group-item p-3 d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1"><%= exam.studentName %> (<%= exam.rollNumber %>)</h6>
+                                                <small class="text-muted"><%= exam.examId ? exam.examId.title : 'Exam' %></small><br>
+                                                <small class="text-muted">Submitted: <%= new Date(exam.submittedAt).toLocaleDateString() %></small>
+                                            </div>
+                                            <a href="/faculty/evaluate-exam/<%= exam._id %>" class="btn btn-sm btn-outline-primary">Evaluate</a>
+                                        </li>
+                                    <% }) %>
+                                </ul>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Essay Evaluations -->
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold"><i class="bi bi-pencil-square me-2 text-pink" style="color: #f472b6;"></i> Essay Submissions</h5>
+                            <span class="badge rounded-pill" style="background-color: #f472b6;"><%= pendingEssays.length %></span>
+                        </div>
+                        <div class="card-body p-0">
+                            <% if(pendingEssays.length === 0) { %>
+                                <div class="text-center py-5">
+                                    <p class="text-muted mb-0">No pending essay evaluations.</p>
+                                </div>
+                            <% } else { %>
+                                <ul class="list-group list-group-flush">
+                                    <% pendingEssays.forEach(essay => { %>
+                                        <li class="list-group-item p-3 d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1"><%= essay.user ? essay.user.name : 'Unknown' %></h6>
+                                                <small class="text-muted"><%= essay.topic.topic %></small><br>
+                                                <small class="text-muted">Submitted: <%= new Date(essay.createdAt).toLocaleDateString() %></small>
+                                            </div>
+                                            <a href="/faculty/evaluate-essay/<%= essay._id %>" class="btn btn-sm" style="color: #f472b6; border-color: #f472b6;">Evaluate</a>
+                                        </li>
+                                    <% }) %>
+                                </ul>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>`;
+
+fs.writeFileSync('views/faculty/dashboard.ejs', dashboardHtml);

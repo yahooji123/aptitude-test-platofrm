@@ -1,0 +1,91 @@
+const fs = require('fs');
+
+const adminFacultyEjs = `<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #8957e5 0%, #d2a8ff 100%);">
+    <div class="banner-title">Manage Faculty Applications</div>
+    <div class="banner-subtitle">Review, approve, and manage faculty access.</div>
+</div>
+
+<div style="margin-top: 40px;">
+    <h3 style="margin-bottom: 20px; color: var(--text-primary);">Pending Applications</h3>
+    <div class="card" style="padding: 20px; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+                    <th style="padding: 12px;">Name</th>
+                    <th style="padding: 12px;">Email</th>
+                    <th style="padding: 12px;">Qualification</th>
+                    <th style="padding: 12px;">Experience</th>
+                    <th style="padding: 12px;">Applied On</th>
+                    <th style="padding: 12px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (pendingFaculties.length === 0) { %>
+                <tr>
+                    <td colspan="6" style="padding: 20px; text-align: center; color: var(--text-secondary);">No pending applications</td>
+                </tr>
+                <% } %>
+                <% pendingFaculties.forEach(faculty => { %>
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 12px; color: var(--text-primary);"><%= faculty.name %></td>
+                    <td style="padding: 12px; color: var(--text-primary);"><%= faculty.email %></td>
+                    <td style="padding: 12px; color: var(--text-primary);"><%= faculty.qualification %></td>
+                    <td style="padding: 12px; color: var(--text-primary);"><%= faculty.experience %> yrs</td>
+                    <td style="padding: 12px; color: var(--text-primary);"><%= new Date(faculty.createdAt).toLocaleDateString() %></td>
+                    <td style="padding: 12px; display: flex; gap: 10px;">
+                        <form action="/admin/faculty/approve/<%= faculty._id %>" method="POST">
+                            <button type="submit" style="padding: 6px 12px; background: #238636; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Approve</button>
+                        </form>
+                        <form action="/admin/faculty/reject/<%= faculty._id %>" method="POST">
+                            <button type="submit" style="padding: 6px 12px; background: #da3633; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div style="margin-top: 50px; margin-bottom: 50px;">
+    <h3 style="margin-bottom: 20px; color: var(--text-primary);">Approved Faculty</h3>
+    <div class="card" style="padding: 20px; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary);">
+                    <th style="padding: 12px;">Name</th>
+                    <th style="padding: 12px;">Email</th>
+                    <th style="padding: 12px;">Qualification</th>
+                    <th style="padding: 12px;">Approved On</th>
+                    <th style="padding: 12px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (approvedFaculties.length === 0) { %>
+                <tr>
+                    <td colspan="5" style="padding: 20px; text-align: center; color: var(--text-secondary);">No approved faculty</td>
+                </tr>
+                <% } %>
+                <% approvedFaculties.forEach(faculty => { %>
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 12px; color: var(--text-primary);"><%= faculty.name %></td>
+                    <td style="padding: 12px; color: var(--text-primary);"><%= faculty.email %></td>
+                    <td style="padding: 12px; color: var(--text-primary);"><%= faculty.qualification %></td>
+                    <td style="padding: 12px; color: var(--text-primary);"><%= new Date(faculty.createdAt).toLocaleDateString() %></td>
+                    <td style="padding: 12px;">
+                        <form action="/admin/faculty/reject/<%= faculty._id %>" method="POST" onsubmit="return confirm('Suspend this faculty?');">
+                            <button type="submit" style="padding: 6px 12px; background: #d29922; color: #0d1117; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">Suspend</button>
+                        </form>
+                    </td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>`;
+
+fs.writeFileSync('views/admin/manage_faculty.ejs', adminFacultyEjs);

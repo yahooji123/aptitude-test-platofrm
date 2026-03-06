@@ -1,0 +1,46 @@
+<%- include('../partials/header') %>
+<div class='auth-form' style='max-width: 500px; margin: 40px auto; padding: 30px; background: var(--card-bg); border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
+    <h2 style='text-align: center; color: var(--text-primary); margin-bottom: 20px;'>Application Status</h2>
+    
+    <% if (error) { %>
+        <p style='color: #ff4d4d; text-align: center;'><%= error %></p>
+    <% } %>
+
+    <% if (!faculty) { %>
+        <form action='/faculty/status' method='POST'>
+            <div class='form-group' style='margin-bottom: 20px;'>
+                <label style='display: block; margin-bottom: 5px; color: var(--text-secondary);'>Enter Registered Email</label>
+                <input type='email' name='email' required placeholder='john@university.edu' style='width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-primary);'>
+            </div>
+            <button type='submit' class='btn' style='width: 100%; padding: 10px; background: #58a6ff; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;'>Check Status</button>
+            <p style='text-align: center; margin-top: 15px;'><a href='/faculty/register' style='color: #58a6ff; text-decoration: none;'>Back to Apply</a></p>
+        </form>
+    <% } else { %>
+        <div style='text-align: center; color: var(--text-primary);'>
+            <h4 style='margin-bottom: 15px;'>Status for <%= faculty.email %></h4>
+            <% if (faculty.status === 'pending') { %>
+                <p style='color: #ffb84d; font-weight: bold; background: rgba(255,184,77,0.1); padding: 10px; border-radius: 4px;'>Your application is currently Pending Review by admins.</p>
+            <% } else if (faculty.status === 'rejected') { %>
+                <p style='color: #ff4d4d; font-weight: bold; background: rgba(255,77,77,0.1); padding: 10px; border-radius: 4px;'>Your application was Rejected.</p>
+            <% } else if (faculty.status === 'approved') { %>
+                <p style='color: #00e676; font-weight: bold; background: rgba(0,230,118,0.1); padding: 10px; border-radius: 4px;'>Your application is Approved!</p>
+                <hr style='border: 1px solid var(--border-color); margin: 20px 0;'>
+                <% if (!faculty.password) { %>
+                    <h5 style='margin-bottom: 15px;'>Please Create Your Password</h5>
+                    <form action='/faculty/setup-password/<%= faculty._id %>' method='POST'>
+                        <div class='form-group' style='margin-bottom: 20px; text-align: left;'>
+                            <label style='display: block; margin-bottom: 5px; color: var(--text-secondary);'>New Password</label>
+                            <input type='password' name='password' required placeholder='********' minlength='6' style='width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-primary);'>
+                        </div>
+                        <button type='submit' class='btn' style='width: 100%; padding: 10px; background: #00e676; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;'>Set Password & Login</button>
+                    </form>
+                <% } else { %>
+                    <p style='color: var(--text-secondary);'>You have already set up your password.</p>
+                    <a href='/faculty/login' class='btn' style='display: block; text-align: center; width: 100%; padding: 10px; background: #58a6ff; color: #fff; border: none; border-radius: 4px; text-decoration: none; font-weight: bold;'>Go to Login</a>
+                <% } %>
+            <% } %>
+            <p style='margin-top: 20px;'><a href='/faculty/status' style='color: var(--text-secondary); text-decoration: none;'>Check another email</a></p>
+        </div>
+    <% } %>
+</div>
+<%- include('../partials/footer') %>
