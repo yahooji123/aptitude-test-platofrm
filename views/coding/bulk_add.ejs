@@ -1,0 +1,52 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #bc8cff 0%, #7928ca 100%);">
+    <div class="banner-title">Bulk Add Questions to <%= topic.name %></div>
+    <div class="banner-subtitle">Paste questions in the required format. Each question block must be separated by <b>---</b> (three dashes on a new line).</div>
+</div>
+
+<div class="container" style="max-width: 900px; margin: 0 auto; padding: 20px;">
+    <div class="card" style="background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 24px;">
+        <h2 style="color: #c9d1d9; border-bottom: 1px solid #30363d; padding-bottom: 10px; margin-bottom: 20px;">Bulk Add Questions</h2>
+        <form action="/coding/admin/topics/<%= topic._id %>/bulk" method="POST">
+            <input type="hidden" name="topicId" value="<%= topic._id %>">
+            <div style="font-size: 1rem; color: #c9d1d9; background: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 18px; margin-bottom: 18px;">
+                <b>Example Format (copy & edit):</b><br><br>
+                <span style="color:#bc8cff;">Sum of Two Numbers</span><br>
+                Given two integers, print their sum.<br>
+                The first line contains two integers a and b.<br>
+                Output their sum.<br>
+                1 &lt;= a, b &lt;= 1000<br>
+                2 3<br>
+                5<br>
+                ---<br>
+                <span style="color:#bc8cff;">Print Hello World</span><br>
+                Print the string "Hello World".<br>
+                No input.<br>
+                Output "Hello World".<br>
+                None<br>
+                <br>
+                Hello World
+            </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="display: block; color: #8b949e; margin-bottom: 5px;">Paste Questions (Format below)</label>
+                <textarea name="questionsText" required rows="12" class="form-control" style="width: 100%; padding: 8px; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 4px; font-family: monospace;" placeholder="Title\nDescription\nInputFormat\nOutputFormat\nConstraints\nSampleInput\nSampleOutput\n---\nTitle2\nDescription2\n..."></textarea>
+            </div>
+            <div style="font-size: 0.95rem; color: #8b949e; margin-bottom: 15px;">
+                <b>Format (per question):</b><br>
+                Title<br>
+                Description<br>
+                InputFormat<br>
+                OutputFormat<br>
+                Constraints<br>
+                SampleInput<br>
+                SampleOutput<br>
+                <span style="color: #bc8cff;">---</span> (separate each question)
+            </div>
+            <button type="submit" class="btn-primary" style="background: #238636; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 1rem;">Add Questions</button>
+            <a href="/coding/admin/topics" class="btn-primary" style="background: #30363d; color: #c9d1d9; border: none; padding: 10px 20px; border-radius: 6px; margin-left: 10px; font-size: 1rem; text-decoration: none;">Back to Topics</a>
+        </form>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

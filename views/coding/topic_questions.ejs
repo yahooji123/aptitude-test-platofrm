@@ -1,0 +1,59 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #1f6feb 0%, #238636 100%); padding: 40px 20px; text-align: center;">
+    <h1 style="font-size: 2.5rem; margin-bottom: 10px; color: white;">Manage Questions: <%= topicName %></h1>
+    <p style="font-size: 1.1rem; color: rgba(255,255,255,0.8);">Select questions to delete</p>
+</div>
+
+<div class="container" style="max-width: 900px; margin: -30px auto 40px; padding: 0 20px; position: relative; z-index: 10;">
+    
+    <% if (locals.success_msg) { %>
+        <div class="alert alert-success" style="background: rgba(46, 160, 67, 0.15); border: 1px solid #3fb950; color: #3fb950; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <%= success_msg %>
+        </div>
+    <% } %>
+    
+    <div class="card" style="background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #30363d; padding-bottom: 15px;">
+            <h3 style="color: #c9d1d9; margin: 0;"><%= questions.length %> Questions Found</h3>
+            <a href="/coding/admin" style="color: #58a6ff; text-decoration: none;">&larr; Back to Dashboard</a>
+        </div>
+
+        <% if(questions && questions.length > 0) { %>
+            <form action="/coding/admin/questions/delete-multiple" method="POST" onsubmit="return confirm('Delete selected questions?');">
+                <input type="hidden" name="topicName" value="<%= topicName %>">
+                
+                <div style="margin-bottom: 15px; display: flex; gap: 15px; align-items: center;">
+                    <label style="color: #8b949e; cursor: pointer; display: flex; align-items: center;">
+                        <input type="checkbox" id="selectAll" style="margin-right: 8px;"> Select All
+                    </label>
+                    <button type="submit" style="background: #f85149; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">Delete Selected</button>
+                </div>
+
+                <div style="max-height: 600px; overflow-y: auto; border: 1px solid #30363d; border-radius: 6px;">
+                    <% questions.forEach((q, i) => { %>
+                        <label style="display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #30363d; cursor: pointer; transition: 0.2s; background: <%= i % 2 === 0 ? '#0d1117' : '#161b22' %>">
+                            <input type="checkbox" name="questionIds" value="<%= q._id %>" class="q-checkbox" style="margin-right: 15px;">
+                            <div style="flex: 1;">
+                                <div style="color: #58a6ff; font-weight: 600; font-size: 1.05rem;"><%= q.title %></div>
+                                <div style="color: #8b949e; font-size: 0.85rem; margin-top: 4px;">Time: <%= q.expectedTime %> mins | Added: <%= new Date(q.createdAt).toLocaleDateString() %></div>
+                            </div>
+                        </label>
+                    <% }) %>
+                </div>
+            </form>
+        <% } else { %>
+            <div style="color: #8b949e; text-align: center; padding: 40px 0;">
+                No questions exist in this topic.
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<script>
+    document.getElementById('selectAll')?.addEventListener('change', function(e) {
+        document.querySelectorAll('.q-checkbox').forEach(cb => cb.checked = e.target.checked);
+    });
+</script>
+
+<%- include('../partials/footer') %>

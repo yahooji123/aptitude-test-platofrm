@@ -1,0 +1,358 @@
+<%- include('../partials/header') %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    body {
+        background-color: #0d1117;
+        color: #c9d1d9;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .dashboard-header {
+        position: relative;
+        text-align: center;
+        margin-bottom: 40px;
+        padding-top: 20px;
+    }
+
+    .back-btn {
+        position: absolute;
+        top: 20px;
+        left: 0;
+        background: rgba(88, 166, 255, 0.1);
+        color: #58a6ff;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        border: 1px solid rgba(88, 166, 255, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+        background: rgba(88, 166, 255, 0.2);
+        box-shadow: 0 0 15px rgba(88, 166, 255, 0.3);
+        transform: translateX(-3px);
+    }
+
+    .dashboard-header h1 {
+        font-size: 2.8rem;
+        background: linear-gradient(90deg, #58a6ff, #3fb950);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 10px;
+        font-weight: 800;
+        letter-spacing: -1px;
+    }
+
+    .dashboard-header p {
+        color: #8b949e;
+        font-size: 1.15rem;
+    }
+
+    /* Top Stats Row */
+    .top-stats {
+        display: flex;
+        gap: 25px;
+        margin-bottom: 40px;
+    }
+
+    .stat-card {
+        flex: 1;
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 16px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 4px;
+    }
+    .stat-card.solved::before { background: linear-gradient(90deg, #1f6feb, #58a6ff); }
+    .stat-card.remaining::before { background: linear-gradient(90deg, #f85149, #ff7b72); }
+    .stat-card.percent::before { background: linear-gradient(90deg, #238636, #3fb950); }
+
+    .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+        border-color: #484f58;
+    }
+
+    .stat-card h3 {
+        color: #8b949e;
+        font-size: 1.05rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 15px;
+        font-weight: 600;
+    }
+
+    .stat-card .value {
+        font-size: 3.2rem;
+        font-weight: 800;
+        line-height: 1;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .stat-card.solved .value { color: #58a6ff; }
+    .stat-card.remaining .value { color: #ff7b72; }
+    .stat-card.percent .value { color: #3fb950; }
+
+    /* Charts Section */
+    .charts-container {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 50px;
+        flex-wrap: wrap; /* responsive */
+    }
+
+    .chart-box {
+        flex: 1;
+        min-width: 300px;
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        transition: border-color 0.3s ease;
+    }
+    
+    .chart-box:hover {
+        border-color: #58a6ff;
+    }
+
+    .chart-box h3 {
+        margin-bottom: 25px;
+        text-align: center;
+        color: #c9d1d9;
+        font-size: 1.3rem;
+        letter-spacing: 0.5px;
+    }
+
+    /* Topic Details Grid */
+    .topics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 25px;
+    }
+
+    .topic-card {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 12px;
+        padding: 25px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .topic-card:hover {
+        border-color: #8b949e;
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+
+    .topic-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 4px;
+        width: var(--progress);
+        background: linear-gradient(90deg, #58a6ff, #3fb950);
+    }
+
+    .topic-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .topic-header h4 {
+        color: #58a6ff;
+        margin: 0;
+        font-size: 1.2rem;
+    }
+    
+    .topic-percent {
+        background: #21262d;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: bold;
+        color: #3fb950;
+    }
+
+    .topic-stats {
+        display: flex;
+        justify-content: space-between;
+        color: #8b949e;
+        font-size: 0.95rem;
+    }
+
+    @media (max-width: 768px) {
+        .top-stats { flex-direction: column; }
+    }
+</style>
+
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <a href="/coding" class="back-btn"><i class="fas fa-arrow-left" style="margin-right: 8px;"></i> Practice Arena</a>
+        <h1>Progress Analytics</h1>
+        <p>Track your coding journey, visualize your strengths, and conquer your goals.</p>
+    </div>
+
+    <!-- Overview Stats -->
+    <div class="top-stats">
+        <div class="stat-card solved">
+            <h3>Total Solved</h3>
+            <div class="value"><%= overall.solved %></div>
+        </div>
+        <div class="stat-card remaining">
+            <h3>Remaining</h3>
+            <div class="value"><%= overall.total - overall.solved %></div>
+        </div>
+        <div class="stat-card percent">
+            <h3>Completion</h3>
+            <div class="value"><%= overall.percent %>%</div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <% if(overall.total > 0) { %>
+    <div class="charts-container">
+        <div class="chart-box">
+            <h3><i class="fas fa-chart-bar" style="color: #58a6ff; margin-right: 8px;"></i> Topic Completion (%)</h3>
+            <canvas id="barChart"></canvas>
+        </div>
+        <div class="chart-box" style="max-width: 420px; margin: 0 auto;">
+            <h3><i class="fas fa-chart-pie" style="color: #3fb950; margin-right: 8px;"></i> Overall Progress</h3>
+            <div style="position: relative;">
+                <canvas id="doughnutChart"></canvas>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold; color: #c9d1d9;"><%= overall.percent %>%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <% } else { %>
+        <div style="text-align: center; padding: 40px; background: #161b22; border-radius: 12px; border: 1px dashed #30363d; margin-bottom: 40px;">
+            <i class="fas fa-code" style="font-size: 3rem; color: #8b949e; margin-bottom: 15px;"></i>
+            <h3 style="color: #c9d1d9;">No Data Available</h3>
+            <p style="color: #8b949e; margin-top: 10px;">Start practicing to see your analytics and charts appear here.</p>
+        </div>
+    <% } %>
+
+    <!-- Detailed Topics -->
+    <h2 style="margin-bottom: 25px; font-weight: 600; color: #c9d1d9; font-size: 1.8rem; border-bottom: 1px solid #30363d; padding-bottom: 15px;"><i class="fas fa-layer-group" style="color: #8b949e; margin-right: 10px;"></i> Topic Details</h2>
+    <div class="topics-grid">
+        <% if(stats.length > 0) { %>
+            <% stats.forEach(s => { %>
+                <div class="topic-card" style="--progress: <%= s.percent %>%">
+                    <div class="topic-header">
+                        <h4><%= s.topic %></h4>
+                        <span class="topic-percent"><%= s.percent %>%</span>
+                    </div>
+                    <div class="topic-stats">
+                        <span>Solved: <strong style="color:#58a6ff; font-size: 1.1rem;"><%= s.solved %></strong></span>
+                        <span>Total: <strong style="color:#c9d1d9; font-size: 1.1rem;"><%= s.total %></strong></span>
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div style="grid-column: 1 / -1; text-align: center; color: #8b949e; padding: 20px;">No topics found.</div>
+        <% } %>
+    </div>
+</div>
+
+<script>
+    // Data Preparation
+    const rawData = <%- JSON.stringify(stats) %>;
+    const labels = rawData.map(d => d.topic);
+    const percentData = rawData.map(d => d.percent);
+
+    // Common Chart Config
+    Chart.defaults.color = '#8b949e';
+    Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
+
+    // 1. Bar Chart (Topics Completion)
+    const ctxBar = document.getElementById('barChart').getContext('2d');
+    new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Completion %',
+                data: percentData,
+                backgroundColor: 'rgba(88, 166, 255, 0.7)',
+                borderColor: '#58a6ff',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: '#30363d' }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    // 2. Doughnut Chart (Overall)
+    const overallSolved = <%= overall.solved %>;
+    const overallRemaining = <%= overall.total - overall.solved %>;
+    const ctxDoughnut = document.getElementById('doughnutChart').getContext('2d');
+    
+    new Chart(ctxDoughnut, {
+        type: 'doughnut',
+        data: {
+            labels: ['Solved', 'Remaining'],
+            datasets: [{
+                data: [overallSolved, overallRemaining],
+                backgroundColor: [
+                    '#3fb950', // green for solved
+                    '#1f2428'  // dark for remaining
+                ],
+                borderColor: ['#3fb950', '#30363d'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '75%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#c9d1d9' }
+                }
+            }
+        }
+    });
+</script>
+
+<%- include('../partials/footer') %>

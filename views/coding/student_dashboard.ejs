@@ -1,0 +1,94 @@
+<%- include('../partials/header') %>
+
+<div class="test-runner-container" style="background-color: #0d1117; min-height: 100vh; color: #c9d1d9;">
+    
+    <div class="dashboard-banner" style="background: linear-gradient(135deg, #1f6feb 0%, #238636 100%); padding: 40px 20px; text-align: center; position: relative;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 10px; color: white;">Practice Arena</h1>
+        <p style="font-size: 1.1rem; color: rgba(255,255,255,0.8); margin-bottom: 20px;">Select topics to practice. Track your progress below.</p>
+        <a href="/progress/dashboard" style="display: inline-block; background: rgba(0,0,0,0.4); color: white; text-decoration: none; padding: 10px 24px; border-radius: 30px; font-weight: bold; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.2);"><i class="fas fa-chart-line" style="margin-right: 8px;"></i> View Analytics Dashboard</a>
+    </div>
+
+    <div class="container" style="max-width: 800px; margin: -30px auto 40px; padding: 0 20px; position: relative; z-index: 10;">
+        
+        <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div>
+                <span style="color: #8b949e; font-size: 1rem;">Total Questions Seen:</span>
+                <span style="color: #c9d1d9; font-size: 1.2rem; font-weight: bold; margin-left: 8px;"><%= locals.seenCount || 0 %></span>
+            </div>
+            
+            <!-- Selective Progress Reset -->
+            <form action="/coding/reset-progress" method="POST" style="margin: 0; display: flex; gap: 10px;" onsubmit="return confirm('Are you sure you want to reset progress for the selected topic? The questions will repeat again.')">
+                <select name="topicToReset" class="form-control" style="padding: 8px; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 6px; font-size: 0.9rem;">
+                    <option value="ALL">All Topics</option>
+                    <% if(topics && topics.length > 0) { %>
+                        <% topics.forEach(t => { %>
+                            <option value="<%= t.name %>">Only <%= t.name %></option>
+                        <% }) %>
+                    <% } %>
+                </select>
+                <button type="submit" style="background: rgba(248, 81, 73, 0.1); border: 1px solid #f85149; color: #f85149; padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap;">Reset Growth</button>
+            </form>
+        </div>
+
+        <div class="card" style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            
+            <% if(locals.error_msg && locals.error_msg.length > 0) { %>
+                <div class="alert alert-danger" style="background: rgba(248, 81, 73, 0.1); border: 1px solid #f85149; color: #f85149; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                    <%= error_msg %>
+                </div>
+            <% } %>
+
+            <form action="/coding/start" method="POST" onsubmit="clearPracticeSession()">
+                
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label style="display: block; font-size: 1.1rem; margin-bottom: 10px; color: #8b949e;">Choose Topics</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <% if(topics && topics.length > 0) { %>
+                            <% topics.forEach(t => { %>
+                                <label style="display: flex; align-items: center; background: #0d1117; border: 1px solid #30363d; padding: 12px; border-radius: 6px; cursor: pointer;">
+                                    <input type="checkbox" name="topics" value="<%= t.name %>" style="margin-right: 10px;" checked>
+                                    <span style="color: #c9d1d9;"><%= t.name %></span>
+                                </label>
+                            <% }) %>
+                        <% } else { %>
+                            <span style="color: #8b949e;">No topics available yet</span>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label style="display: block; font-size: 1.1rem; margin-bottom: 10px; color: #8b949e;">Number of Questions</label>
+                    <input type="number" name="count" min="1" max="50" value="5" class="form-control" style="width: 100%; padding: 12px; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 6px; font-size: 1rem;">
+                </div>
+
+                <button type="submit" class="btn-primary" style="
+                    width: 100%; 
+                    padding: 15px; 
+                    background: #238636; 
+                    color: white; 
+                    border: none; 
+                    border-radius: 6px; 
+                    font-size: 1.1rem; 
+                    font-weight: 600; 
+                    cursor: pointer; 
+                    transition: background 0.2s;"
+                    onmouseover="this.style.background='#2ea043'"
+                    onmouseout="this.style.background='#238636'"
+                >
+                    Start Practice
+                </button>
+
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Clear any old saved practice session so a fresh one starts
+    function clearPracticeSession() {
+        localStorage.removeItem('currentPracticeSession');
+    }
+</script>
+
+<%- include('../partials/footer') %>

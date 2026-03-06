@@ -36,6 +36,8 @@ app.use('/adaptive', require('./routes/adaptiveRoutes'));
 app.use('/essay', require('./routes/essayRoutes')); // New Essay Feature
 app.use('/reading', require('./routes/readingRoutes')); // New Reading Feature
 app.use('/english', require('./routes/englishRoutes')); // New English Learning Feature
+app.use('/coding', require('./routes/codingRoutes')); // New Coding Practice Feature
+app.use('/progress', require('./routes/progressRoutes')); // Analytics Dashboard
 
 // Public Routes (Login/Register Pages)
 app.get('/', (req, res) => res.redirect('/student/dashboard'));

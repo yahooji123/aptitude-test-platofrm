@@ -1,0 +1,114 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #7928ca 0%, #ff0080 100%); padding: 40px 20px; text-align: center;">
+    <h1 style="font-size: 2.5rem; margin-bottom: 10px; color: white;">Coding Challenge Admin Dashboard</h1>
+    <p style="font-size: 1.1rem; color: rgba(255,255,255,0.8);">Manage Topics and Questions</p>
+</div>
+
+<div class="container" style="max-width: 1200px; margin: -30px auto 40px; padding: 0 20px; position: relative; z-index: 10;">
+
+    <% if (locals.success_msg) { %>
+        <div class="alert alert-success" style="background: rgba(46, 160, 67, 0.15); border: 1px solid #3fb950; color: #3fb950; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <%= success_msg %>
+        </div>
+    <% } %>
+    
+    <% if (locals.error_msg) { %>
+        <div class="alert alert-danger" style="background: rgba(248, 81, 73, 0.1); border: 1px solid #f85149; color: #f85149; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <%= error_msg %>
+        </div>
+    <% } %>
+
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px;">
+        
+        <!-- Left Column: Topics -->
+        <div>
+            <div class="card" style="background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 24px; margin-bottom: 20px;">
+                <h3 style="color: #c9d1d9; border-bottom: 1px solid #30363d; padding-bottom: 10px; margin-bottom: 20px;">1. Create Topic</h3>
+                <form action="/coding/admin/topics/add" method="POST">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <input type="text" name="name" required class="form-control" style="width: 100%; padding: 10px; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 4px;" placeholder="Topic Name (e.g., Arrays)">
+                    </div>
+                    <button type="submit" style="background: #bc8cff; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; width: 100%;">Add Topic</button>
+                </form>
+            </div>
+            
+            <div class="card" style="background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 24px;">
+                <h3 style="color: #c9d1d9; border-bottom: 1px solid #30363d; padding-bottom: 10px; margin-bottom: 15px;">Existing Topics</h3>
+                <ul style="list-style: none; padding: 0; color: #8b949e;">
+                    <% if(locals.topics && locals.topics.length > 0) { %>
+                        <% topics.forEach((t, i) => { %>
+                            <li style="padding: 10px 0; border-bottom: 1px solid #21262d; display: flex; justify-content: space-between; align-items: center;">
+                                <a href="/coding/admin/topics/<%= encodeURIComponent(t) %>/questions" style="color: #58a6ff; text-decoration: none; font-weight: 600;"><%= i+1 %>. <%= t %></a>
+                                
+                                <form action="/coding/admin/topics/<%= encodeURIComponent(t) %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this topic and ALL its questions?')">
+                                    <button type="submit" style="background: none; border: 1px solid #f85149; color: #f85149; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Delete</button>
+                                </form>
+                            </li>
+                        <% }) %>
+                    <% } else { %>
+                        <li>No topics created yet.</li>
+                    <% } %>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Right Column: Questions -->
+        <div>
+            <div class="card" style="background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 24px; margin-bottom: 20px;">
+                <h3 style="color: #c9d1d9; border-bottom: 1px solid #30363d; padding-bottom: 10px; margin-bottom: 20px;">2. Add Questions</h3>
+                <form action="/coding/admin/bulk" method="POST">
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <textarea name="questionsText" required rows="12" class="form-control" style="width: 100%; padding: 10px; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 4px; font-family: monospace; line-height: 1.5;" placeholder="Paste your questions here according to the format below..."></textarea>
+                    </div>
+                    <button type="submit" style="background: #238636; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 1rem;">Save Questions</button>
+                </form>
+                
+                <div style="background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 15px; margin-top: 20px;">
+                    <h4 style="color: #8b949e; margin-bottom: 10px; font-size: 1rem;">Required Format</h4>
+                    <pre style="color: #58a6ff; font-size: 0.9rem; margin: 0; white-space: pre-wrap;">
+Title: Two Sum
+Topic: Arrays
+Problem:
+Given an array of integers nums and a target.
+
+Example 1:
+Input: nums=[2,7,11,15], target=9
+Output: [0,1]
+
+Example 2:
+Input: nums=[3,2,4], target=6
+Output: [1,2]
+
+Expected Time: 10
+                    </pre>
+                </div>
+            </div>
+            
+            <div class="card" style="background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 24px;">
+                <h3 style="color: #c9d1d9; border-bottom: 1px solid #30363d; padding-bottom: 10px; margin-bottom: 15px;">3. Recent Questions (All)</h3>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <% if(locals.questions && questions.length > 0) { %>
+                        <ul style="list-style: none; padding: 0; color: #c9d1d9;">
+                            <% questions.forEach(q => { %>
+                                <li style="padding: 10px 0; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between;">
+                                    <div>
+                                        <div style="font-weight: 600;"><%= q.title %></div>
+                                        <div style="font-size: 0.85rem; color: #8b949e; margin-top: 4px;">Time: <%= q.expectedTime %> min</div>
+                                    </div>
+                                    <span style="background: #30363d; color: #58a6ff; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; height: fit-content;"><%= q.topic %></span>
+                                </li>
+                            <% }) %>
+                        </ul>
+                    <% } else { %>
+                        <div style="color: #8b949e;">No questions added yet.</div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+</div>
+
+<%- include('../partials/footer') %>
