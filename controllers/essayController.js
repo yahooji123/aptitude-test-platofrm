@@ -231,13 +231,29 @@ exports.startEssayTest = async (req, res) => {
 // GET Render Write Page (Persistent URL)
 exports.renderWritePage = async (req, res) => {
     try {
-        const topic = await EssayTopic.findById(req.params.id);
+        const topicId = req.params.id;
+        const topic = await EssayTopic.findById(topicId);
         if (!topic) return res.redirect('/essay/student/dashboard');
 
         const mode = req.query.mode || 'practice';
         
+        let submission = await EssaySubmission.findOne({ user: req.user._id, topic: topicId, status: 'Draft' });
+        if (!submission) {
+            submission = await EssaySubmission.create({ 
+                user: req.user._id, 
+                topic: topicId, 
+                essayContent: ' ', 
+                status: 'Draft',
+                liveAiCredits: 5 
+            });
+        }
+
+        const SystemSetting = require('../models/SystemSetting');
+        const aiSetting = await SystemSetting.findOne({ key: 'AI_LIVE_ESSAY_CHECK_ENABLED' });
+        const isLiveAiEnabled = aiSetting && aiSetting.value === true;
+        
         // Pass topic and mode to the view
-        res.render('essay/write', { topic, mode });
+        res.render('essay/write', { topic, mode, submission, isLiveAiEnabled });
     } catch (error) {
         console.error(error);
         res.status(500).send('Server Error');
@@ -247,29 +263,116 @@ exports.renderWritePage = async (req, res) => {
 // POST Submit Essay
 exports.submitEssay = async (req, res) => {
     try {
-        const { topicId, essayContent } = req.body;
+        const { topicId, essayContent, submissionId } = req.body;
         
         // Idempotency: Prevent double submission of same content
         const duplicate = await EssaySubmission.findOne({
             user: req.user._id,
             topic: topicId,
-            essayContent
+            essayContent,
+            status: { $ne: 'Draft' }
         });
 
         if (duplicate) {
              return res.redirect('/essay/student/dashboard');
         }
 
+        const SystemSetting = require('../models/SystemSetting');
+        const { gradeEssayWithAI } = require('../utils/aiService');
+        const EssayTopic = require('../models/EssayTopic');
+
+        const aiSetting = await SystemSetting.findOne({ key: 'AI_ESSAY_GRADING_ENABLED' });
+        const isAiEnabled = aiSetting && aiSetting.value === true;
+
+        let status = 'Pending Evaluation';
+        let score = null;
+        let feedback = '';
+        let highlightedText = '';
+
+        if (isAiEnabled) {
+            const topicDoc = await EssayTopic.findById(topicId);
+            if (topicDoc) {
+                const aiResult = await gradeEssayWithAI(topicDoc.topic, essayContent);
+                if (aiResult) {
+                    score = aiResult.score;
+                    feedback = aiResult.feedback;
+                    highlightedText = aiResult.highlightedText || '';
+                    status = 'Checked'; // Marked as evaluated
+                }
+            }
+        }
+
+        if (submissionId) {
+            const submission = await EssaySubmission.findById(submissionId);
+            if (submission) {
+                submission.essayContent = essayContent;
+                submission.status = status;
+                submission.score = score;
+                submission.feedback = feedback;
+                submission.highlightedText = highlightedText;
+                await submission.save();
+                return res.redirect('/essay/student/dashboard');
+            }
+        } 
+        
+        // Fallback
         await EssaySubmission.create({
             user: req.user._id,
             topic: topicId,
-            essayContent
+            essayContent,
+            status,
+            score,
+            feedback,
+            highlightedText
         });
 
         res.redirect('/essay/student/dashboard');
     } catch (error) {
         console.error(error);
         res.status(500).send('Server Error');
+    }
+};
+
+// POST Live Edit AI Helper
+exports.liveEssayCheck = async (req, res) => {
+    try {
+        const { submissionId, selectedText } = req.body;
+        
+        if (!selectedText || selectedText.trim() === '') {
+            return res.status(400).json({ success: false, error: 'No text selected.' });
+        }
+
+        const SystemSetting = require('../models/SystemSetting');
+        const aiSetting = await SystemSetting.findOne({ key: 'AI_LIVE_ESSAY_CHECK_ENABLED' });
+        if (!aiSetting || aiSetting.value !== true) {
+            return res.status(403).json({ success: false, error: 'Live AI checking is currently disabled.' });
+        }
+
+        const submission = await EssaySubmission.findOne({ _id: submissionId, user: req.user._id });
+        if (!submission) return res.status(404).json({ success: false, error: 'Draft not found.' });
+
+        if (submission.liveAiCredits <= 0) {
+            return res.status(400).json({ success: false, error: 'You have used all 5 AI checking credits for this essay.' });
+        }
+
+        const wordCount = selectedText.trim().split(/\s+/).length;
+        if (wordCount > 200) {
+            return res.status(400).json({ success: false, error: `Selection is too long (${wordCount} words). Maximum allowed is 200 words per check.` });
+        }
+
+        const { liveAnalyzeText } = require('../utils/aiService');
+        const aiResult = await liveAnalyzeText(selectedText);
+        
+        if (!aiResult) return res.status(500).json({ success: false, error: 'Failed to analyze text. Please try again.' });
+
+        submission.liveAiCredits -= 1;
+        await submission.save();
+
+        res.json({ success: true, aiResult, credits: submission.liveAiCredits });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, error: 'Server Error' });
     }
 };
 
@@ -287,5 +390,44 @@ exports.getViewResult = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).send('Server Error');
+    }
+};
+
+// POST Handle Post-Submission AI Action (Translate, Vocab, Grammar)
+exports.handleEssayAIAction = async (req, res) => {
+    try {
+        const submissionId = req.params.id;
+        const { action } = req.body; 
+        
+        const submission = await EssaySubmission.findOne({ _id: submissionId, user: req.user._id });
+        if (!submission) return res.status(404).json({ success: false, error: 'Submission not found' });
+        
+        // If data is already generated, return it without consuming a credit
+        if (action === 'translate' && submission.aiHindiTranslation) return res.json({ success: true, data: submission.aiHindiTranslation, credits: submission.aiCredits });
+        if (action === 'words' && submission.aiDifficultWords) return res.json({ success: true, data: submission.aiDifficultWords, credits: submission.aiCredits });
+        if (action === 'grammar' && submission.aiGrammarExplanation) return res.json({ success: true, data: submission.aiGrammarExplanation, credits: submission.aiCredits });
+
+        // Ensure user has credits
+        if (submission.aiCredits <= 0) {
+            return res.status(400).json({ success: false, error: 'No AI credits remaining for this essay. You have used all 3 credits.' });
+        }
+
+        const { processEssayAIAction } = require('../utils/aiService');
+        const resultText = await processEssayAIAction(action, submission.essayContent);
+        
+        if (!resultText) return res.status(500).json({ success: false, error: 'Failed to process AI request. Please try again later.' });
+
+        // Decrement credit and save response
+        submission.aiCredits -= 1;
+        if (action === 'translate') submission.aiHindiTranslation = resultText;
+        if (action === 'words') submission.aiDifficultWords = resultText;
+        if (action === 'grammar') submission.aiGrammarExplanation = resultText;
+        await submission.save();
+
+        res.json({ success: true, data: resultText, credits: submission.aiCredits });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, error: 'Server Error' });
     }
 };

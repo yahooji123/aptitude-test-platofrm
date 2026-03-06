@@ -26,6 +26,14 @@ const userSchema = new mongoose.Schema({
     profileImage: {
         type: String,
         default: ''
+    },
+    aiCredits: {
+        type: Number,
+        default: 10
+    },
+    lastCreditRefreshDate: {
+        type: Date,
+        default: Date.now
     }
 }, { timestamps: true });
 

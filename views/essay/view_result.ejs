@@ -48,14 +48,135 @@
         <div>
             <h4 style="color: #8b949e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;">Your Answer</h4>
             <div style="background: #0d1117; padding: 25px; border-radius: 8px; border: 1px solid #30363d; color: #e6edf3; line-height: 1.8; font-family: 'Georgia', serif; white-space: pre-wrap;">
-<%= submission.essayContent %>
+<%- submission.highlightedText ? submission.highlightedText : submission.essayContent %>
             </div>
+            
+            <style>
+                .error-highlight {
+                    background-color: rgba(248, 81, 73, 0.2);
+                    border-bottom: 2px dashed #f85149;
+                    color: #ff7b72;
+                    padding: 0 4px;
+                    border-radius: 3px;
+                    cursor: help;
+                }
+                .ai-feature-btn {
+                    flex: 1; min-width: 200px; background: #21262d; border: 1px solid #30363d; color: #c9d1d9; border-radius: 8px; padding: 12px; cursor: pointer; font-weight: bold; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem;
+                }
+                .ai-feature-btn:hover:not(:disabled) {
+                    background: #30363d; border-color: #8b949e;
+                }
+                .ai-feature-btn:disabled {
+                    opacity: 0.7; cursor: not-allowed;
+                }
+                .ai-result-box {
+                    background: #0d1117; border: 1px solid #30363d; border-left: 4px solid #a371f7; padding: 25px; border-radius: 8px; margin-top: 15px; color: #e6edf3; line-height: 1.7; font-size: 0.95rem; animation: slideDown 0.3s ease-out;
+                }
+                @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+            </style>
+            
             <div style="text-align: right; margin-top: 10px; color: #8b949e; font-size: 0.85rem;">
                 Submitted on <%= new Date(submission.createdAt).toLocaleString() %>
             </div>
         </div>
 
+        <!-- NEW: Post-Submission AI Features -->
+        <div style="margin-top: 40px; border-top: 1px solid #30363d; padding-top: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: #a371f7; margin: 0; display: flex; align-items: center; gap: 10px;">
+                    ✨ AI Assist Tools
+                </h3>
+                <div style="background: rgba(163, 113, 247, 0.1); border: 1px solid #a371f7; color: #a371f7; padding: 6px 15px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;">
+                    <span id="aiCreditsDisplay"><%= submission.aiCredits %></span> Credits Remaining
+                </div>
+            </div>
+            
+            <p style="color: #8b949e; font-size: 0.9rem; margin-bottom: 20px;">Use your credits to deeply analyze this specific essay. Each action consumes 1 credit.</p>
+
+            <!-- Buttons -->
+            <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 30px;">
+                <button class="ai-feature-btn" id="btn-translate" onclick="triggerAI('translate')" <%= submission.aiHindiTranslation ? 'disabled style="background: rgba(163, 113, 247, 0.1); border-color: #a371f7; color: #a371f7;"' : '' %>>
+                    🌐 <%= submission.aiHindiTranslation ? 'Translation Unlocked ✓' : 'Translate to Hindi (-1)' %>
+                </button>
+                <button class="ai-feature-btn" id="btn-words" onclick="triggerAI('words')" <%= submission.aiDifficultWords ? 'disabled style="background: rgba(163, 113, 247, 0.1); border-color: #a371f7; color: #a371f7;"' : '' %>>
+                    📖 <%= submission.aiDifficultWords ? 'Vocabulary Unlocked ✓' : 'Difficult Words & Meaning (-1)' %>
+                </button>
+                <button class="ai-feature-btn" id="btn-grammar" onclick="triggerAI('grammar')" <%= submission.aiGrammarExplanation ? 'disabled style="background: rgba(163, 113, 247, 0.1); border-color: #a371f7; color: #a371f7;"' : '' %>>
+                    ✅ <%= submission.aiGrammarExplanation ? 'Grammar Unlocked ✓' : 'Grammar Breakdown (-1)' %>
+                </button>
+            </div>
+
+            <!-- Pre-rendered Results (if already unlocked previously) -->
+            <div id="result-translate" class="ai-result-box" style="display: <%= submission.aiHindiTranslation ? 'block' : 'none' %>;">
+                <h4 style="color: #a371f7; margin-top: 0; margin-bottom: 15px;">🌐 Hindi Translation</h4>
+                <div class="ai-content" style="white-space: pre-wrap;"><%- typeof parseMarkdown !== 'undefined' ? parseMarkdown(submission.aiHindiTranslation) : submission.aiHindiTranslation %></div>
+            </div>
+
+            <div id="result-words" class="ai-result-box" style="display: <%= submission.aiDifficultWords ? 'block' : 'none' %>;">
+                <h4 style="color: #a371f7; margin-top: 0; margin-bottom: 15px;">📖 Difficult Words</h4>
+                <div class="ai-content" style="white-space: pre-wrap;"><%- submission.aiDifficultWords %></div>
+            </div>
+
+            <div id="result-grammar" class="ai-result-box" style="display: <%= submission.aiGrammarExplanation ? 'block' : 'none' %>;">
+                <h4 style="color: #a371f7; margin-top: 0; margin-bottom: 15px;">✅ Grammar Breakdown</h4>
+                <div class="ai-content" style="white-space: pre-wrap;"><%- submission.aiGrammarExplanation %></div>
+            </div>
+
+        </div>
+
     </div>
 </div>
+
+<script>
+    async function triggerAI(action) {
+        const btn = document.getElementById('btn-' + action);
+        const originalText = btn.innerHTML;
+        
+        btn.innerHTML = '⏳ Processing Feature...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`/essay/student/result/<%= submission._id %>/ai-action`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                // Update credits
+                document.getElementById('aiCreditsDisplay').innerText = data.credits;
+                
+                // Show Result Box
+                const box = document.getElementById('result-' + action);
+                box.style.display = 'block';
+                
+                // We use innerHTML and white-space pre-wrap to support basic markdown rendering naturally
+                // Remove raw markdown bold tags for slightly cleaner UI, or just let CSS handle it
+                let cleanData = data.data.replace(/\*\*/g, '<strong>').replace(/\*/g, '</strong>'); 
+                box.querySelector('.ai-content').innerHTML = cleanData;
+                
+                // Update Button State to locked
+                btn.style.background = 'rgba(163, 113, 247, 0.1)';
+                btn.style.borderColor = '#a371f7';
+                btn.style.color = '#a371f7';
+                
+                if (action === 'translate') btn.innerHTML = '🌐 Translation Unlocked ✓';
+                if (action === 'words') btn.innerHTML = '📖 Vocabulary Unlocked ✓';
+                if (action === 'grammar') btn.innerHTML = '✅ Grammar Unlocked ✓';
+
+            } else {
+                alert(data.error);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        } catch (error) {
+            console.error(error);
+            alert('A network error occurred. Please try again.');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+</script>
 
 <%- include('../partials/footer') %>

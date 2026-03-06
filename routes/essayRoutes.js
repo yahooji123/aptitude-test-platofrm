@@ -20,7 +20,9 @@ router.post('/admin/submissions/delete/:id', protect, authorize('admin'), essayC
 router.get('/student/dashboard', protect, authorize('student'), essayController.getStudentEssayDashboard);
 router.get('/student/start', protect, authorize('student'), essayController.startEssayTest); // Init & Redirect
 router.get('/student/write/:id', protect, authorize('student'), essayController.renderWritePage); // Actual Page
+router.post('/student/live-check', protect, authorize('student'), essayController.liveEssayCheck); // New Check Route
 router.post('/student/submit', protect, authorize('student'), essayController.submitEssay);
 router.get('/student/result/:id', protect, authorize('student'), essayController.getViewResult);
+router.post('/student/result/:id/ai-action', protect, authorize('student'), essayController.handleEssayAIAction); // Post-Submission AI
 
 module.exports = router;

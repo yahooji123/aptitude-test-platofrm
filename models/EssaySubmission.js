@@ -13,12 +13,16 @@ const essaySubmissionSchema = new mongoose.Schema({
     },
     essayContent: {
         type: String,
-        required: true
+        default: ''
     },
     status: {
         type: String,
-        enum: ['Pending Evaluation', 'Checked'],
+        enum: ['Draft', 'Pending Evaluation', 'Checked'],
         default: 'Pending Evaluation'
+    },
+    liveAiCredits: {
+        type: Number,
+        default: 5
     },
     score: {
         type: Number,
@@ -31,6 +35,26 @@ const essaySubmissionSchema = new mongoose.Schema({
     maxMarks: {
         type: Number,
         default: 10
+    },
+    highlightedText: {
+        type: String,
+        default: ''
+    },
+    aiCredits: {
+        type: Number,
+        default: 3
+    },
+    aiHindiTranslation: {
+        type: String,
+        default: null
+    },
+    aiDifficultWords: {
+        type: String,
+        default: null
+    },
+    aiGrammarExplanation: {
+        type: String,
+        default: null
     }
 }, { timestamps: true });
 

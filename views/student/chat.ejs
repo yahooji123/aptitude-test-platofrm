@@ -1,0 +1,123 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #1f2937, #111827);">
+    <div class="banner-title" style="background: linear-gradient(90deg, #60a5fa, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AI Tutor Chat</div>
+    <div class="banner-subtitle">Ask questions about any subject! You have <span id="credits-left" style="color: #4ade80; font-weight: bold;"><%= user.aiCredits %></span> credits left today.</div>
+</div>
+
+<div class="student-container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
+    <% if (error) { %>
+        <div style="background: #ef444433; border: 1px solid #ef4444; color: #fca5a5; padding: 10px; border-radius: 6px; margin-bottom: 20px;">
+            <%= error %>
+        </div>
+    <% } %>
+
+    <div class="chat-container" style="background: #0d1117; border: 1px solid #30363d; border-radius: 12px; display: flex; flex-direction: column; height: 60vh;">
+        
+        <!-- Chat History -->
+        <div id="chat-history" style="flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
+            <div class="message ai-message" style="align-self: flex-start; background: #1f2937; padding: 12px 18px; border-radius: 12px; border-bottom-left-radius: 2px; max-width: 80%; color: #c9d1d9; font-size: 0.95rem; line-height: 1.5;">
+                Hello! I'm your AI Tutor. I can help you with questions from any subject. You get 10 free credits to use every day! How can I help you today?
+            </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="chat-input-area" style="padding: 15px; border-top: 1px solid #30363d; background: #161b22; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
+            <form id="chat-form" style="display: flex; gap: 10px;">
+                <input type="text" id="chat-input" placeholder="Type your question here..." required autocomplete="off"
+                    style="flex: 1; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 8px; padding: 12px 15px; font-size: 0.95rem;" 
+                    <% if (user.aiCredits <= 0) { %>disabled placeholder="Out of credits for today!"<% } %> />
+                <button type="submit" id="chat-submit" class="btn btn-primary" style="padding: 0 20px; border-radius: 8px;"
+                    <% if (user.aiCredits <= 0) { %>disabled<% } %>>Send</button>
+            </form>
+            <div id="typing-indicator" style="display: none; color: #8b949e; font-size: 0.85rem; margin-top: 5px;">AI is thinking...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+    const chatHistory = document.getElementById('chat-history');
+    const creditsLeftSpan = document.getElementById('credits-left');
+    const submitBtn = document.getElementById('chat-submit');
+    const typingIndicator = document.getElementById('typing-indicator');
+
+    function addMessage(text, isUser = false) {
+        const msgDiv = document.createElement('div');
+        msgDiv.style.padding = '12px 18px';
+        msgDiv.style.borderRadius = '12px';
+        msgDiv.style.maxWidth = '80%';
+        msgDiv.style.fontSize = '0.95rem';
+        msgDiv.style.lineHeight = '1.5';
+        msgDiv.style.wordWrap = 'break-word';
+
+        if (isUser) {
+            msgDiv.style.alignSelf = 'flex-end';
+            msgDiv.style.background = '#2563eb';
+            msgDiv.style.color = '#ffffff';
+            msgDiv.style.borderBottomRightRadius = '2px';
+        } else {
+            msgDiv.style.alignSelf = 'flex-start';
+            msgDiv.style.background = '#1f2937';
+            msgDiv.style.color = '#c9d1d9';
+            msgDiv.style.borderBottomLeftRadius = '2px';
+        }
+
+        // Extremely simple formatting for markdown-like bold/newlines if any (replace newlines with <br> inside safe text bounds)
+        // More robust: convert markdown. For now, text is mostly plain from AI.
+        const safeText = document.createElement('div');
+        safeText.textContent = text;
+        msgDiv.innerHTML = safeText.innerHTML.replace(/\n/g, '<br/>');
+
+        chatHistory.appendChild(msgDiv);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        // Display user message
+        addMessage(message, true);
+        chatInput.value = '';
+        
+        // Disable input
+        chatInput.disabled = true;
+        submitBtn.disabled = true;
+        typingIndicator.style.display = 'block';
+
+        try {
+            const response = await fetch('/student/chat/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                addMessage(`❌ ${data.error}`);
+            } else {
+                addMessage(data.reply);
+                creditsLeftSpan.textContent = data.creditsLeft;
+                
+                if (data.creditsLeft <= 0) {
+                    chatInput.placeholder = "Out of credits for today!";
+                    return; // keep disabled
+                }
+            }
+        } catch (error) {
+            addMessage('❌ Error connecting to the server. Please try again.');
+        }
+
+        // Re-enable input if not out of credits
+        chatInput.disabled = false;
+        submitBtn.disabled = false;
+        typingIndicator.style.display = 'none';
+        chatInput.focus();
+    });
+</script>
+
+<%- include('../partials/footer') %>

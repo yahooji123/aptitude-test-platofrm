@@ -678,6 +678,65 @@ const deleteAccount = async (req, res) => {
     }
 };
 
+// @desc    Get AI Chat Page
+// @route   GET /student/chat
+const getAIChat = async (req, res) => {
+    try {
+        // Refresh credits if day passed
+        let user = await User.findById(req.user._id);
+        const today = new Date().toDateString();
+        const lastRefresh = user.lastCreditRefreshDate ? user.lastCreditRefreshDate.toDateString() : '';
+        
+        if (today !== lastRefresh) {
+            user.aiCredits = 10;
+            user.lastCreditRefreshDate = new Date();
+            await user.save();
+        }
+
+        res.render('student/chat', { user, error: null });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Ask AI Chat
+// @route   POST /student/chat/ask
+const askAIChat = async (req, res) => {
+    try {
+        const { message } = req.body;
+        let user = await User.findById(req.user._id);
+        
+        // Refresh credits if day passed
+        const today = new Date().toDateString();
+        const lastRefresh = user.lastCreditRefreshDate ? user.lastCreditRefreshDate.toDateString() : '';
+        if (today !== lastRefresh) {
+            user.aiCredits = 10;
+            user.lastCreditRefreshDate = new Date();
+        }
+
+        if (user.aiCredits <= 0) {
+            await user.save();
+            return res.json({ error: 'Daily credit limit reached. Please come back tomorrow.' });
+        }
+
+        const { chatWithAI } = require('../utils/aiService');
+        const reply = await chatWithAI(message);
+        
+        if (!reply) {
+            return res.json({ error: 'AI failed to respond. Please try again.' });
+        }
+
+        user.aiCredits -= 1;
+        await user.save();
+
+        res.json({ reply, creditsLeft: user.aiCredits });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Server Error' });
+    }
+};
+
 module.exports = {
     getDashboard,
     getCreateCustomTest, // New export
@@ -691,5 +750,7 @@ module.exports = {
     getProfile,
     updateProfile,
     deleteAccount,
-    resetHistory         // New export
+    resetHistory,         // New export
+    getAIChat,            // New AI Chat
+    askAIChat             // New AI Chat
 };

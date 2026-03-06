@@ -228,8 +228,67 @@
 
 <form action="/essay/student/submit" method="POST" id="essayForm" style="height: 100%;">
     <input type="hidden" name="topicId" value="<%= topic._id %>">
+    <input type="hidden" id="submissionId" name="submissionId" value="<%= typeof submission !== 'undefined' ? submission._id : '' %>">
 
     <div class="essay-workspace" id="workspace">
+
+        <!-- Custom modal for AI Real-time Check -->
+        <div id="aiLiveModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;">
+            <div style="background: white; border-radius: 12px; padding: 30px; width: 90%; max-width: 600px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative;">
+                <button type="button" onclick="closeAiModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">&times;</button>
+                <h3 style="margin-top: 0; color: #a371f7; display: flex; align-items: center; gap: 8px;">✨ AI Feedback</h3>
+                
+                <div id="aiModalLoading" style="display: flex; flex-direction: column; align-items: center; padding: 40px 0;">
+                    <div style="font-size: 2rem; animation: pulse 1s infinite;">🤖</div>
+                    <p style="color: #64748b; margin-top: 15px;">Analyzing your text...</p>
+                </div>
+
+                <div id="aiModalContent" style="display: none;">
+                    <div style="margin-bottom: 15px;">
+                        <strong style="color: #1e293b; font-size: 0.9rem;">Corrected Sentence:</strong>
+                        <div id="aiResCorrected" style="background: #f1f5f9; padding: 12px; border-radius: 6px; margin-top: 5px; color: #0f172a; font-family: Georgia, serif;"></div>
+                    </div>
+                    <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                        <div style="flex: 1; background: #fff1f2; border: 1px solid #ffe4e6; padding: 12px; border-radius: 6px;">
+                            <strong style="color: #be123c; font-size: 0.85rem;">Grammar Mistakes:</strong>
+                            <div id="aiResGrammar" style="font-size: 0.9rem; color: #881337; margin-top: 5px;"></div>
+                        </div>
+                        <div style="flex: 1; background: #fffbeb; border: 1px solid #fef3c7; padding: 12px; border-radius: 6px;">
+                            <strong style="color: #b45309; font-size: 0.85rem;">Spelling Check:</strong>
+                            <div id="aiResSpelling" style="font-size: 0.9rem; color: #78350f; margin-top: 5px;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <strong style="color: #1e293b; font-size: 0.9rem;">Pro Suggestion:</strong>
+                        <div id="aiResSuggestion" style="background: rgba(163, 113, 247, 0.1); border-left: 3px solid #a371f7; padding: 12px; border-radius: 6px; margin-top: 5px; color: #4c1d95; font-style: italic;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Full Screen Loading Overlay for AI Grading -->
+        <div id="aiLoadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 255, 255, 0.95); z-index: 1000; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+            <div style="font-size: 3rem; animation: pulse 1.5s infinite;">🤖</div>
+            <h2 style="color: #1e293b; margin-top: 20px; font-family: 'Inter', sans-serif;">AI is reading your essay...</h2>
+            <p style="color: #64748b; font-family: 'Inter', sans-serif; max-width: 400px; margin-top: 10px;">Please wait while we analyze grammar, vocabulary, and sentence structures. This usually takes around 5-10 seconds.</p>
+            <div style="margin-top: 20px; width: 200px; height: 6px; background: #e2e8f0; border-radius: 10px; overflow: hidden;">
+                <div style="width: 100%; height: 100%; background: #2563eb; animation: progress 2s infinite linear; transform-origin: left;"></div>
+            </div>
+            <div id="aiTimer" style="margin-top: 15px; font-family: monospace; color: #2563eb; font-weight: bold; font-size: 1.2rem;">0s</div>
+        </div>
+
+        <style>
+            @keyframes pulse {
+                0% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.1); opacity: 0.8; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+            @keyframes progress {
+                0% { transform: scaleX(0); }
+                50% { transform: scaleX(1); }
+                100% { transform: scaleX(0); transform-origin: right; }
+            }
+        </style>
         
         <!-- LEFT PANEL: GUIDANCE -->
         <aside class="guidance-panel">
@@ -286,13 +345,21 @@
                     <span id="focusText">Enter Focus Mode</span>
                 </button>
 
-                <!-- Center: Live Stats -->
-                <div style="display: flex; gap: 20px;">
+                <!-- Center: Stats & AI Live Check -->
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <% if (typeof isLiveAiEnabled !== 'undefined' && isLiveAiEnabled) { %>
+                        <div style="display: flex; gap: 10px; border-right: 1px solid #e2e8f0; padding-right: 20px;">
+                            <button type="button" class="tool-btn" onclick="checkAILive('selection')" style="color: #6d28d9; border-color: #c4b5fd; background: #faf5ff;">
+                                ✨ Check Selected (<span id="liveCreditsDisplay"><%= typeof submission !== 'undefined' ? submission.liveAiCredits : 0 %></span> left)
+                            </button>
+                            <button type="button" class="tool-btn" onclick="checkAILive('whole')" style="color: #0f766e; border-color: #ddd6fe;">
+                                📝 Check Whole Essay
+                            </button>
+                        </div>
+                    <% } %>
+
                     <div class="stat-badge">
                         <span>📝</span> <span id="wordCount">0 words</span>
-                    </div>
-                    <div class="stat-badge">
-                        <span>🔤</span> <span id="charCount">0 chars</span>
                     </div>
                     <div class="stat-badge">
                         <span>⏱️</span> <span id="sessionTimer">00:00</span>
@@ -310,7 +377,7 @@
                 <div class="paper-sheet">
                     <textarea name="essayContent" class="essay-input" 
                         placeholder="Start writing your essay here..." 
-                        oninput="updateStats(this)"></textarea>
+                        oninput="updateStats(this)"><%= typeof submission !== 'undefined' ? submission.essayContent : '' %></textarea>
                 </div>
             </div>
 
@@ -461,6 +528,77 @@
         }
     }
 
+    // --- LIVE AI CHECKING ---
+    function closeAiModal() {
+        document.getElementById('aiLiveModal').style.display = 'none';
+    }
+
+    async function checkAILive(type) {
+        let textToSend = "";
+        const textarea = document.querySelector('.essay-input');
+        
+        if (type === 'selection') {
+            textToSend = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
+            if (!textToSend || textToSend.trim() === "") {
+                alert("Please select some text from your essay first.");
+                return;
+            }
+        } else {
+            textToSend = textarea.value;
+            if (!textToSend || textToSend.trim().length < 10) {
+                alert("Please write something first.");
+                return;
+            }
+        }
+
+        const submissionId = document.getElementById('submissionId').value;
+        if (!submissionId) {
+             alert('Could not identify active draft. Please refresh the page.');
+             return;
+        }
+
+        // Show Modal
+        document.getElementById('aiLiveModal').style.display = 'flex';
+        document.getElementById('aiModalLoading').style.display = 'flex';
+        document.getElementById('aiModalContent').style.display = 'none';
+
+        try {
+            const res = await fetch('/essay/student/live-check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ submissionId, selectedText: textToSend })
+            });
+
+            const data = await res.json();
+            
+            if (data.success) {
+                // Update credits visually
+                const liveCreditsDisplay = document.getElementById('liveCreditsDisplay');
+                if (liveCreditsDisplay) {
+                    liveCreditsDisplay.innerText = data.credits;
+                }
+
+                // Populate content
+                document.getElementById('aiResCorrected').innerText = data.aiResult.correctedSentence || "N/A";
+                document.getElementById('aiResGrammar').innerText = data.aiResult.grammarMistakes || "None";
+                document.getElementById('aiResSpelling').innerText = data.aiResult.spellingCorrections || "None";
+                document.getElementById('aiResSuggestion').innerText = data.aiResult.improvementSuggestion || "Looking good!";
+
+                // Switch visible pane
+                document.getElementById('aiModalLoading').style.display = 'none';
+                document.getElementById('aiModalContent').style.display = 'block';
+
+            } else {
+                closeAiModal();
+                alert(data.error || 'Something went wrong.');
+            }
+        } catch (error) {
+            console.error(error);
+            closeAiModal();
+            alert('A network error occurred. Please try again.');
+        }
+    }
+
     // --- SUBMISSION ---
     function confirmSubmit() {
         const textarea = document.querySelector('.essay-input');
@@ -471,10 +609,25 @@
             return false;
         }
         if(confirm("Are you sure you want to submit? This cannot be undone.")) {
+            // Show loading animation
+            showLoadingScreen();
             submitForm(false);
             return true; // Form handles submission
         }
         return false;
+    }
+
+    function showLoadingScreen() {
+        const overlay = document.getElementById('aiLoadingOverlay');
+        const timerDisplay = document.getElementById('aiTimer');
+        if (overlay) {
+            overlay.style.display = 'flex';
+            let seconds = 0;
+            setInterval(() => {
+                seconds++;
+                timerDisplay.innerText = seconds + "s";
+            }, 1000);
+        }
     }
 
     function submitForm(force) {
@@ -483,6 +636,7 @@
         
         if (force) {
             // Bypass validation and events
+            showLoadingScreen();
             window.onbeforeunload = null;
             document.getElementById('essayForm').submit();
         }

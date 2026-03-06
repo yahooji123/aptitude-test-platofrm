@@ -15,7 +15,9 @@ const {
     resetHistory,        // New Import
     getCreateCustomTest, // New Import
     createCustomTest,    // New Import
-    deleteCustomTest     // New Import
+    deleteCustomTest,    // New Import
+    getAIChat,           // New AI Chat
+    askAIChat            // New AI Chat
 } = require('../controllers/studentController');
 const { protect, checkUser } = require('../middleware/auth');
 
@@ -25,6 +27,10 @@ router.get('/practice', checkUser, getPractice);
 
 // Protected Routes (Login required)
 router.use(protect); 
+
+// AI Chat Routes
+router.get('/chat', getAIChat);
+router.post('/chat/ask', askAIChat);
 
 // Custom Test Routes (New)
 router.get('/custom-test', getCreateCustomTest);

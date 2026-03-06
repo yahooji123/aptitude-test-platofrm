@@ -97,6 +97,10 @@ exports.getAdminDashboard = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = 10;
         const skip = (page - 1) * limit;
+        const SystemSetting = require('../models/SystemSetting');
+
+        const aiSetting = await SystemSetting.findOne({ key: 'AI_READING_GEN_ENABLED' }).lean();
+        const aiReadingGen = aiSetting ? aiSetting.value : false;
 
         const [passages, total] = await Promise.all([
             ReadingPassage.find()
@@ -111,6 +115,7 @@ exports.getAdminDashboard = async (req, res) => {
 
         res.render('reading/admin_dashboard', { 
             passages,
+            aiReadingGen,
             currentPage: page,
             totalPages
         });
@@ -134,6 +139,39 @@ exports.addPassage = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(400).send(`Error: ${err.message} <br><a href="/reading/admin/dashboard">Back</a>`);
+    }
+};
+
+exports.generateAIPassage = async (req, res) => {
+    try {
+        const { passageText, questionCount } = req.body;
+        const count = parseInt(questionCount) || 5;
+        const SystemSetting = require('../models/SystemSetting');
+        const { generateQuestionsFromPassage } = require('../utils/aiService');
+
+        const aiSetting = await SystemSetting.findOne({ key: 'AI_READING_GEN_ENABLED' });
+        const isAiEnabled = aiSetting && aiSetting.value === true;
+
+        if (!isAiEnabled) {
+             return res.status(403).send('AI Generation feature is currently disabled by Admin.');
+        }
+
+        const generatedContent = await generateQuestionsFromPassage(passageText, count);
+        if (!generatedContent) {
+             return res.status(500).send('Failed to generate content using AI. Please try again later.');
+        }
+
+        const parsed = parseReadingContent(generatedContent);
+        
+        await ReadingPassage.create({
+            ...parsed,
+            createdBy: req.user._id
+        });
+        
+        res.redirect('/reading/admin/dashboard');
+    } catch (err) {
+        console.error(err);
+        res.status(400).send(`AI Generation Parsing Error: ${err.message} <br><a href="/reading/admin/dashboard">Back</a>`);
     }
 };
 

@@ -25,12 +25,18 @@ const getDashboard = async (req, res) => {
 
         // Fetch System Settings
         let smartPracticeMode = await SystemSetting.findOne({ key: 'smartPracticeMode' }).lean();
-        
+        let aiEssayGrading = await SystemSetting.findOne({ key: 'AI_ESSAY_GRADING_ENABLED' }).lean();
+        let aiReadingGen = await SystemSetting.findOne({ key: 'AI_READING_GEN_ENABLED' }).lean();
+        let aiLiveEssayCheck = await SystemSetting.findOne({ key: 'AI_LIVE_ESSAY_CHECK_ENABLED' }).lean();
+
         res.render('admin/dashboard', { 
             topics, 
             questionCount, 
             tests,
             smartPracticeMode: smartPracticeMode ? smartPracticeMode.value : false,
+            aiEssayGrading: aiEssayGrading ? aiEssayGrading.value : false,
+            aiReadingGen: aiReadingGen ? aiReadingGen.value : false,
+            aiLiveEssayCheck: aiLiveEssayCheck ? aiLiveEssayCheck.value : false,
             currentPage: page,
             totalPages
         });

@@ -9,22 +9,82 @@
 <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 40px;">
     
     <!-- Smart Practice Mode Toggle Card -->
-    <div class="admin-stat-card" style="border: 1px solid <%= smartPracticeMode ? '#2ea043' : '#30363d' %>; transition: all 0.3s;" id="smartModeCard">
+    <div class="admin-stat-card" style="border: 1px solid <%= typeof smartPracticeMode !== 'undefined' && smartPracticeMode ? '#2ea043' : '#30363d' %>; transition: all 0.3s;" id="smartModeCard">
         <div>
             <div class="admin-stat-label">Smart Practice Mode</div>
             <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
-                <div class="admin-stat-value" id="smartModeStatus" style="font-size: 1.2rem; color: <%= smartPracticeMode ? '#2ea043' : '#8b949e' %>;">
-                    <%= smartPracticeMode ? 'Active' : 'Disabled' %>
+                <div class="admin-stat-value" id="smartModeStatus" style="font-size: 1.2rem; color: <%= typeof smartPracticeMode !== 'undefined' && smartPracticeMode ? '#2ea043' : '#8b949e' %>;">
+                    <%= typeof smartPracticeMode !== 'undefined' && smartPracticeMode ? 'Active' : 'Disabled' %>
                 </div>
                 <!-- Toggle Switch -->
                 <label class="switch">
-                    <input type="checkbox" id="smartModeToggle" <%= smartPracticeMode ? 'checked' : '' %> onchange="toggleSmartMode()">
+                    <input type="checkbox" id="smartModeToggle" <%= typeof smartPracticeMode !== 'undefined' && smartPracticeMode ? 'checked' : '' %> onchange="toggleSetting('smartPracticeMode', this)">
                     <span class="slider round"></span>
                 </label>
             </div>
         </div>
         <div style="margin-top: 10px; font-size: 0.8rem; color: #8b949e;">
-            Prioritize unseen questions for students.
+            Prioritize unseen questions.
+        </div>
+    </div>
+
+    <!-- AI Essay Grading Toggle Card -->
+    <div class="admin-stat-card" style="border: 1px solid <%= typeof aiEssayGrading !== 'undefined' && aiEssayGrading ? '#a371f7' : '#30363d' %>; transition: all 0.3s;" id="aiEssayCard">
+        <div>
+            <div class="admin-stat-label">AI Essay Grading</div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                <div class="admin-stat-value" id="aiEssayStatus" style="font-size: 1.2rem; color: <%= typeof aiEssayGrading !== 'undefined' && aiEssayGrading ? '#a371f7' : '#8b949e' %>;">
+                    <%= typeof aiEssayGrading !== 'undefined' && aiEssayGrading ? 'Enabled' : 'Disabled' %>
+                </div>
+                <!-- Toggle Switch -->
+                <label class="switch">
+                    <input type="checkbox" id="aiEssayToggle" <%= typeof aiEssayGrading !== 'undefined' && aiEssayGrading ? 'checked' : '' %> onchange="toggleSetting('AI_ESSAY_GRADING_ENABLED', this)">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+        <div style="margin-top: 10px; font-size: 0.8rem; color: #8b949e;">
+            Auto-grade essays with Gemini.
+        </div>
+    </div>
+
+    <!-- AI Reading Gen Toggle Card -->
+    <div class="admin-stat-card" style="border: 1px solid <%= typeof aiReadingGen !== 'undefined' && aiReadingGen ? '#a371f7' : '#30363d' %>; transition: all 0.3s;" id="aiReadingCard">
+        <div>
+            <div class="admin-stat-label">AI Passage Generator</div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                <div class="admin-stat-value" id="aiReadingStatus" style="font-size: 1.2rem; color: <%= typeof aiReadingGen !== 'undefined' && aiReadingGen ? '#a371f7' : '#8b949e' %>;">
+                    <%= typeof aiReadingGen !== 'undefined' && aiReadingGen ? 'Enabled' : 'Disabled' %>
+                </div>
+                <!-- Toggle Switch -->
+                <label class="switch">
+                    <input type="checkbox" id="aiReadingToggle" <%= typeof aiReadingGen !== 'undefined' && aiReadingGen ? 'checked' : '' %> onchange="toggleSetting('AI_READING_GEN_ENABLED', this)">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+        <div style="margin-top: 10px; font-size: 0.8rem; color: #8b949e;">
+            Generate MCQs from text.
+        </div>
+    </div>
+
+    <!-- AI Live Essay Check Toggle Card -->
+    <div class="admin-stat-card" style="border: 1px solid <%= typeof aiLiveEssayCheck !== 'undefined' && aiLiveEssayCheck ? '#a371f7' : '#30363d' %>; transition: all 0.3s;" id="aiLiveCheckCard">
+        <div>
+            <div class="admin-stat-label">Live AI Essay Help</div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                <div class="admin-stat-value" id="aiLiveCheckStatus" style="font-size: 1.2rem; color: <%= typeof aiLiveEssayCheck !== 'undefined' && aiLiveEssayCheck ? '#a371f7' : '#8b949e' %>;">
+                    <%= typeof aiLiveEssayCheck !== 'undefined' && aiLiveEssayCheck ? 'Enabled' : 'Disabled' %>
+                </div>
+                <!-- Toggle Switch -->
+                <label class="switch">
+                    <input type="checkbox" id="aiLiveCheckToggle" <%= typeof aiLiveEssayCheck !== 'undefined' && aiLiveEssayCheck ? 'checked' : '' %> onchange="toggleSetting('AI_LIVE_ESSAY_CHECK_ENABLED', this)">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+        <div style="margin-top: 10px; font-size: 0.8rem; color: #8b949e;">
+            5 credits/essay during writing.
         </div>
     </div>
 
@@ -34,31 +94,8 @@
             <div class="admin-stat-value"><%= questionCount %></div>
         </div>
         <div style="margin-top: 15px;">
-            <a href="/admin/questions" class="btn btn-nav-login" style="display:inline-block; font-size: 0.9rem;">View All Questions &rarr;</a>
+            <a href="/admin/questions" class="btn btn-nav-login" style="display:inline-block; font-size: 0.9rem;">View All &rarr;</a>
         </div>
-    </div>
-
-    <div class="admin-stat-card">
-        <div>
-            <div class="admin-stat-label">Active Tests</div>
-            <div class="admin-stat-value"><%= typeof tests !== 'undefined' ? tests.filter(t => t.isActive).length : 0 %></div>
-        </div>
-        <div style="margin-top: 15px;">
-            <span style="color: #238636; font-size: 0.9rem;">● Live for students</span>
-        </div>
-    </div>
-    
-    <div class="admin-stat-card">
-        <div>
-            <div class="admin-stat-label">System Topics</div>
-            <div class="admin-stat-value" style="font-size: 1.8rem;"><%= topics.length %></div>
-        </div>
-        <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary); font-size: 0.85rem; max-height: 80px; overflow-y: auto;">
-            <% topics.slice(0, 5).forEach(topic => { %>
-                <li><%= topic %></li>
-            <% }) %>
-            <% if(topics.length > 5) { %><li>+<%= topics.length - 5 %> more</li><% } %>
-        </ul>
     </div>
 </div>
 
@@ -176,33 +213,51 @@
 </div>
 
 <script>
-    async function toggleSmartMode() {
-        const toggle = document.getElementById('smartModeToggle');
-        const statusLabel = document.getElementById('smartModeStatus');
-        const card = document.getElementById('smartModeCard');
+    async function toggleSetting(key, checkbox) {
+        let statusLabel, card, activeColor;
+        
+        if (key === 'smartPracticeMode') {
+            statusLabel = document.getElementById('smartModeStatus');
+            card = document.getElementById('smartModeCard');
+            activeColor = '#2ea043';
+        } else if (key === 'AI_ESSAY_GRADING_ENABLED') {
+            statusLabel = document.getElementById('aiEssayStatus');
+            card = document.getElementById('aiEssayCard');
+            activeColor = '#a371f7';
+        } else if (key === 'AI_READING_GEN_ENABLED') {
+            statusLabel = document.getElementById('aiReadingStatus');
+            card = document.getElementById('aiReadingCard');
+            activeColor = '#a371f7';
+        } else if (key === 'AI_LIVE_ESSAY_CHECK_ENABLED') {
+            statusLabel = document.getElementById('aiLiveCheckStatus');
+            card = document.getElementById('aiLiveCheckCard');
+            activeColor = '#a371f7';
+        }
         
         // Optimistic UI Update
-        const isChecked = toggle.checked;
-        statusLabel.textContent = isChecked ? 'Active' : 'Disabled';
-        statusLabel.style.color = isChecked ? '#2ea043' : '#8b949e';
-        card.style.borderColor = isChecked ? '#2ea043' : '#30363d';
+        const isChecked = checkbox.checked;
+        statusLabel.textContent = isChecked ? (key === 'smartPracticeMode' ? 'Active' : 'Enabled') : 'Disabled';
+        statusLabel.style.color = isChecked ? activeColor : '#8b949e';
+        card.style.borderColor = isChecked ? activeColor : '#30363d';
 
         try {
             const res = await fetch('/admin/settings/toggle', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key: 'smartPracticeMode' })
+                body: JSON.stringify({ key })
             });
             const data = await res.json();
             if(!data.success) {
                 // Revert on failure
-                toggle.checked = !isChecked;
+                checkbox.checked = !isChecked;
                 alert('Failed to update setting');
+                window.location.reload();
             }
         } catch (err) {
             console.error(err);
-            toggle.checked = !isChecked; // Revert
+            checkbox.checked = !isChecked; // Revert
             alert('Error updating setting');
+            window.location.reload();
         }
     }
 </script>
