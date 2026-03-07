@@ -42,6 +42,10 @@ const userSchema = new mongoose.Schema({
     lastReadingCreditRefreshDate: {
         type: Date,
         default: Date.now
+    },
+    totalAiRequests: {
+        type: Number,
+        default: 0
     }
 }, { timestamps: true });
 

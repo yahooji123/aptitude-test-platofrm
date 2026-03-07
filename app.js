@@ -37,6 +37,7 @@ app.use('/essay', require('./routes/essayRoutes')); // New Essay Feature
 app.use('/reading', require('./routes/readingRoutes')); // New Reading Feature
 app.use('/english', require('./routes/englishRoutes')); // New English Learning Feature
 app.use('/coding', require('./routes/codingRoutes')); // New Coding Practice Feature
+app.use('/interview', require('./routes/interviewRoutes')); // New AI Interview Feature
 app.use('/progress', require('./routes/progressRoutes')); // Analytics Dashboard
 app.use('/faculty', require('./routes/facultyRoutes')); // New Faculty Feature
 

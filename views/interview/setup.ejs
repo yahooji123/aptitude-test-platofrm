@@ -1,0 +1,41 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #1f6feb 0%, #388bfd 100%);">
+    <div class="banner-title">AI Mock Interview</div>
+    <div class="banner-subtitle">Simulate HR and Technical rounds with AI evaluation.</div>
+</div>
+
+<div class="container" style="max-width: 600px; margin-top: -30px; position: relative; z-index: 2;">
+    <div class="quiz-card">
+        <h3 style="margin-top: 0;">Setup Your Interview</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">
+            Choose a subject or job role, and the AI will generate tailored questions to test your communication and logical reasoning.
+        </p>
+
+        <form action="/interview/start" method="POST">
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Subject / Job Role</label>
+                <input type="text" name="subject" required placeholder="e.g., Software Engineering, HR Round, Marketing..." 
+                    style="width: 100%; padding: 12px; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+            </div>
+
+            <div style="margin-bottom: 30px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Number of Questions</label>
+                <select name="count" required style="width: 100%; padding: 12px; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                    <option value="3">3 Questions (Quick Practice)</option>
+                    <option value="5" selected>5 Questions (Standard Round)</option>
+                    <option value="10">10 Questions (Deep Dive)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary-custom" style="width: 100%; padding: 14px; font-size: 1.1rem;">
+                Start Interview Session ✨
+            </button>
+            <p style="text-align: center; margin-top: 15px; font-size: 0.85rem; color: var(--text-secondary);">
+                Uses AI Credits per answer submitted.
+            </p>
+        </form>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

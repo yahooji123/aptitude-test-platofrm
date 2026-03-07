@@ -367,6 +367,10 @@ exports.liveEssayCheck = async (req, res) => {
 
         submission.liveAiCredits -= 1;
         await submission.save();
+        
+        // Track overall user request
+        const User = require('../models/User');
+        await User.findByIdAndUpdate(req.user._id, { $inc: { totalAiRequests: 1 } });
 
         res.json({ success: true, aiResult, credits: submission.liveAiCredits });
 
@@ -423,6 +427,9 @@ exports.handleEssayAIAction = async (req, res) => {
         if (action === 'words') submission.aiDifficultWords = resultText;
         if (action === 'grammar') submission.aiGrammarExplanation = resultText;
         await submission.save();
+
+        const User = require('../models/User');
+        await User.findByIdAndUpdate(req.user._id, { $inc: { totalAiRequests: 1 } });
 
         res.json({ success: true, data: resultText, credits: submission.aiCredits });
 

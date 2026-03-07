@@ -573,8 +573,32 @@ const deleteQuestionsByTopic = async (req, res) => {
     }
 };
 
+// @desc    Get AI Analytics
+// @route   GET /admin/ai-analytics
+const getAiAnalytics = async (req, res) => {
+    try {
+        const ApiUsage = require('../models/ApiUsage');
+        const apiStats = await ApiUsage.find().sort({ provider: 1, keyAlias: 1 }).lean();
+        
+        // Let's get users who used AI
+        const topUsers = await User.find({ totalAiRequests: { $gt: 0 } })
+            .sort({ totalAiRequests: -1 })
+            .select('name email totalAiRequests')
+            .lean();
+
+        res.render('admin/ai_analytics', {
+            apiStats,
+            topUsers
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).render('error', { user: req.user, code: 500, message: 'Server Error loading analytics' });
+    }
+};
+
 module.exports = {
     getDashboard,
+    getAiAnalytics,
     toggleSetting, // New Export
     getQuestions,
     addQuestion,

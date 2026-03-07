@@ -1,0 +1,64 @@
+<%- include('../partials/header') %>
+
+<div class="container" style="max-width: 800px; margin-top: 40px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; color: var(--text-primary);">
+            <%= session.subject %> Interview
+        </h2>
+        <span style="background: rgba(88, 166, 255, 0.1); color: #58a6ff; padding: 6px 12px; border-radius: 12px; font-weight: 600;">
+            Question <%= currentQIndex + 1 %> of <%= total %>
+        </span>
+    </div>
+
+    <!-- Progress Bar -->
+    <div style="width: 100%; background: var(--border-color); height: 8px; border-radius: 4px; margin-bottom: 30px;">
+        <div style="height: 100%; background: #58a6ff; border-radius: 4px; width: <%= (currentQIndex / total) * 100 %>%;"></div>
+    </div>
+
+    <div class="quiz-card" style="border-left: 4px solid #58a6ff;">
+        <h3 style="margin-top: 0; font-size: 1.4rem; line-height: 1.5;">
+            <%= currentQuestion %>
+        </h3>
+        
+        <form action="/interview/session/<%= session._id %>/submit" method="POST" id="interviewForm" style="margin-top: 25px;">
+            <label style="display: block; margin-bottom: 10px; color: var(--text-secondary); font-weight: 500;">
+                Your Answer:
+            </label>
+            <textarea name="answer" id="answerBox" rows="6" required placeholder="Type your answer full of confidence..."
+                style="width: 100%; padding: 15px; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); font-family: inherit; font-size: 1rem; resize: vertical; margin-bottom: 20px;"
+            ></textarea>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                    Credits Left: <strong id="credits" style="<%= user.aiCredits > 0 ? 'color:#3fb950' : 'color:#f85149' %>"><%= user.aiCredits %></strong>
+                </div>
+                <button type="submit" id="submitBtn" class="btn btn-primary-custom" style="padding: 10px 24px; min-width: 150px;">
+                    Submit Answer & Continue
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+<script>
+    document.getElementById('interviewForm').addEventListener('submit', function(e) {
+        const credits = parseInt(document.getElementById('credits').innerText);
+        if (credits <= 0) {
+            e.preventDefault();
+            alert('You do not have enough AI Credits to write and evaluate this response. Please request admin for credits.');
+            return;
+        }
+
+        const btn = document.getElementById('submitBtn');
+        btn.innerHTML = 'Evaluating Pattern... <span class="spinner" style="display:inline-block; width:12px;height:12px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite; margin-left:8px;"></span>';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+    });
+</script>
+<style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<%- include('../partials/footer') %>

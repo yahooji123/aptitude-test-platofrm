@@ -1,0 +1,147 @@
+<%- include('../partials/header') %>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #1f6feb 0%, #388bfd 100%);">
+    <div class="banner-title">AI Resource Analytics</div>
+    <div class="banner-subtitle">Monitor API Keys usage and Student AI Requests limit.</div>
+    <div style="margin-top: 15px;">
+        <a href="/admin/dashboard" class="btn btn-nav-login" style="background: rgba(255,255,255,0.2); color: white; border: none;">&larr; Back to Dashboard</a>
+    </div>
+</div>
+
+<style>
+    .overlap-container {
+        max-width: 1200px;
+        margin-top: -30px;
+        position: relative;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    @media (max-width: 768px) {
+        .overlap-container {
+            margin-top: 10px;
+        }
+    }
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .status-active { background: rgba(46, 160, 67, 0.2); color: #3fb950; }
+    .status-exhausted { background: rgba(248, 81, 73, 0.2); color: #f85149; }
+</style>
+
+<div class="container overlap-container">
+    
+    <!-- API KEY STATS -->
+    <div class="quiz-card">
+        <h3 style="margin: 0 0 20px 0; display: flex; align-items: center; gap: 10px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+            API Key Usage Stats
+        </h3>
+
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Provider & Alias</th>
+                        <th>Key Prefix</th>
+                        <th>Total Requests</th>
+                        <th>Status</th>
+                        <th>Last Used</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (typeof apiStats !== 'undefined' && apiStats.length > 0) { %>
+                        <% apiStats.forEach(stat => { %>
+                            <tr>
+                                <td style="font-weight: 500;">
+                                    <% if(stat.provider === 'Gemini') { %>
+                                        <span style="color: #4ade80;">[Gemini]</span> 
+                                    <% } else { %>
+                                        <span style="color: #f472b6;">[Groq]</span> 
+                                    <% } %>
+                                    <%= stat.keyAlias %>
+                                </td>
+                                <td style="font-family: monospace; color: var(--text-secondary);"><%= stat.keyPrefix %></td>
+                                <td style="font-weight:bold; font-size: 1.1rem;"><%= stat.requestCount %></td>
+                                <td>
+                                    <% if(stat.isExhausted) { %>
+                                        <span class="status-badge status-exhausted">Exhausted</span>
+                                    <% } else { %>
+                                        <span class="status-badge status-active">Active</span>
+                                    <% } %>
+                                </td>
+                                <td style="color: var(--text-secondary); font-size: 0.9rem;">
+                                    <%= new Date(stat.lastUsed).toLocaleString() %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 30px; color: #8b949e;">
+                                No API requests recorded yet.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- STUDENT STATS -->
+    <div class="quiz-card">
+        <h3 style="margin: 0 0 20px 0; display: flex; align-items: center; gap: 10px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a371f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Student AI Usage
+            <span style="background: var(--bg-secondary); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; color: var(--text-secondary);"><%= topUsers.length %> Active Users</span>
+        </h3>
+
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Student Name</th>
+                        <th>Email</th>
+                        <th style="text-align: right;">Total Lifetime AI Requests</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (typeof topUsers !== 'undefined' && topUsers.length > 0) { %>
+                        <% topUsers.forEach((student, index) => { %>
+                            <tr>
+                                <td style="color: var(--text-secondary);"><%= index + 1 %></td>
+                                <td style="font-weight: 500;">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div style="width: 28px; height: 28px; background: var(--bg-secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 0.8rem;">
+                                            <%= student.name.charAt(0).toUpperCase() %>
+                                        </div>
+                                        <a href="/admin/student/edit/<%= student._id %>" style="color:var(--text-primary); text-decoration:none;">
+                                            <%= student.name %>
+                                        </a>
+                                    </div>
+                                </td>
+                                <td style="color: var(--text-secondary);"><%= student.email %></td>
+                                <td style="text-align: right; font-weight: bold; color: #58a6ff; font-size: 1.1rem;">
+                                    <%= student.totalAiRequests %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 30px; color: #8b949e;">
+                                No students have used AI features yet.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<%- include('../partials/footer') %>

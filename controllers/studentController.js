@@ -740,6 +740,7 @@ const askAIChat = async (req, res) => {
         }
 
         user.aiCredits -= 1;
+        user.totalAiRequests = (user.totalAiRequests || 0) + 1;
         await user.save();
 
         res.json({ reply, creditsLeft: user.aiCredits });

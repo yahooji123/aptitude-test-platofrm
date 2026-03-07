@@ -432,6 +432,7 @@ exports.performAIAction = async (req, res) => {
         }
 
         user.readingAiCredits -= 1;
+        user.totalAiRequests = (user.totalAiRequests || 0) + 1;
         await user.save();
 
         res.json({ reply, creditsLeft: user.readingAiCredits });

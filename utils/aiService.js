@@ -1,10 +1,27 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const ApiUsage = require('../models/ApiUsage');
 
 // Load keys from .env directly into memory
 let apiKeys = [];
 for (const [k, v] of Object.entries(process.env)) {
     if (k.startsWith('GEMINI_API_KEY') && v) {
         apiKeys.push({ alias: k, key: v, isExhausted: false });
+    }
+}
+
+async function updateApiUsage(alias, key, provider, isExhausted = false) {
+    try {
+        const keyPrefix = key ? key.substring(0, 8) + '...' : 'Unknown';
+        await ApiUsage.findOneAndUpdate(
+            { keyAlias: alias },
+            { 
+                $inc: { requestCount: 1 }, 
+                $set: { provider, keyPrefix, isExhausted, lastUsed: new Date() } 
+            },
+            { upsert: true, new: true }
+        );
+    } catch (err) {
+        console.error("Failed to update ApiUsage:", err);
     }
 }
 
@@ -22,7 +39,6 @@ async function generateWithFallback(prompt, responseMimeType = "text/plain") {
 
     if (availableKeys.length === 0) {
         console.error("No active API keys available. All might be exhausted.");
-        return null;
     }
 
     for (let currentKey of availableKeys) {
@@ -30,6 +46,10 @@ async function generateWithFallback(prompt, responseMimeType = "text/plain") {
             const genAI = new GoogleGenerativeAI(currentKey.key);
             const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
             const result = await model.generateContent(prompt);
+            
+            // Log successful usage
+            updateApiUsage(currentKey.alias, currentKey.key, 'Gemini');
+            
             return result.response.text().trim();
         } catch (error) {
             console.error(`AI Execution Error on key ${currentKey.alias}:`, error.message);
@@ -37,11 +57,13 @@ async function generateWithFallback(prompt, responseMimeType = "text/plain") {
             if (error.status === 429) {
                 console.warn(`Key ${currentKey.alias} seems exhausted. Disabling it automatically in memory.`);
                 currentKey.isExhausted = true;
+                // Log exhaustion
+                updateApiUsage(currentKey.alias, currentKey.key, 'Gemini', true);
             }
-            // Proceed to next key in loop
+            // Proceed to next key in loop // Maybe log failure? For now, handled on 429.
         }
     }
-    
+
     // If we reach here, all Gemini keys failed. Try Groq API as a fallback.
     if (process.env.GROQ_API_KEY) {
         console.warn("All Gemini keys failed or exhausted. Trying Groq API as fallback.");
@@ -59,7 +81,8 @@ async function generateWithFallback(prompt, responseMimeType = "text/plain") {
             });
             const data = await response.json();
             if (data.choices && data.choices.length > 0) {
-                return data.choices[0].message.content.trim();
+                // Log proper usage
+                updateApiUsage('GROQ_API_KEY', process.env.GROQ_API_KEY, 'Groq');
             } else {
                 console.error("Groq API error or empty response:", data);
             }
@@ -203,5 +226,75 @@ exports.processReadingAIAction = async (action, passageText, questionData = null
     } else {
         return null;
     }
+    return await generateWithFallback(prompt);
+};
+
+// --- Mock Interview Functions ---
+
+// 1. Generate Interview Questions
+exports.generateInterviewQuestions = async (subject, count = 5) => {
+    const prompt = `
+    You are an expert HR and Technical Interviewer. 
+    Generate exactly ${count} interview questions for the subject/topic: "${subject}".
+    The questions should range from basic concepts to scenario-based/advanced level.
+    
+    Provide the output strictly in a valid JSON array of strings format:
+    [
+        "Question 1?",
+        "Question 2?",
+        ...
+    ]
+    Do not include any extra text, markdown formatting like \`\`\`json, or headers. Only the raw JSON array.
+    `;
+
+    try {
+        let text = await generateWithFallback(prompt);
+        if (!text) return null;
+        text = text.replace(/```json/i, '').replace(/```/g, '').trim();
+        return JSON.parse(text);
+    } catch (e) {
+        console.error("AI Interview Gen Error", e);
+        return null;
+    }
+};
+
+// 2. Evaluate Interview Answer
+exports.evaluateInterviewAnswer = async (question, answer) => {
+    const prompt = `
+    You are an expert Interview Assessor. Evaluate the candidate's answer based on the given interview question.
+    
+    Question: "${question}"
+    Candidate's Answer: "${answer}"
+    
+    Evaluate on three parameters (0 to 10 scale):
+    1. Confidence & Clarity (Is the language assertive and clear?)
+    2. Communication Skills (Grammar, vocabulary, sentence structure)
+    3. Logical Reasoning (Does the answer technically make sense and answer the prompt directly?)
+    
+    Provide the evaluation strictly in JSON format with these exact keys:
+    {
+        "confidenceScore": <number 0-10>,
+        "communicationScore": <number 0-10>,
+        "logicScore": <number 0-10>,
+        "feedback": "<A concise 2-3 sentence feedback highlighting what was good and what can be improved.>",
+        "idealAnswer": "<A well-structured, professional 3-4 sentence ideal answer that the candidate should have given for this specific question.>"
+    }
+    Do not add extra text, markdown formatting, or headers.
+    `;
+
+    try {
+        let text = await generateWithFallback(prompt);
+        if (!text) return null;
+        text = text.replace(/```json/i, '').replace(/```/g, '').trim();
+        return JSON.parse(text);
+    } catch (e) {
+        console.error("AI Interview Evaluate Error", e);
+        return null;
+    }
+};
+
+// 3. Translate Interview Text to Hindi
+exports.translateInterviewText = async (text) => {
+    const prompt = `Translate the following English text into professional, clear Hindi.\n\nText:\n"${text}"\n\nReturn ONLY the Hindi translation.`;
     return await generateWithFallback(prompt);
 };

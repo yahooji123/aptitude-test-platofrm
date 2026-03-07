@@ -13,6 +13,7 @@ router.use(protect);
 router.use(authorize('admin'));
 
 router.get('/dashboard', getDashboard);
+router.get('/ai-analytics', require('../controllers/adminController').getAiAnalytics);
 // Settings & API Keys
 router.post('/settings/toggle', require('../controllers/adminController').toggleSetting);
 
