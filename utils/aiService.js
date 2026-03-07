@@ -42,7 +42,32 @@ async function generateWithFallback(prompt, responseMimeType = "text/plain") {
         }
     }
     
-    // If we reach here, all keys failed
+    // If we reach here, all Gemini keys failed. Try Groq API as a fallback.
+    if (process.env.GROQ_API_KEY) {
+        console.warn("All Gemini keys failed or exhausted. Trying Groq API as fallback.");
+        try {
+            const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    messages: [{ role: "user", content: prompt }],
+                    model: "llama3-70b-8192" // High quality model for text reasoning
+                })
+            });
+            const data = await response.json();
+            if (data.choices && data.choices.length > 0) {
+                return data.choices[0].message.content.trim();
+            } else {
+                console.error("Groq API error or empty response:", data);
+            }
+        } catch (groqError) {
+            console.error("Groq AI Execution Error:", groqError.message);
+        }
+    }
+
     return null;
 }
 

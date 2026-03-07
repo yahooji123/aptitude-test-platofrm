@@ -492,13 +492,16 @@ const getEditStudent = async (req, res) => {
 // @route   POST /admin/student/edit/:id
 const postEditStudent = async (req, res) => {
     try {
-        const { name, email, newPassword } = req.body;
+        const { name, email, newPassword, aiCredits, readingAiCredits } = req.body;
         const student = await User.findById(req.params.id);
         
         if (!student) return res.status(404).render('error', { message: 'Student not found' });
 
         student.name = name;
         student.email = email;
+
+        if (aiCredits !== undefined) student.aiCredits = Number(aiCredits);
+        if (readingAiCredits !== undefined) student.readingAiCredits = Number(readingAiCredits);
 
         if (newPassword && newPassword.trim() !== "") {
             student.password = newPassword; 

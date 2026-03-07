@@ -20,6 +20,18 @@
                 <input type="email" name="email" class="form-control" value="<%= student.email %>" required>
             </div>
 
+            <div class="form-group">
+                <label>AI Chat & Essay Credits</label>
+                <input type="number" name="aiCredits" class="form-control" value="<%= student.aiCredits %>" min="0" required>
+                <small style="color: var(--text-secondary);">Used for Essay Grading, Chat, and Topic Generation.</small>
+            </div>
+
+            <div class="form-group">
+                <label>AI Reading Credits</label>
+                <input type="number" name="readingAiCredits" class="form-control" value="<%= student.readingAiCredits %>" min="0" required>
+                <small style="color: var(--text-secondary);">Used for Reading Comprehension Generation.</small>
+            </div>
+
             <!-- Add other fields if necessary, e.g., Roll Number if stored in User model -->
             <!-- Assuming User model only has name/email/password for now based on context -->
             
