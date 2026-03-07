@@ -76,13 +76,14 @@ async function generateWithFallback(prompt, responseMimeType = "text/plain") {
                 },
                 body: JSON.stringify({
                     messages: [{ role: "user", content: prompt }],
-                    model: "llama3-70b-8192" // High quality model for text reasoning
+                    model: "llama-3.3-70b-versatile" // Updated to currently supported high quality model
                 })
             });
             const data = await response.json();
             if (data.choices && data.choices.length > 0) {
                 // Log proper usage
                 updateApiUsage('GROQ_API_KEY', process.env.GROQ_API_KEY, 'Groq');
+                return data.choices[0].message.content;
             } else {
                 console.error("Groq API error or empty response:", data);
             }

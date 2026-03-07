@@ -1,41 +1,177 @@
 <%- include('../partials/header') %>
 
-<div class="dashboard-banner" style="background: linear-gradient(135deg, #1f2937, #111827);">
+<!-- Markdown Parser and Highlight.js -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<style>
+    /* Styling for AI Message Markdown/Code Blocks */
+    .ai-message {
+        align-self: flex-start;
+        background: #1f2937;
+        padding: 15px 20px;
+        border-radius: 12px;
+        border-bottom-left-radius: 2px;
+        max-width: 85%;
+        color: #c9d1d9;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        word-wrap: break-word;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .ai-message p {
+        margin-bottom: 10px;
+    }
+    .ai-message p:last-child {
+        margin-bottom: 0;
+    }
+    
+    /* Inline code styling */
+    .ai-message code:not(pre code) {
+        background: #0d1117;
+        color: #58a6ff;
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85em;
+    }
+
+    /* Code block styling */
+    .ai-message pre {
+        background: #0d1117 !important;
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        padding: 15px;
+        overflow-x: auto;
+        margin: 15px 0;
+        position: relative;
+    }
+    
+    .ai-message pre code {
+        background: transparent;
+        padding: 0;
+        color: inherit;
+        border-radius: 0;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9em;
+        line-height: 1.5;
+    }
+
+    /* Lists styling */
+    .ai-message ul, .ai-message ol {
+        margin-left: 20px;
+        margin-bottom: 10px;
+        padding-left: 10px;
+    }
+    
+    .ai-message li {
+        margin-bottom: 5px;
+    }
+
+    /* Links and emphasize */
+    .ai-message a {
+        color: #58a6ff;
+        text-decoration: underline;
+    }
+    
+    .ai-message strong {
+        font-weight: 600;
+        color: #f0f6fc;
+    }
+
+    .user-message {
+        align-self: flex-end;
+        background: #2563eb;
+        color: #ffffff;
+        padding: 12px 18px;
+        border-radius: 12px;
+        border-bottom-right-radius: 2px;
+        max-width: 80%;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        word-wrap: break-word;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Scrollbar for chat container */
+    .chat-container ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    .chat-container ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .chat-container ::-webkit-scrollbar-thumb {
+        background: #30363d;
+        border-radius: 4px;
+    }
+    .chat-container ::-webkit-scrollbar-thumb:hover {
+        background: #484f58;
+    }
+</style>
+
+<div class="dashboard-banner" style="background: linear-gradient(135deg, #1f2937, #111827);">   
     <div class="banner-title" style="background: linear-gradient(90deg, #60a5fa, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AI Tutor Chat</div>
     <div class="banner-subtitle">Ask questions about any subject! You have <span id="credits-left" style="color: #4ade80; font-weight: bold;"><%= user.aiCredits %></span> credits left today.</div>
 </div>
 
-<div class="student-container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
+<div class="student-container" style="max-width: 900px; margin: 0 auto; padding: 20px;">        
     <% if (error) { %>
         <div style="background: #ef444433; border: 1px solid #ef4444; color: #fca5a5; padding: 10px; border-radius: 6px; margin-bottom: 20px;">
             <%= error %>
         </div>
     <% } %>
 
-    <div class="chat-container" style="background: #0d1117; border: 1px solid #30363d; border-radius: 12px; display: flex; flex-direction: column; height: 60vh;">
-        
+    <div class="chat-wrapper" style="background: #0d1117; border: 1px solid #30363d; border-radius: 12px; display: flex; flex-direction: column; height: 65vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
         <!-- Chat History -->
-        <div id="chat-history" style="flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;">
-            <div class="message ai-message" style="align-self: flex-start; background: #1f2937; padding: 12px 18px; border-radius: 12px; border-bottom-left-radius: 2px; max-width: 80%; color: #c9d1d9; font-size: 0.95rem; line-height: 1.5;">
-                Hello! I'm your AI Tutor. I can help you with questions from any subject. You get 10 free credits to use every day! How can I help you today?
+        <div id="chat-history" class="chat-container" style="flex: 1; padding: 20px; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth;">
+            <div class="message ai-message">
+                <p>Hello! I'm your AI Tutor. I can help you with questions from any subject.</p>
+                <p>You get <strong>10 free credits</strong> to use every day! How can I help you today?</p>
             </div>
         </div>
 
         <!-- Chat Input -->
         <div class="chat-input-area" style="padding: 15px; border-top: 1px solid #30363d; background: #161b22; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
             <form id="chat-form" style="display: flex; gap: 10px;">
-                <input type="text" id="chat-input" placeholder="Type your question here..." required autocomplete="off"
-                    style="flex: 1; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 8px; padding: 12px 15px; font-size: 0.95rem;" 
+                <input type="text" id="chat-input" placeholder="Type your question here... (e.g., 'Write a python code for sorting an array')" required autocomplete="off"
+                    style="flex: 1; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 8px; padding: 14px 15px; font-size: 1rem; transition: border-color 0.2s;"
+                    onfocus="this.style.borderColor='#58a6ff'" onblur="this.style.borderColor='#30363d'"
                     <% if (user.aiCredits <= 0) { %>disabled placeholder="Out of credits for today!"<% } %> />
-                <button type="submit" id="chat-submit" class="btn btn-primary" style="padding: 0 20px; border-radius: 8px;"
-                    <% if (user.aiCredits <= 0) { %>disabled<% } %>>Send</button>
+                <button type="submit" id="chat-submit" class="btn btn-primary" style="padding: 0 25px; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 8px;"
+                    <% if (user.aiCredits <= 0) { %>disabled<% } %>>
+                    Send
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576 6.636 10.07Zm6.787-8.201L1.591 6.602l4.339 2.76 7.494-7.493Z"/></svg>
+                </button>
             </form>
-            <div id="typing-indicator" style="display: none; color: #8b949e; font-size: 0.85rem; margin-top: 5px;">AI is thinking...</div>
+            <div id="typing-indicator" style="display: none; color: #8b949e; font-size: 0.85rem; margin-top: 8px; margin-left: 5px; font-style: italic;">
+                <span style="display:inline-block; animation: pulse 1s infinite;">AI is thinking...</span>
+            </div>
         </div>
     </div>
 </div>
 
+<style>
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
+</style>
+
 <script>
+    // Configure marked to use highlight.js for code boxes
+    marked.setOptions({
+        highlight: function (code, lang) {
+            const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+            return hljs.highlight(code, { language }).value;
+        },
+        breaks: true,
+        gfm: true
+    });
+
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const chatHistory = document.getElementById('chat-history');
@@ -45,32 +181,28 @@
 
     function addMessage(text, isUser = false) {
         const msgDiv = document.createElement('div');
-        msgDiv.style.padding = '12px 18px';
-        msgDiv.style.borderRadius = '12px';
-        msgDiv.style.maxWidth = '80%';
-        msgDiv.style.fontSize = '0.95rem';
-        msgDiv.style.lineHeight = '1.5';
-        msgDiv.style.wordWrap = 'break-word';
+        msgDiv.className = 'message ' + (isUser ? 'user-message' : 'ai-message');
 
         if (isUser) {
-            msgDiv.style.alignSelf = 'flex-end';
-            msgDiv.style.background = '#2563eb';
-            msgDiv.style.color = '#ffffff';
-            msgDiv.style.borderBottomRightRadius = '2px';
+            // User message is raw text to avoid injection issues
+            const safeText = document.createElement('div');
+            safeText.textContent = text;
+            msgDiv.innerHTML = safeText.innerHTML.replace(/\n/g, '<br/>');
         } else {
-            msgDiv.style.alignSelf = 'flex-start';
-            msgDiv.style.background = '#1f2937';
-            msgDiv.style.color = '#c9d1d9';
-            msgDiv.style.borderBottomLeftRadius = '2px';
+            // AI message parsed as Markdown!
+            msgDiv.innerHTML = marked.parse(text);
         }
 
-        // Extremely simple formatting for markdown-like bold/newlines if any (replace newlines with <br> inside safe text bounds)
-        // More robust: convert markdown. For now, text is mostly plain from AI.
-        const safeText = document.createElement('div');
-        safeText.textContent = text;
-        msgDiv.innerHTML = safeText.innerHTML.replace(/\n/g, '<br/>');
-
         chatHistory.appendChild(msgDiv);
+        
+        // Apply highlight JS to any code blocks that were just added
+        if (!isUser) {
+            msgDiv.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        }
+        
+        // Auto scroll to bottom
         chatHistory.scrollTop = chatHistory.scrollHeight;
     }
 
@@ -79,11 +211,9 @@
         const message = chatInput.value.trim();
         if (!message) return;
 
-        // Display user message
         addMessage(message, true);
         chatInput.value = '';
-        
-        // Disable input
+
         chatInput.disabled = true;
         submitBtn.disabled = true;
         typingIndicator.style.display = 'block';
@@ -98,21 +228,20 @@
             const data = await response.json();
 
             if (data.error) {
-                addMessage(`❌ ${data.error}`);
+                addMessage(`⚠️ **Error:** ${data.error}`);
             } else {
                 addMessage(data.reply);
                 creditsLeftSpan.textContent = data.creditsLeft;
-                
+
                 if (data.creditsLeft <= 0) {
                     chatInput.placeholder = "Out of credits for today!";
-                    return; // keep disabled
+                    return; 
                 }
             }
         } catch (error) {
-            addMessage('❌ Error connecting to the server. Please try again.');
+            addMessage('⚠️ **Error connecting to the server.** Please try again.');
         }
 
-        // Re-enable input if not out of credits
         chatInput.disabled = false;
         submitBtn.disabled = false;
         typingIndicator.style.display = 'none';

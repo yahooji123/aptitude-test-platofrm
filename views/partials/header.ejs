@@ -8,6 +8,267 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
+    <% if (typeof systemSettings !== 'undefined' && systemSettings.NAVBAR_STYLE === 'modern') { %>
+    <nav class="navbar modern-navbar">
+        <div class="nav-brand">
+            <a href="/" class="logo modern-logo">
+                <div class="logo-icon"></div>
+                <span style="color: #fff;">Aptitude</span><span style="color: #58a6ff;">Pro</span>
+            </a>
+            <button class="mobile-menu-btn" onclick="toggleMenu()" aria-label="Toggle Menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div class="nav-links modern-nav-links" id="navLinks">
+            <% if (typeof faculty !== 'undefined' && faculty) { %>
+                <div class="nav-user-info">
+                    <span class="user-badge faculty-badge">Faculty: <%= faculty.name %></span>
+                </div>
+                <a href="/faculty/dashboard" class="nav-item modern-nav-item">Dashboard</a>
+                <a href="/faculty/logout" class="btn-nav-login btn-logout modern-btn">Logout</a>
+            <% } else if (typeof user !== 'undefined' && user) { %>
+                <div class="nav-user-info">
+                    <span class="user-badge welcome-badge">Welcome, <%= user.name %></span>
+                </div>
+                <% if (user.role === 'admin') { %>
+                    <a href="/admin/dashboard" class="nav-item modern-nav-item">Admin Panel</a>
+                    <a href="/admin/faculty/pending" class="nav-item modern-nav-item" style="color: #ffb84d;">Manage Faculty</a>
+                    <a href="/adaptive/admin/dashboard" class="nav-item modern-nav-item adaptive-link">Adaptive®</a>
+                    <a href="/essay/admin/dashboard" class="nav-item modern-nav-item" style="color: #f472b6;">Essay (Admin)</a>
+                    <a href="/reading/admin/dashboard" class="nav-item modern-nav-item" style="color: #60a5fa;">Reading (Admin)</a>
+                    <a href="/english/admin/dashboard" class="nav-item modern-nav-item" style="color: #34d399;">English (Admin)</a>
+                    <a href="/exams/admin/dashboard" class="nav-item modern-nav-item" style="color: #a855f7;">University Exams</a>
+                    <a href="/coding/admin" class="nav-item modern-nav-item" style="color: #bc8cff;">Coding (Admin)</a>
+                    <a href="/admin/profile" class="nav-item modern-nav-item icon-link" title="Admin Profile">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <span class="mobile-only">Profile</span>
+                    </a>
+                <% } else { %>
+                    <a href="/student/dashboard" class="nav-item modern-nav-item">Dashboard</a>
+                    <% if (typeof systemSettings !== 'undefined' && systemSettings.AI_CHAT_ENABLED) { %>
+                        <a href="/student/chat" class="nav-item modern-nav-item" style="color: #4ade80;">✨ AI Chat</a>
+                    <% } %>
+                    <a href="/adaptive/student/dashboard" class="nav-item modern-nav-item adaptive-link">Adaptive®</a>
+                    <a href="/essay/student/dashboard" class="nav-item modern-nav-item" style="color: #f472b6;">Essay Test</a>
+                    <a href="/reading/student/dashboard" class="nav-item modern-nav-item" style="color: #60a5fa;">Reading Practice</a>
+                    <a href="/english/dashboard" class="nav-item modern-nav-item" style="color: #34d399;">English Learning</a>
+                    <a href="/coding" class="nav-item modern-nav-item" style="color: #bc8cff;">Coding Arena</a>
+                    <a href="/interview/setup" class="nav-item modern-nav-item" style="color: #ffb84d;">AI Interview</a>
+                    <a href="/exams" class="nav-item modern-nav-item" style="color: #a855f7;">University Exams</a>
+                    <a href="/student/history" class="nav-item modern-nav-item">My History</a>
+                    <a href="/student/profile" class="nav-item modern-nav-item icon-link" title="My Profile">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <span class="mobile-only">Profile</span>
+                    </a>
+                <% } %>
+                <a href="/auth/logout" class="btn-nav-login btn-logout modern-btn">Logout</a>
+            <% } else { %>
+                <a href="/faculty/register" class="btn-nav-login modern-btn-outline">Faculty</a>
+                <a href="/login" class="btn-nav-login modern-btn-solid">Login</a>
+                <a href="/register" class="btn-nav-signup modern-btn-gradient">Register</a>
+            <% } %>
+        </div>
+    </nav>
+    <style>
+        .modern-navbar {
+            background: rgba(13, 17, 23, 0.7);
+            backdrop-filter: blur(20px) saturate(150%);
+            -webkit-backdrop-filter: blur(20px) saturate(150%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+            padding: 1rem 2.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        .modern-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .modern-logo span {
+            transition: color 0.3s ease;
+        }
+        .modern-logo:hover span:last-child {
+            text-shadow: 0 0 15px rgba(88, 166, 255, 0.6);
+        }
+        .logo-icon {
+            width: 26px;
+            height: 26px;
+            background: linear-gradient(135deg, #1f6feb 0%, #a371f7 100%);
+            border-radius: 8px;
+            transform: rotate(45deg);
+            box-shadow: 0 0 15px rgba(163, 113, 247, 0.4);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            background: #0d1117;
+            border-radius: 5px;
+        }
+        .modern-logo:hover .logo-icon {
+            transform: rotate(135deg) scale(1.1);
+            box-shadow: 0 0 20px rgba(88, 166, 255, 0.6);
+        }
+        .modern-nav-item {
+            font-weight: 500;
+            padding: 8px 14px;
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.8) !important;
+            transition: all 0.2s ease-in-out;
+            position: relative;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+        .modern-nav-item::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: currentColor;
+            transition: width 0.3s ease;
+            border-radius: 2px;
+            opacity: 0;
+        }
+        .modern-nav-item:hover {
+            color: #fff !important;
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+        }
+        .modern-nav-item:hover::before {
+            width: 60%;
+            opacity: 1;
+            box-shadow: 0 0 8px currentColor;
+        }
+        .user-badge {
+            font-size: 0.85rem;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            backdrop-filter: blur(5px);
+        }
+        .welcome-badge {
+            background: rgba(88, 166, 255, 0.08);
+            color: #58a6ff;
+            border: 1px solid rgba(88, 166, 255, 0.3);
+        }
+        .welcome-badge::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #58a6ff;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #58a6ff;
+            animation: pulse-blue 2s infinite;
+        }
+        .faculty-badge {
+            background: rgba(163, 113, 247, 0.08);
+            color: #a371f7;
+            border: 1px solid rgba(163, 113, 247, 0.3);
+        }
+        .faculty-badge::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #a371f7;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #a371f7;
+            animation: pulse-purple 2s infinite;
+        }
+        @keyframes pulse-blue {
+            0% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0.6); }
+            70% { box-shadow: 0 0 0 6px rgba(88, 166, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0); }
+        }
+        @keyframes pulse-purple {
+            0% { box-shadow: 0 0 0 0 rgba(163, 113, 247, 0.6); }
+            70% { box-shadow: 0 0 0 6px rgba(163, 113, 247, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(163, 113, 247, 0); }
+        }
+        .modern-btn {
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 8px 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.8rem;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .modern-btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-logout.modern-btn {
+            background: rgba(248, 81, 73, 0.1);
+            color: #f85149;
+            border: 1px solid rgba(248, 81, 73, 0.3);
+        }
+        .btn-logout.modern-btn:hover {
+            background: rgba(248, 81, 73, 0.2);
+            box-shadow: 0 4px 15px rgba(248, 81, 73, 0.25);
+            color: #ff7b72;
+        }
+        .modern-btn-solid {
+            background: #238636;
+            color: white;
+            border: 1px solid rgba(240, 246, 252, 0.1);
+            box-shadow: 0 4px 12px rgba(35, 134, 54, 0.2);
+        }
+        .modern-btn-solid:hover {
+            background: #2ea043;
+            box-shadow: 0 6px 16px rgba(35, 134, 54, 0.4);
+            border-color: rgba(240, 246, 252, 0.3);
+        }
+        .modern-btn-gradient {
+            background: linear-gradient(135deg, #a371f7 0%, #1f6feb 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(163, 113, 247, 0.3);
+        }
+        .modern-btn-gradient:hover {
+            box-shadow: 0 6px 20px rgba(31, 111, 235, 0.5);
+            background: linear-gradient(135deg, #b085f8 0%, #388bfd 100%);
+        }
+        .modern-btn-outline {
+            background: rgba(88, 166, 255, 0.05);
+            color: #58a6ff;
+            border: 1px solid #58a6ff;
+        }
+        .modern-btn-outline:hover {
+            background: rgba(88, 166, 255, 0.15);
+            box-shadow: 0 4px 15px rgba(88, 166, 255, 0.25);
+            color: #79c0ff;
+        }
+    </style>
+    <% } else { %>
     <nav class="navbar">
         <div class="nav-brand">
             <a href="/" class="logo">
@@ -21,7 +282,7 @@
                 </svg>
             </button>
         </div>
-        
+
         <div class="nav-links" id="navLinks">
             <% if (typeof faculty !== 'undefined' && faculty) { %>
                 <div class="nav-user-info">
@@ -78,6 +339,7 @@
             <% } %>
         </div>
     </nav>
+    <% } %>
     <div class="container main-content-wrapper">
 
     <script>

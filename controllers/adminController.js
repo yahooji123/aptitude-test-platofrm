@@ -596,9 +596,43 @@ const getAiAnalytics = async (req, res) => {
     }
 };
 
+// @desc    Get UI Handler Page
+// @route   GET /admin/ui-handler
+const getUiHandler = async (req, res) => {
+    try {
+        res.render('admin/ui_handler', { user: req.user });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Post UI Handler Updates
+// @route   POST /admin/ui-handler
+const postUiHandler = async (req, res) => {
+    try {
+        const { navbarStyle } = req.body;
+        
+        let setting = await SystemSetting.findOne({ key: 'NAVBAR_STYLE' });
+        if (!setting) {
+            setting = new SystemSetting({ key: 'NAVBAR_STYLE', value: navbarStyle });
+        } else {
+            setting.value = navbarStyle;
+        }
+        await setting.save();
+        
+        res.redirect('/admin/ui-handler?success=1');
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+};
+
 module.exports = {
     getDashboard,
     getAiAnalytics,
+    getUiHandler,
+    postUiHandler,
     toggleSetting, // New Export
     getQuestions,
     addQuestion,

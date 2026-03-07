@@ -23,6 +23,7 @@ router.get('/custom-test/delete/:id', protect, englishController.deleteCustomTes
 
 // Student Routes
 router.get('/dashboard', protect, englishController.getStudentDashboard);
+router.get('/test/generate', protect, (req, res) => res.redirect('/english/dashboard'));
 router.post('/test/generate', protect, englishController.generateTest);
 router.post('/test/submit', protect, englishController.submitTest);
 router.get('/stats', protect, englishController.getStats);

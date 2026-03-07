@@ -14,6 +14,8 @@ router.use(authorize('admin'));
 
 router.get('/dashboard', getDashboard);
 router.get('/ai-analytics', require('../controllers/adminController').getAiAnalytics);
+router.get('/ui-handler', require('../controllers/adminController').getUiHandler);
+router.post('/ui-handler', require('../controllers/adminController').postUiHandler);
 // Settings & API Keys
 router.post('/settings/toggle', require('../controllers/adminController').toggleSetting);
 
